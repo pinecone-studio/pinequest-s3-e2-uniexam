@@ -1,7 +1,7 @@
 const Page = () => {
   return (
     <div className="w-screen h-screen mx-auto">
-      <p>check</p>
+      <p>setup checked</p>
     </div>
   );
 };
