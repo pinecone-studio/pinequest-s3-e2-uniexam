@@ -1,26 +1,13 @@
+"use client";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import React from "react";
+import { useAuth } from "@clerk/nextjs";
 
 const Page = () => {
+  const { userId } = useAuth();
+  console.log({ userId });
   return (
     <div>
-      <Dialog>
-        <DialogTrigger>
-          <Button>Open</Button>
-        </DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Dialog</DialogTitle>
-          </DialogHeader>
-        </DialogContent>
-      </Dialog>
+      <Button>checking</Button>
     </div>
   );
 };
