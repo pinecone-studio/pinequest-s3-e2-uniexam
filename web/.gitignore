@@ -45,3 +45,5 @@ bun.lock
 
 node_modules
 .next
+# clerk configuration (can include secrets)
+/.clerk/
