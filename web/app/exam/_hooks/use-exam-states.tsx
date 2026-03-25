@@ -8,7 +8,7 @@ const ExamContext = createContext<ReturnType<
 
 const useExamStateInternal = () => {
   const [currentId, setCurrentId] = useState<number>(1);
-  const [answers, setAnswers] = useState<Record<number, number | null>>({});
+  const [answers, setAnswers] = useState<Record<number, string | null>>({});
   const [flagged, setFlagged] = useState<number[]>([]);
 
   const totalQuestions = mockExam.length;

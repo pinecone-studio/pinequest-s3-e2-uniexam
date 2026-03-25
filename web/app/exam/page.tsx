@@ -16,9 +16,9 @@ export default Exam;
 export const ExamContent = () => {
   const { setAnswers, currentId } = useExamState();
 
-  const handleAnswerChange = (value: string) => {
-    setAnswers((prev) => ({ ...prev, [currentId]: Number(value) }));
-  };
+  //   const handleAnswerChange = (value: string) => {
+  //     setAnswers((prev) => ({ ...prev, [currentId]: Number(value) }));
+  //   };
 
   return (
     <div className="flex flex-col h-screen bg-gray-50 overflow-hidden">

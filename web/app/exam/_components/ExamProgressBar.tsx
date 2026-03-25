@@ -5,8 +5,16 @@ import ExamTimer from "./ExamTimer";
 import { CircleCheckBig, Flag, Send } from "lucide-react";
 
 export const ExamProgressBar = () => {
-  const { totalQuestions, currentId, answers, flagged, setCurrentId } =
-    useExamState();
+  const {
+    totalQuestions,
+    currentId,
+    answers,
+    flagged,
+    setCurrentId,
+    answeredCount,
+  } = useExamState();
+  const progress = Math.round((answeredCount / totalQuestions) * 100);
+
   return (
     <div className="border-l bg-muted/30 p-6 flex flex-col w-80">
       <ExamTimer />
@@ -17,14 +25,14 @@ export const ExamProgressBar = () => {
             <Button
               key={q}
               onClick={() => setCurrentId(q)}
-              className={`rounded-full p-5 items-center ${
+              className={`rounded-full p-5 items-center border-2! ${
                 q === currentId
-                  ? "bg-indigo-700 text-white hover:bg-indigo-800"
+                  ? "bg-indigo-700 text-white hover:bg-indigo-800 border-transparent"
                   : flagged.includes(q)
-                    ? "bg-amber-200 border-2 border-amber-400 text-amber-800 hover:bg-amber-300"
+                    ? "bg-amber-200 border-amber-400 text-amber-800 hover:bg-amber-300"
                     : answers[q] !== undefined && answers[q] !== null
-                      ? "bg-indigo-200 border-2 border-indigo-700 text-indigo-800 hover:bg-indigo-300"
-                      : "bg-muted hover:bg-muted/80 text-muted-foreground"
+                      ? "bg-indigo-200 border-indigo-700 text-indigo-800 hover:bg-indigo-300"
+                      : "bg-muted hover:bg-muted/80 text-muted-foreground border-transparent"
               }`}
             >
               {q}
@@ -49,23 +57,25 @@ export const ExamProgressBar = () => {
             Тэмдэглэсэн
           </span>
         </div>
+
         <div className="mt-6">
-          <div className="flex items-center justify-between text-sm  mb-2">
+          <div className="flex items-center justify-between text-sm mb-2">
             <span className="text-muted-foreground">Явц</span>
-            <span className="font-medium ">too %</span>
+            <span className="font-medium">{progress}%</span>
           </div>
           <div className="w-full bg-muted overflow-hidden rounded-full h-2">
             <div
               className="bg-indigo-500 h-2 rounded-full transition-all"
-              // style={{ width: `${progress}%` }}
+              style={{ width: `${progress}%` }}
             />
           </div>
-          <div className="flex items-center justify-between text-sm  mt-3">
+          <div className="flex items-center justify-between text-sm mt-3">
             <span className="flex gap-1.5 items-center">
-              <CircleCheckBig size={15} color="#303F9F" /> too/{totalQuestions}
+              <CircleCheckBig size={15} color="#303F9F" /> {answeredCount}/
+              {totalQuestions}
             </span>
             <span className="flex gap-1.5 items-center">
-              <Flag size={15} color="#FFA000" /> too тэмдэглэсэн
+              <Flag size={15} color="#FFA000" /> {flagged.length} тэмдэглэсэн
             </span>
           </div>
         </div>
