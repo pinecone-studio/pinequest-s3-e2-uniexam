@@ -29,9 +29,9 @@ const ExamTimer = ({
           <Clock size={16} />
           <p>Үлдсэн цаг</p>
         </CardHeader>
-        <CardContent className="justify-center">
+        <CardContent className="justify-center font-mono">
           <p
-            className={`text-3xl font-bold tracking-tight text-center ${timeLeft < 300 ? "text-red-500" : "text-gray-800"}`}
+            className={`text-3xl font-mono font-medium tracking-tight text-center ${timeLeft < 300 ? "text-red-500" : "text-gray-800"}`}
           >
             {formatTime(timeLeft)}
           </p>

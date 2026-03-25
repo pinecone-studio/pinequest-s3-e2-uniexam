@@ -1,11 +1,20 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, JetBrains_Mono, Roboto_Mono } from "next/font/google";
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Toaster } from "sonner";
 
 const inter = Inter({
   subsets: ["latin"],
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-jetbrains-mono",
+});
+const robotoMono = Roboto_Mono({
+  subsets: ["latin"],
+  variable: "--font-roboto-mono",
 });
 
 export const metadata: Metadata = {
@@ -20,7 +29,10 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider>
-      <html lang="en" className={`${inter.className} h-full antialiased`}>
+      <html
+        lang="en"
+        className={`${inter.className} ${jetbrainsMono.variable} ${robotoMono.variable} h-full antialiased`}
+      >
         <body className="min-h-full flex flex-col">
           <main>{children}</main>
           <Toaster position="top-center" expand={false} visibleToasts={1} />

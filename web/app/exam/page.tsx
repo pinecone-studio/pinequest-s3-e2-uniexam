@@ -50,7 +50,6 @@ export const ExamContent = () => {
       className="flex flex-col h-screen bg-gray-50 overflow-hidden"
       id="exam-area"
     >
-      {" "}
       <ProctoringGuard />
       <ExamHeader />
       <div
