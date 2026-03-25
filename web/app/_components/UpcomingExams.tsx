@@ -1,7 +1,9 @@
 "use client"
 
 import Link from "next/link"
-import { Calendar, Clock, ArrowRight } from "lucide-react"
+import { Calendar, Clock, ArrowRight, ChevronRight } from "lucide-react"
+import { Button } from "@/components/ui/button"
+
 
 const exams = [
   {
@@ -60,12 +62,11 @@ export default function UpcomingExams() {
 
             {/* RIGHT */}
             {exam.hasInProgress && (
-              <Link href={`/exam/${exam.id}`}>
-                <button className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-1.5 text-white font-medium hover:bg-indigo-700 transition">
-                  Continue
-                  <ArrowRight className="w-4 h-4" />
-                </button>
-              </Link>
+              <Link href={"./exam"}>
+        <Button className="hover:cursor-pointer">
+          Continue to Exam <ChevronRight />
+        </Button>
+      </Link>
             )}
           </div>
         ))}
