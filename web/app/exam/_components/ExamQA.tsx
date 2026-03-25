@@ -1,9 +1,23 @@
 "use client";
+import { useCallback, useState } from "react";
 import { ChevronLeft, ChevronRight, Flag } from "lucide-react";
 import { useExamState } from "../_hooks/use-exam-states";
+import { useExamGuard } from "../_hooks/use-exam-guard";
 import { Textarea } from "@/components/ui/textarea";
 
 export const ExamQA = () => {
+  const [violations, setViolations] = useState<string[]>([]);
+  const [maxWarningsReached, setMaxWarningsReached] = useState(false);
+
+  const onViolation = useCallback((type: string) => {
+    setViolations((prev) => [...prev, type]);
+  }, []);
+
+  useExamGuard(onViolation, {
+    maxWarnings: 3,
+    onMaxWarnings: () => setMaxWarningsReached(true),
+  });
+
   const {
     totalQuestions,
     currentQuestion,
@@ -39,9 +53,29 @@ export const ExamQA = () => {
   };
   //   console.log({ answers });
 
+  const lastViolation = violations[violations.length - 1];
+
   return (
     <div>
       <main className="flex-1 flex flex-col px-8 py-30 max-w-3xl mx-auto w-full">
+        {maxWarningsReached && (
+          <div
+            className="mb-4 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-900"
+            role="alert"
+          >
+            Та шалгалтын дүрмийг олон удаа зөрчлөө. Шалгуулагчид мэдэгдэнэ.
+          </div>
+        )}
+        {violations.length > 0 && !maxWarningsReached && (
+          <div
+            className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950"
+            role="status"
+          >
+            <span className="font-medium">Анхааруулга ({violations.length}/3): </span>
+            {lastViolation}
+          </div>
+        )}
+
         <p className="text-gray-800 text-base font-medium mb-6">
           {currentQuestion.question}
         </p>
