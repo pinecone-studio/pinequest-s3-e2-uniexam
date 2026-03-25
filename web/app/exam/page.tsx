@@ -1,6 +1,7 @@
 "use client";
 
 import { ExamHeader, ExamProgressBar, ExamQA } from "./_components";
+import ProctoringGuard from "./_components/ProctoringGuard";
 import { ExamProvider, useExamState } from "./_hooks/use-exam-states";
 
 const Exam = () => {
@@ -22,6 +23,8 @@ export const ExamContent = () => {
 
   return (
     <div className="flex flex-col h-screen bg-gray-50 overflow-hidden">
+      <ProctoringGuard />
+
       <ExamHeader />
       <div className="flex flex-1 overflow-hidden">
         <div className="flex-1 overflow-y-auto">

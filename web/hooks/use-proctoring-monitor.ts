@@ -42,32 +42,35 @@ function createEventId() {
   return `event-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
-async function waitForVideoReady(video: HTMLVideoElement) {
-  if (video.readyState >= 2 && video.videoWidth > 0 && video.videoHeight > 0) {
-    return;
-  }
+async function waitForVideoMetadata(video: HTMLVideoElement) {
+  if (video.readyState >= 1) return;
 
   await new Promise<void>((resolve) => {
-    const onLoadedData = () => {
-      if (video.videoWidth > 0 && video.videoHeight > 0) {
-        video.removeEventListener("loadeddata", onLoadedData);
-        resolve();
-      }
+    const onLoadedMetadata = () => {
+      video.removeEventListener("loadedmetadata", onLoadedMetadata);
+      resolve();
     };
 
-    video.addEventListener("loadeddata", onLoadedData);
-
-    requestAnimationFrame(() => {
-      if (
-        video.readyState >= 2 &&
-        video.videoWidth > 0 &&
-        video.videoHeight > 0
-      ) {
-        video.removeEventListener("loadeddata", onLoadedData);
-        resolve();
-      }
-    });
+    video.addEventListener("loadedmetadata", onLoadedMetadata);
   });
+}
+
+async function waitForVideoReady(video: HTMLVideoElement, timeoutMs = 5000) {
+  const start = Date.now();
+
+  while (Date.now() - start < timeoutMs) {
+    if (
+      video.readyState >= 2 &&
+      video.videoWidth > 0 &&
+      video.videoHeight > 0
+    ) {
+      return;
+    }
+
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+  }
+
+  throw new Error("Video frame not ready");
 }
 
 export function useProctoringMonitor(
@@ -81,6 +84,8 @@ export function useProctoringMonitor(
   const startedRef = useRef(false);
   const sessionIdRef = useRef("");
   const lastTimestampRef = useRef(-1);
+  const trackCleanupRef = useRef<(() => void) | null>(null);
+  const lastErrorRef = useRef("");
 
   const [sessionId, setSessionId] = useState("");
   const [lastCheckedAt, setLastCheckedAt] = useState("");
@@ -89,6 +94,51 @@ export function useProctoringMonitor(
   const [isMonitoring, setIsMonitoring] = useState(false);
   const [currentWarning, setCurrentWarning] = useState<WarningType>(null);
   const [faceCount, setFaceCount] = useState(0);
+
+  const logErrorOnce = useCallback((error: unknown) => {
+    const message = error instanceof Error ? error.message : String(error);
+
+    if (lastErrorRef.current !== message) {
+      console.error(message);
+      lastErrorRef.current = message;
+    }
+  }, []);
+
+  const stopMonitoring = useCallback(() => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+
+    if (trackCleanupRef.current) {
+      trackCleanupRef.current();
+      trackCleanupRef.current = null;
+    }
+
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
+
+    const video = videoRef.current;
+    if (video) {
+      try {
+        video.pause();
+      } catch {
+        // ignore
+      }
+
+      video.srcObject = null;
+    }
+
+    startedRef.current = false;
+    lastTimestampRef.current = -1;
+    lastErrorRef.current = "";
+    setIsMonitoring(false);
+    setCurrentWarning(null);
+    setFaceCount(0);
+  }, []);
+
   const detectFaces = useCallback(
     async (video: HTMLVideoElement): Promise<DetectionSummary | null> => {
       if (
@@ -131,7 +181,7 @@ export function useProctoringMonitor(
 
         if (detectedFaceCount === 0) {
           return {
-            faceCount: detectedFaceCount,
+            faceCount: 0,
             warningType: "NO_FACE",
             detectionConfidence,
           };
@@ -146,11 +196,13 @@ export function useProctoringMonitor(
         }
 
         return {
-          faceCount: detectedFaceCount,
+          faceCount: 1,
           warningType: null,
           detectionConfidence,
         };
-      } catch {
+      } catch (error) {
+        logErrorOnce(error);
+
         return {
           faceCount: 0,
           warningType: "NO_FACE",
@@ -158,7 +210,7 @@ export function useProctoringMonitor(
         };
       }
     },
-    [],
+    [logErrorOnce],
   );
 
   const addIncident = useCallback(
@@ -182,9 +234,25 @@ export function useProctoringMonitor(
 
   const checkProctoring = useCallback(async () => {
     const video = videoRef.current;
+    const stream = streamRef.current;
     const currentSessionId = sessionIdRef.current;
 
-    if (!video || !currentSessionId) return null;
+    if (!video || !stream || !currentSessionId) return null;
+
+    const [track] = stream.getVideoTracks();
+
+    if (!track || track.readyState !== "live") {
+      stopMonitoring();
+      return null;
+    }
+
+    if (
+      video.readyState < 2 ||
+      video.videoWidth <= 0 ||
+      video.videoHeight <= 0
+    ) {
+      return null;
+    }
 
     const detection = await detectFaces(video);
 
@@ -197,7 +265,7 @@ export function useProctoringMonitor(
     addIncident(currentSessionId, detection);
 
     return detection;
-  }, [addIncident, detectFaces]);
+  }, [addIncident, detectFaces, stopMonitoring]);
 
   const startCamera = useCallback(async () => {
     const video = videoRef.current;
@@ -221,11 +289,27 @@ export function useProctoringMonitor(
 
     streamRef.current = stream;
 
+    const [track] = stream.getVideoTracks();
+
+    const handleTrackStopLikeEvent = () => {
+      stopMonitoring();
+    };
+
+    if (track) {
+      track.addEventListener("ended", handleTrackStopLikeEvent);
+      track.addEventListener("mute", handleTrackStopLikeEvent);
+
+      trackCleanupRef.current = () => {
+        track.removeEventListener("ended", handleTrackStopLikeEvent);
+        track.removeEventListener("mute", handleTrackStopLikeEvent);
+      };
+    }
+
     if (video.srcObject !== stream) {
       video.srcObject = stream;
     }
 
-    await waitForVideoReady(video);
+    await waitForVideoMetadata(video);
 
     if (video.paused) {
       try {
@@ -238,29 +322,9 @@ export function useProctoringMonitor(
         }
       }
     }
-  }, []);
 
-  const stopMonitoring = useCallback(() => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
-
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((track) => track.stop());
-      streamRef.current = null;
-    }
-
-    const video = videoRef.current;
-    if (video) {
-      video.pause();
-      video.srcObject = null;
-    }
-
-    startedRef.current = false;
-    lastTimestampRef.current = -1;
-    setIsMonitoring(false);
-  }, []);
+    await waitForVideoReady(video);
+  }, [stopMonitoring]);
 
   const startMonitoring = useCallback(async () => {
     if (startedRef.current) return;
@@ -280,14 +344,14 @@ export function useProctoringMonitor(
 
       intervalRef.current = setInterval(() => {
         checkProctoring().catch((error) => {
-          console.error(error);
+          logErrorOnce(error);
         });
       }, intervalMs);
     } catch (error) {
       startedRef.current = false;
       throw error;
     }
-  }, [checkProctoring, intervalMs, startCamera]);
+  }, [checkProctoring, intervalMs, logErrorOnce, startCamera]);
 
   const resetIncidents = useCallback(() => {
     setIncidents([]);
@@ -305,7 +369,7 @@ export function useProctoringMonitor(
           await startMonitoring();
         }
       } catch (error) {
-        console.error(error);
+        logErrorOnce(error);
       }
     };
 
@@ -315,7 +379,7 @@ export function useProctoringMonitor(
       cancelled = true;
       stopMonitoring();
     };
-  }, [autoStart, startMonitoring, stopMonitoring]);
+  }, [autoStart, logErrorOnce, startMonitoring, stopMonitoring]);
 
   return {
     videoRef,
