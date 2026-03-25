@@ -2,6 +2,8 @@ import { Button } from "@/components/ui/button";
 import Header from "./header/page";
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
+import UpcomingExams from "./_components/UpcomingExams";
+import RecentResults from "./_components/RecentResults";
 
 const Page = () => {
   return (
@@ -13,6 +15,8 @@ const Page = () => {
           Continue to Exam <ChevronRight />
         </Button>
       </Link>
+      <UpcomingExams/>
+      <RecentResults/>
     </div>
   );
 };
