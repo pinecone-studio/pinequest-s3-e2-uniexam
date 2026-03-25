@@ -6,8 +6,8 @@ const Page = () => {
   return (
     <div className="w-screen h-screen mx-auto">
       <Header />
-      <UpcomingExams/>
-      <RecentResults/>
+      <UpcomingExams />
+      <RecentResults />
     </div>
   );
 };
