@@ -2,6 +2,7 @@
 import { ChevronLeft, ChevronRight, Flag } from "lucide-react";
 import { useExamState } from "../_hooks/use-exam-states";
 import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
 
 export const ExamQA = () => {
   const {
@@ -37,6 +38,38 @@ export const ExamQA = () => {
   const handleBack = () => {
     if (currentId > 1) setCurrentId(currentId - 1);
   };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (
+      e.key === "Control" ||
+      e.key === "Alt" ||
+      e.key === "Meta" ||
+      e.key === "Shift"
+    ) {
+      return;
+    }
+
+    if (
+      e.ctrlKey ||
+      e.metaKey ||
+      e.altKey ||
+      e.key === "PrintScreen" ||
+      e.key === "F12"
+    ) {
+      e.preventDefault();
+      toast.error(`Товчлол ашиглах хориотой: ${e.key}`);
+    }
+  };
+
+  const handleContextMenu = (e: React.MouseEvent<HTMLTextAreaElement>) => {
+    e.preventDefault();
+    toast.error("Хулганы баруун товч ашиглах хориотой!");
+  };
+
+  const handleCopyPaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    e.preventDefault();
+    toast.error("Хуулах/Буулгах үйлдэл хориотой!");
+  };
   //   console.log({ answers });
 
   return (
@@ -56,6 +89,11 @@ export const ExamQA = () => {
               placeholder="Хариултаа энд бичнэ үү..."
               value={answer?.toString() ?? ""}
               onChange={(e) => handleAnswerChange(e.target.value)}
+              onKeyDown={handleKeyDown}
+              onContextMenu={handleContextMenu}
+              onCopy={handleCopyPaste}
+              onPaste={handleCopyPaste}
+              onCut={handleCopyPaste}
             />
             <span className="text-xs text-gray-400 text-right">
               {wordCount} үг
