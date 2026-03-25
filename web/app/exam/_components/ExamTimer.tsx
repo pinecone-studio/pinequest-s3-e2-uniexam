@@ -24,7 +24,7 @@ const ExamTimer = ({
 
   return (
     <div className="border-none">
-      <Card className="flex flex-col gap-4 rounded-xl py-8 mb-6 justify-center w-full">
+      <Card className="flex flex-col gap-2.5 rounded-xl py-4 mb-6 justify-center w-full">
         <CardHeader className="flex gap-2 justify-center items-center">
           <Clock size={16} />
           <p>Үлдсэн цаг</p>

@@ -2,9 +2,10 @@
 import { useRouter } from "next/navigation";
 import { useExamState } from "../_hooks/use-exam-states";
 import { ChevronLeft } from "lucide-react";
+import { examName, mockExam } from "../mockExamData";
 
 export const ExamHeader = () => {
-  const { totalQuestions } = useExamState();
+  const { totalQuestions, currentId } = useExamState();
   const router = useRouter();
   return (
     <div className="border-b text-muted-foreground text-sm px-6 py-4">
@@ -14,10 +15,8 @@ export const ExamHeader = () => {
             onClick={() => router.back()}
             className="hover:cursor-pointer"
           />
-          <p>Exam title</p>
+          <p>{examName.title}</p>
         </div>
-
-        <p>0 of {totalQuestions} answered</p>
       </div>
     </div>
   );

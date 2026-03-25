@@ -80,9 +80,9 @@ export const ExamProgressBar = () => {
           </div>
         </div>
       </div>
-      <Button className="flex items-center gap-3 rounded-md w-full px-6 py-5 bg-indigo-700">
+      <Button className="flex items-center font-semibold gap-3 rounded-md w-full px-6 py-5 bg-indigo-700">
         <Send />
-        Submit Exam
+        Шалгалт Дуусгах
       </Button>
     </div>
   );

@@ -89,13 +89,13 @@ export const ExamQA = () => {
           </div>
         )}
 
-        <div className="flex items-center justify-between mt-8">
+        <div className="flex items-center justify-between mt-8 font-medium">
           <button
             onClick={handleBack}
             disabled={currentQuestion.id === 1}
             className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-800 disabled:opacity-30 disabled:cursor-not-allowed transition"
           >
-            <ChevronLeft size={16} /> Back
+            <ChevronLeft size={16} /> Буцах
           </button>
 
           <button
@@ -114,7 +114,7 @@ export const ExamQA = () => {
             disabled={currentQuestion.id === totalQuestions}
             className="flex items-center gap-2 text-sm px-5 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed transition"
           >
-            Next <ChevronRight size={16} />
+            Цааш <ChevronRight size={16} />
           </button>
         </div>
       </main>
