@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ExamHeader, ExamProgressBar, ExamQA } from "./_components";
-import ProctoringGuard from "./_components/ProctoringGuard";
+import { ProctoringGuard } from "./_components/ProctoringGuard";
 import { ExamProvider } from "./_hooks/use-exam-states";
 import { toast } from "sonner";
 
