@@ -99,15 +99,43 @@ const GradeStudentPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      <GradingHeader />
-      <StudentInfoHeader />
+      <GradingHeader
+        classId={classId}
+        totalStudents={allStudents.length}
+        gradedCount={gradedCount}
+        pendingCount={pendingCount}
+      />
+      <StudentInfoHeader
+        student={student}
+        currentEssay={essayIndex + 1}
+        totalEssays={student.essays.length}
+      />
 
       <div className="flex flex-1 overflow-hidden">
         <div className="flex-1 flex flex-col overflow-hidden">
-          <EssaySubmission />
+          <EssaySubmission
+            essay={currentEssay}
+            essayIndex={essayIndex}
+            totalEssays={student.essays.length}
+            onPrev={() => setEssayIndex((i) => Math.max(0, i - 1))}
+            onNext={() =>
+              setEssayIndex((i) => Math.min(student.essays.length - 1, i + 1))
+            }
+          />
         </div>
 
-        <GradingSidebar />
+        {/* <GradingSidebar
+          mcScore={student.mcScore}
+          mcTotal={student.mcTotal}
+          currentEssay={currentEssay}
+          onRubricChange={handleRubricChange}
+          onFeedbackChange={handleFeedbackChange}
+          totalScore={totalScore}
+          maxTotalScore={maxTotalScore}
+          onSubmit={handleSubmit}
+          onPrevStudent={() => navigateStudent("prev")}
+          onNextStudent={() => navigateStudent("next")}
+        /> */}
       </div>
     </div>
   );
