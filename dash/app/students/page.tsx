@@ -6,13 +6,51 @@ import {
   SelectContent,
   SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
 import StudentTable from "./_components/StudentTable";
 import { useStudentSearch } from "./_hooks/use-student-search";
-import { Student } from "./type";
+import { ExamHistory, Student } from "./type";
+
+const examHistoryTemplate = [
+  { name: "Явцын шалгалт", date: "2026.03.15", delta: 3 },
+  { name: "Сорил 2", date: "2026.03.10", delta: -4 },
+  { name: "Сорил 1", date: "2026.02.28", delta: 0 },
+  { name: "Бие даалт 2", date: "2026.02.20", delta: -2 },
+  { name: "Бие даалт 1", date: "2026.02.10", delta: 2 },
+] as const;
+
+const clampScore = (score: number) => Math.min(99, Math.max(55, score));
+
+const getGrade = (score: number) => {
+  if (score >= 95) return "A";
+  if (score >= 90) return "A-";
+  if (score >= 85) return "B+";
+  if (score >= 80) return "B";
+  if (score >= 75) return "B-";
+  if (score >= 70) return "C+";
+  if (score >= 65) return "C";
+
+  return "D";
+};
+
+const buildMockExamHistory = (
+  averageScore: number,
+  examsTaken: number,
+): ExamHistory[] =>
+  examHistoryTemplate.slice(0, examsTaken).map((exam, index) => {
+    const score = clampScore(averageScore + exam.delta);
+
+    return {
+      id: index + 1,
+      name: exam.name,
+      date: exam.date,
+      score,
+      maxScore: 100,
+      grade: getGrade(score),
+    };
+  });
 
 const initialStudents: Student[] = [
   {
@@ -24,7 +62,7 @@ const initialStudents: Student[] = [
     examsTaken: 5,
     trend: "up",
     lastActive: "2 цагийн өмнө",
-    examHistory: [],
+    examHistory: buildMockExamHistory(92, 5),
   },
   {
     id: 2,
@@ -35,7 +73,7 @@ const initialStudents: Student[] = [
     examsTaken: 5,
     trend: "stable",
     lastActive: "1 өдрийн өмнө",
-    examHistory: [],
+    examHistory: buildMockExamHistory(78, 5),
   },
   {
     id: 3,
@@ -46,7 +84,7 @@ const initialStudents: Student[] = [
     examsTaken: 4,
     trend: "up",
     lastActive: "3 цагийн өмнө",
-    examHistory: [],
+    examHistory: buildMockExamHistory(85, 4),
   },
   {
     id: 4,
@@ -57,7 +95,7 @@ const initialStudents: Student[] = [
     examsTaken: 3,
     trend: "down",
     lastActive: "5 өдрийн өмнө",
-    examHistory: [],
+    examHistory: buildMockExamHistory(65, 3),
   },
   {
     id: 5,
@@ -68,7 +106,7 @@ const initialStudents: Student[] = [
     examsTaken: 5,
     trend: "up",
     lastActive: "Дөнгөж сая",
-    examHistory: [],
+    examHistory: buildMockExamHistory(88, 5),
   },
   {
     id: 6,
@@ -79,7 +117,7 @@ const initialStudents: Student[] = [
     examsTaken: 4,
     trend: "stable",
     lastActive: "6 цагийн өмнө",
-    examHistory: [],
+    examHistory: buildMockExamHistory(91, 4),
   },
   {
     id: 7,
@@ -90,7 +128,7 @@ const initialStudents: Student[] = [
     examsTaken: 3,
     trend: "down",
     lastActive: "2 өдрийн өмнө",
-    examHistory: [],
+    examHistory: buildMockExamHistory(73, 3),
   },
   {
     id: 8,
@@ -101,7 +139,7 @@ const initialStudents: Student[] = [
     examsTaken: 2,
     trend: "up",
     lastActive: "30 минутын өмнө",
-    examHistory: [],
+    examHistory: buildMockExamHistory(95, 2),
   },
 ];
 
