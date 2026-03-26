@@ -78,7 +78,7 @@ const StudentTable = ({ students }: StudentTableProps) => {
               <td className="px-6 py-4 text-sm text-gray-700">
                 {student.examsTaken} шалгалт
               </td>
-              <td className="px-4 py-4 flex justify-center">
+              <td className="px-4 py-7 flex justify-center">
                 {student.trend === "up" && (
                   <TrendingUp className="w-4 h-4 text-green-500" />
                 )}

@@ -106,9 +106,13 @@ const initialStudents: Student[] = [
 ];
 
 const Page = () => {
-  // Бидний үүсгэсэн Custom Hook-ийг дуудаж байна
-  const { searchQuery, setSearchQuery, filteredItems } =
-    useStudentSearch(initialStudents);
+  const {
+    searchQuery,
+    setSearchQuery,
+    courseFilter,
+    setCourseFilter,
+    filteredItems,
+  } = useStudentSearch(initialStudents);
 
   return (
     <div className="p-6 lg:p-8 bg-gray-50/50 min-h-screen">
@@ -128,23 +132,23 @@ const Page = () => {
             onChange={(e) => setSearchQuery(e.target.value)}
           />
 
-          <Select>
+          {/* onValueChange эвэнтээр сонгосон утгыг hook рүү дамжуулна */}
+          <Select value={courseFilter} onValueChange={setCourseFilter}>
             <SelectTrigger className="w-48 bg-white">
               <SelectValue placeholder="Курс сонгох" />
             </SelectTrigger>
-
             <SelectContent
               position="popper"
               side="bottom"
               sideOffset={4}
-              className="w-[--radix-select-trigger-width] min-w-[var(--radix-select-trigger-width)]"
+              className="w-[--radix-select-trigger-width]"
             >
               <SelectGroup>
                 <SelectItem value="all">Бүх курс</SelectItem>
-                <SelectItem value="1">1-р курс</SelectItem>
-                <SelectItem value="2">2-р курс</SelectItem>
-                <SelectItem value="3">3-р курс</SelectItem>
-                <SelectItem value="4">4-р курс</SelectItem>
+                <SelectItem value="1-р курс">1-р курс</SelectItem>
+                <SelectItem value="2-р курс">2-р курс</SelectItem>
+                <SelectItem value="3-р курс">3-р курс</SelectItem>
+                <SelectItem value="4-р курс">4-р курс</SelectItem>
               </SelectGroup>
             </SelectContent>
           </Select>
