@@ -1,10 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
+import { toast } from "sonner";
 import { ExamHeader, ExamProgressBar, ExamQA } from "./_components";
 import ProctoringGuard from "./_components/ProctoringGuard";
 import { ExamProvider } from "./_hooks/use-exam-states";
-import { toast } from "sonner";
+
+const WARNING_TOAST_CLASS =
+  "bg-red-600 text-white font-bold border border-red-800";
 
 const Exam = () => {
   return (
@@ -17,23 +20,66 @@ const Exam = () => {
 export default Exam;
 
 export const ExamContent = () => {
-  const [warningCount, setWarningCount] = useState<number>(0);
-  const [isOutside, setIsOutside] = useState<boolean>(false);
   const leaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const warningCountRef = useRef<number>(0);
+  const lastWarningAtRef = useRef<number>(0);
+
   useEffect(() => {
-    const handleWindowLeave = () => {
-      setWarningCount((prev) => prev + 1);
-      toast.warning(`Анхааруулга ${warningCount + 1}: Цонхноос гарлаа!`, {
-        className: "bg-red-600 text-white font-bold border border-red-800",
+    const showWarningToast = (message: string) => {
+      const now = Date.now();
+
+      if (now - lastWarningAtRef.current < 800) {
+        return;
+      }
+
+      lastWarningAtRef.current = now;
+      warningCountRef.current += 1;
+
+      toast.warning(`Анхааруулга ${warningCountRef.current}: ${message}`, {
+        className: WARNING_TOAST_CLASS,
       });
     };
-    document.addEventListener("mouseleave", handleWindowLeave);
-    return () => document.removeEventListener("mouseleave", handleWindowLeave);
-  }, [warningCount]);
+
+    const handlePointerLeavePage = (event: MouseEvent) => {
+      if (document.hidden) {
+        return;
+      }
+
+      if (event.relatedTarget) {
+        return;
+      }
+
+      if (event.clientY <= 0) {
+        showWarningToast("Tab hover хийх оролдлого илэрлээ!");
+        return;
+      }
+
+      showWarningToast("Цонхноос гарлаа!");
+    };
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        return;
+      }
+
+      showWarningToast("Tab солих оролдлого илэрлээ!");
+    };
+
+    window.addEventListener("mouseout", handlePointerLeavePage);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener("mouseout", handlePointerLeavePage);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+
+      if (leaveTimeoutRef.current) {
+        clearTimeout(leaveTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleExamLeave = () => {
     leaveTimeoutRef.current = setTimeout(() => {
-      setIsOutside(true);
       toast.error("Шалгалтын хэсгээс гарах оролдлого илэрлээ");
     }, 100);
   };
@@ -42,12 +88,11 @@ export const ExamContent = () => {
     if (leaveTimeoutRef.current) {
       clearTimeout(leaveTimeoutRef.current);
     }
-    setIsOutside(false);
   };
 
   return (
     <div
-      className="flex flex-col h-screen bg-gray-50 overflow-hidden"
+      className="flex h-screen flex-col overflow-hidden bg-gray-50"
       id="exam-area"
     >
       <ProctoringGuard />
