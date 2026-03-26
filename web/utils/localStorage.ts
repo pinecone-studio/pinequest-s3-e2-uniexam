@@ -1,4 +1,4 @@
-import { Todo } from "../../web/types/Todo";
+import { Todo } from "../types/Todo";
 
 const KEY = "todos";
 
