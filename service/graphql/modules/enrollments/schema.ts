@@ -12,5 +12,6 @@ export const enrollmentTypeDefs = `#graphql
 
   extend type Mutation {
     createEnrollment(student_id: String!, course_id: String!): Enrollment
+    updateEnrollment(id: String!, student_id: String, course_id: String): Enrollment
   }
 `;

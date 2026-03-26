@@ -13,5 +13,6 @@ export const answerTypeDefs = `#graphql
 
   extend type Mutation {
     createAnswer(question_id: String!, text: String!, is_correct: Boolean!): Answer
+    updateAnswer(id: String!, question_id: String, text: String, is_correct: Boolean): Answer
   }
 `;

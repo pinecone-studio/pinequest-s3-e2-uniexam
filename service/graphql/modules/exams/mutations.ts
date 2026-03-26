@@ -1,3 +1,4 @@
+import { pickDefined } from "@/graphql/shared";
 import { supabase } from "@/lib/supabase";
 
 type CreateExamArgs = {
@@ -54,5 +55,36 @@ export const examMutations = {
     if (qError) throw new Error(qError.message);
 
     return exam;
+  },
+  updateExam: async (
+    _: unknown,
+    args: {
+      id: string;
+      course_id?: string;
+      title?: string;
+      description?: string;
+      start_time?: string;
+      end_time?: string;
+      duration?: number;
+    },
+  ) => {
+    const payload = pickDefined({
+      course_id: args.course_id,
+      title: args.title,
+      description: args.description,
+      start_time: args.start_time,
+      end_time: args.end_time,
+      duration: args.duration,
+    });
+
+    const { data, error } = await supabase
+      .from("exams")
+      .update(payload)
+      .eq("id", args.id)
+      .select()
+      .single();
+
+    if (error) throw new Error(error.message);
+    return data;
   },
 };

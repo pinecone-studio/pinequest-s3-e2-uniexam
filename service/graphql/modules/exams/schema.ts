@@ -39,5 +39,14 @@ export const examTypeDefs = `#graphql
       duration: Int!
       questions: [CreateQuestionInput!]!
     ): Exam
+    updateExam(
+      id: String!
+      course_id: String
+      title: String
+      description: String
+      start_time: String
+      end_time: String
+      duration: Int
+    ): Exam
   }
 `;

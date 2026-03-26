@@ -14,5 +14,6 @@ export const questionTypeDefs = `#graphql
 
   extend type Mutation {
     createQuestion(exam_id: String!, text: String!, type: String!, order_index: Int!): Question
+    updateQuestion(id: String!, exam_id: String, text: String, type: String, order_index: Int): Question
   }
 `;

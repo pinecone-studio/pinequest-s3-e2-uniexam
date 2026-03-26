@@ -13,5 +13,8 @@ export const teacherTypeDefs = `#graphql
 
   extend type Mutation {
     createTeacher(name: String!, email: String!): Teacher
+    updateTeacher(id: String!, name: String, email: String): Teacher
   }
+
+  
 `;

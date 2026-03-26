@@ -22,5 +22,13 @@ export const submissionTypeDefs = `#graphql
       submitted_at: String
       score: Int
     ): Submission
+    updateSubmission(
+      id: String!
+      student_id: String
+      exam_id: String
+      started_at: String
+      submitted_at: String
+      score: Int
+    ): Submission
   }
 `;

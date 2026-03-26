@@ -19,5 +19,12 @@ export const submissionAnswerTypeDefs = `#graphql
       answer_id: String
       text_answer: String
     ): SubmissionAnswer
+    updateSubmissionAnswer(
+      id: String!
+      submission_id: String
+      question_id: String
+      answer_id: String
+      text_answer: String
+    ): SubmissionAnswer
   }
 `;
