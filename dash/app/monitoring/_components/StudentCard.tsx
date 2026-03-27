@@ -131,7 +131,10 @@ function StudentCardView({ student }: Props) {
               </span>
             </div>
 
-            <Progress value={progressPercent} className="h-2" />
+            <Progress
+              value={progressPercent}
+              className="h-2 [&>div]:bg-blue-600"
+            />
           </div>
         )}
       </CardContent>

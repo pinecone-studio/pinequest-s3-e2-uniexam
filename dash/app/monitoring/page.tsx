@@ -9,6 +9,7 @@ import { StatCard } from "./_components/StatCard";
 import { MonitoringFilters } from "./_components/MonitoringFilters";
 import { MonitoringHeader } from "./_components/MonitoringHeader";
 import { MonitoringPagination } from "./_components/MonitoringPagination";
+import { MonitoringPageSkeleton } from "./_components/MonitoringPageSkeleton";
 import { StudentCard } from "./_components/StudentCard";
 import { students } from "./_data/students";
 
@@ -17,10 +18,19 @@ type StudentFilter = "all" | "alert";
 const PAGE_SIZE = 8;
 
 export default function MonitoringPage() {
+  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [studentFilter, setStudentFilter] = useState<StudentFilter>("all");
   const [classFilter, setClassFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 900);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   const classOptions = useMemo(() => {
     return Array.from(new Set(students.map((student) => student.className)));
@@ -83,9 +93,13 @@ export default function MonitoringPage() {
     };
   }, [classFilteredStudents]);
 
+  if (isLoading) {
+    return <MonitoringPageSkeleton />;
+  }
+
   return (
-    <div className="min-h-screen bg-slate-50 p-6 ">
-      <div className="mx-auto max-w-7xl space-y-6">
+    <div className="min-h-screen bg-slate-50 p-6">
+      <div className="mx-auto max-w-7xl space-y-4">
         <MonitoringHeader
           classFilter={classFilter}
           classOptions={classOptions}
