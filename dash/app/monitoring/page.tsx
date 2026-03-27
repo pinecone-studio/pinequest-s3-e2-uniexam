@@ -1,22 +1,26 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, CheckCircle2, Monitor, Wifi } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
 
-import { students } from "./_data/students";
-import { MonitoringHeader } from "./_components/MonitoringHeader";
 import { StatCard } from "./_components/StatCard";
 import { MonitoringFilters } from "./_components/MonitoringFilters";
+import { MonitoringHeader } from "./_components/MonitoringHeader";
+import { MonitoringPagination } from "./_components/MonitoringPagination";
 import { StudentCard } from "./_components/StudentCard";
+import { students } from "./_data/students";
 
 type StudentFilter = "all" | "alert";
+
+const PAGE_SIZE = 8;
 
 export default function MonitoringPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [studentFilter, setStudentFilter] = useState<StudentFilter>("all");
   const [classFilter, setClassFilter] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
 
   const classOptions = useMemo(() => {
     return Array.from(new Set(students.map((student) => student.className)));
@@ -37,11 +41,32 @@ export default function MonitoringPage() {
         .includes(searchTerm.toLowerCase());
 
       const matchesStudentFilter =
-        studentFilter === "all" ? true : student.tabSwitches > 0;
+        studentFilter === "all"
+          ? true
+          : student.tabSwitches > 0 || Boolean(student.latestAlert);
 
       return matchesSearch && matchesStudentFilter;
     });
   }, [classFilteredStudents, searchTerm, studentFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(visibleStudents.length / PAGE_SIZE));
+
+  const paginatedStudents = useMemo(() => {
+    const startIndex = (currentPage - 1) * PAGE_SIZE;
+    const endIndex = startIndex + PAGE_SIZE;
+
+    return visibleStudents.slice(startIndex, endIndex);
+  }, [visibleStudents, currentPage]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, studentFilter, classFilter]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
 
   const stats = useMemo(() => {
     return {
@@ -52,13 +77,14 @@ export default function MonitoringPage() {
       submitted: classFilteredStudents.filter(
         (student) => student.status === "submitted",
       ).length,
-      alerts: classFilteredStudents.filter((student) => student.tabSwitches > 0)
-        .length,
+      alerts: classFilteredStudents.filter(
+        (student) => student.tabSwitches > 0 || Boolean(student.latestAlert),
+      ).length,
     };
   }, [classFilteredStudents]);
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6">
+    <div className="min-h-screen bg-slate-50 p-6 ">
       <div className="mx-auto max-w-7xl space-y-6">
         <MonitoringHeader
           classFilter={classFilter}
@@ -92,7 +118,7 @@ export default function MonitoringPage() {
           />
 
           <StatCard
-            title="Таб сольсон анхааруулга"
+            title="Нийт анхааруулга"
             value={stats.alerts}
             icon={AlertTriangle}
             iconWrapperClassName="bg-red-100"
@@ -103,7 +129,12 @@ export default function MonitoringPage() {
         <Card className="rounded-2xl shadow-sm">
           <CardContent className="p-6">
             <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-              <h2 className="text-2xl font-semibold">Сурагчдын явц</h2>
+              <div>
+                <h2 className="text-2xl font-semibold">Сурагчдын явц</h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Нийт {visibleStudents.length} сурагчийн илэрц
+                </p>
+              </div>
 
               <MonitoringFilters
                 searchTerm={searchTerm}
@@ -118,11 +149,19 @@ export default function MonitoringPage() {
                 Илэрц олдсонгүй.
               </div>
             ) : (
-              <div className="grid gap-8 md:grid-cols-2 xl:grid-cols-3">
-                {visibleStudents.map((student) => (
-                  <StudentCard key={student.id} student={student} />
-                ))}
-              </div>
+              <>
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                  {paginatedStudents.map((student) => (
+                    <StudentCard key={student.id} student={student} />
+                  ))}
+                </div>
+
+                <MonitoringPagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                />
+              </>
             )}
           </CardContent>
         </Card>

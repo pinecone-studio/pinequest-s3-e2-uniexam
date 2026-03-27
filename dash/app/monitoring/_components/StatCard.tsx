@@ -18,14 +18,14 @@ export function StatCard({
   iconClassName,
 }: Props) {
   return (
-    <Card className="rounded-2xl shadow-sm flex justify-center h-[70%]">
+    <Card className="rounded-2xl shadow-sm flex justify-center h-[60%]">
       <CardContent className="flex items-center gap-4 p-6">
-        <div className={`rounded-2xl p-4 ${iconWrapperClassName}`}>
-          <Icon className={`h-7 w-7 ${iconClassName}`} />
+        <div className={`rounded-2xl p-3 ${iconWrapperClassName}`}>
+          <Icon className={`h-5 w-5 ${iconClassName}`} />
         </div>
 
         <div>
-          <div className="text-3xl font-bold">{value}</div>
+          <div className="text-xl font-semibold">{value}</div>
           <p className="text-sm text-muted-foreground">{title}</p>
         </div>
       </CardContent>
