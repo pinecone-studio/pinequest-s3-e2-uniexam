@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type KeyboardEvent } from "react";
 import {
   MoreHorizontal,
   TrendingUp,
@@ -8,7 +8,6 @@ import {
   Minus,
   Mail,
   Download,
-  Eye,
   X,
 } from "lucide-react";
 import { Student } from "../type";
@@ -74,6 +73,16 @@ const StudentTable = ({ students }: StudentTableProps) => {
     setDetailsOpen(true);
   };
 
+  const handleRowKeyDown = (
+    event: KeyboardEvent<HTMLTableRowElement>,
+    student: Student,
+  ) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      handleViewDetails(student);
+    }
+  };
+
   const activeTrend = selectedStudent ? trendMeta[selectedStudent.trend] : null;
   const ActiveTrendIcon = activeTrend?.icon;
 
@@ -112,7 +121,11 @@ const StudentTable = ({ students }: StudentTableProps) => {
               return (
                 <tr
                   key={student.id}
-                  className="group transition-colors hover:bg-gray-50/50"
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => handleViewDetails(student)}
+                  onKeyDown={(event) => handleRowKeyDown(event, student)}
+                  className="group cursor-pointer transition-colors hover:bg-gray-50/50 focus:outline-none focus-visible:bg-gray-50/70"
                 >
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
@@ -173,27 +186,18 @@ const StudentTable = ({ students }: StudentTableProps) => {
                           <button
                             type="button"
                             aria-label={`${student.name} үйлдлүүд`}
+                            onClick={(event) => event.stopPropagation()}
                             className="rounded-md p-2 outline-none transition-colors hover:bg-gray-100"
                           >
                             <MoreHorizontal className="h-5 w-5 text-gray-400" />
                           </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-48 p-1">
-                          <DropdownMenuItem
-                            className="cursor-pointer gap-2"
-                            onSelect={(event) => {
-                              event.preventDefault();
-                              handleViewDetails(student);
-                            }}
-                          >
-                            <Eye className="h-4 w-4" />
-                            Дэлгэрэнгүй
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="cursor-pointer gap-2 text-gray-700">
+                          <DropdownMenuItem className="cursor-pointer gap-2 pt-2 text-gray-700">
                             <Mail className="h-4 w-4" />
                             И-мэйл илгээх
                           </DropdownMenuItem>
-                          <DropdownMenuItem className="mt-1 cursor-pointer gap-2 border-t pt-2 text-gray-700">
+                          <DropdownMenuItem className="mt-1 cursor-pointer gap-2 pt-2 text-gray-700">
                             <Download className="h-4 w-4" />
                             Дүн татах
                           </DropdownMenuItem>

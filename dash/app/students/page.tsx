@@ -155,8 +155,8 @@ const Page = () => {
   return (
     <div className="p-6 lg:p-8 bg-gray-50/50 min-h-screen">
       <div className="mb-10">
-        <h1 className="text-2xl font-semibold text-foreground">Оюутнууд</h1>
-        <p className="mt-1 text-muted-foreground">
+        <h1 className="text-xl font-semibold text-foreground">Оюутнууд</h1>
+        <p className="text-[14px] text-muted-foreground">
           Оюутны амжилт болон шалгалтын түүхийг харах
         </p>
       </div>
