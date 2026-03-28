@@ -38,7 +38,7 @@ export default function RootLayout({
       >
         <body className="min-h-full flex">
           {/* <Sidebar /> */}
-          <main>
+          <main className="flex-1">
             <ConditionalLayout sidebar={<Sidebar />}>
               {children}
             </ConditionalLayout>

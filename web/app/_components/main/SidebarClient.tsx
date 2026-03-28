@@ -42,7 +42,7 @@ const SidebarClient = ({ displayName, isSignedIn }: Props) => {
   const router = useRouter();
   return (
     <TooltipProvider delayDuration={100}>
-      <div className="h-screen bg-gray-50 py-4 px-4 flex flex-col justify-between items-center">
+      <div className="h-screen w-16 bg-gray-50 py-4 px-4 flex flex-col justify-between items-center">
         <div className="flex flex-col items-center gap-6 w-full">
           <div
             className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#006d77] text-white text-sm font-semibold hover:cursor-pointer"
