@@ -75,5 +75,6 @@ export const resolvers = {
   },
   Course: relationResolvers.Course,
   Exam: relationResolvers.Exam,
+  Question: relationResolvers.Question,
   Submission: relationResolvers.Submission,
 };

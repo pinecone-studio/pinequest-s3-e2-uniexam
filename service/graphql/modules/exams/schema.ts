@@ -8,6 +8,7 @@ export const examTypeDefs = `#graphql
     end_time: String
     duration: Int
     questions: [Question]
+    course: Course
   }
 
   extend type Query {
@@ -16,10 +17,23 @@ export const examTypeDefs = `#graphql
   }
 
   input CreateQuestionInput {
-  text: String!
-  type: String!
-  order_index: Int!
-}
+    text: String!
+    type: String!
+    order_index: Int!
+  }
+
+  enum QuestionDifficulty {
+    easy
+    medium
+    hard
+  }
+
+  input ManualExamQuestionInput {
+    content: String!
+    difficulty: QuestionDifficulty!
+    options: [String!]!
+    correctOptionIndex: Int!
+  }
 
   extend type Mutation {
     createExam(
@@ -38,6 +52,15 @@ export const examTypeDefs = `#graphql
       end_time: String!
       duration: Int!
       questions: [CreateQuestionInput!]!
+    ): Exam
+    saveExamManual(
+      course_id: String!
+      title: String!
+      description: String
+      start_time: String!
+      end_time: String!
+      duration: Int!
+      questions: [ManualExamQuestionInput!]!
     ): Exam
     updateExam(
       id: String!

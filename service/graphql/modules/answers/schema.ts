@@ -4,6 +4,7 @@ export const answerTypeDefs = `#graphql
     question_id: String
     text: String
     is_correct: Boolean
+    order_index: Int
   }
 
   extend type Query {

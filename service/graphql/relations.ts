@@ -14,12 +14,34 @@ export const relationResolvers = {
   },
 
   Exam: {
+    course: async (parent: { course_id: string }) => {
+      const { data, error } = await supabase
+        .from("courses")
+        .select("*")
+        .eq("id", parent.course_id)
+        .maybeSingle();
+
+      if (error) throw new Error(error.message);
+      return data;
+    },
     questions: async (parent: { id: string }) => {
       const { data, error } = await supabase
         .from("questions")
         .select("*")
         .eq("exam_id", parent.id)
         .order("order_index", { ascending: true });
+
+      if (error) throw new Error(error.message);
+      return data;
+    },
+  },
+
+  Question: {
+    answers: async (parent: { id: string }) => {
+      const { data, error } = await supabase
+        .from("answers")
+        .select("*")
+        .eq("question_id", parent.id);
 
       if (error) throw new Error(error.message);
       return data;
