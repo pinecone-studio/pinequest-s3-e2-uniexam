@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useUser } from "@clerk/nextjs";
 import Link from "next/link";
 import { Calendar, Clock, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { graphqlRequest } from "@/lib/graphql";
 
 type CourseExamResponse = {
@@ -22,6 +24,19 @@ type CourseExamResponse = {
   }[];
 };
 
+type SignedInUpcomingExamsResponse = {
+  studentByEmail: {
+    id: string;
+  } | null;
+  submissions: {
+    id: string;
+    student_id: string;
+    exam_id: string;
+    status: "in_progress" | "submitted" | "reviewed" | null;
+  }[];
+  courses: CourseExamResponse["courses"];
+};
+
 type UpcomingExamCard = {
   id: string;
   subject: string;
@@ -31,7 +46,34 @@ type UpcomingExamCard = {
 };
 
 const UPCOMING_EXAMS_QUERY = `
-  query UpcomingExams {
+  query UpcomingExams($email: String!) {
+    studentByEmail(email: $email) {
+      id
+    }
+    submissions {
+      id
+      student_id
+      exam_id
+      status
+    }
+    courses {
+      id
+      name
+      code
+      exams {
+        id
+        title
+        start_time
+        end_time
+        duration
+        type
+      }
+    }
+  }
+`;
+
+const UPCOMING_EXAMS_COURSES_ONLY_QUERY = `
+  query UpcomingExamsCoursesOnly {
     courses {
       id
       name
@@ -62,37 +104,85 @@ const formatExamTime = (value: string) =>
     hour12: false,
   }).format(new Date(value));
 
+const buildUpcomingExamCards = (courses: CourseExamResponse["courses"]) =>
+  courses
+    .flatMap((course) =>
+      (course.exams ?? []).map((exam) => ({
+        id: exam.id,
+        subject: course.name || course.code,
+        title: exam.title,
+        date: formatExamDate(exam.start_time),
+        time: formatExamTime(exam.start_time),
+        startsAt: exam.start_time,
+      })),
+    )
+    .sort(
+      (left, right) =>
+        new Date(left.startsAt).getTime() - new Date(right.startsAt).getTime(),
+    );
+
 export default function UpcomingExams() {
   const [exams, setExams] = useState<UpcomingExamCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { user, isLoaded } = useUser();
 
   useEffect(() => {
     let cancelled = false;
 
+    if (!isLoaded) {
+      return;
+    }
+
     const loadExams = async () => {
       try {
-        const data =
-          await graphqlRequest<CourseExamResponse>(UPCOMING_EXAMS_QUERY);
+        setLoading(true);
+        setError(null);
+
+        const studentEmail = user?.primaryEmailAddress?.emailAddress;
+
+        if (!studentEmail) {
+          const data = await graphqlRequest<CourseExamResponse>(
+            UPCOMING_EXAMS_COURSES_ONLY_QUERY,
+          );
+
+          if (cancelled) return;
+
+          const nextExams = buildUpcomingExamCards(data.courses).map((exam) => ({
+            id: exam.id,
+            subject: exam.subject,
+            title: exam.title,
+            date: exam.date,
+            time: exam.time,
+          }));
+
+          setExams(nextExams);
+          return;
+        }
+
+        const data = await graphqlRequest<SignedInUpcomingExamsResponse>(
+          UPCOMING_EXAMS_QUERY,
+          {
+            email: studentEmail,
+          },
+        );
 
         if (cancelled) return;
 
-        const nextExams = data.courses
-          .flatMap((course) =>
-            (course.exams ?? []).map((exam) => ({
-              id: exam.id,
-              subject: course.name || course.code,
-              title: exam.title,
-              date: formatExamDate(exam.start_time),
-              time: formatExamTime(exam.start_time),
-              startsAt: exam.start_time,
-            })),
-          )
-          .sort(
-            (left, right) =>
-              new Date(left.startsAt).getTime() -
-              new Date(right.startsAt).getTime(),
-          )
+        const studentId = data.studentByEmail?.id;
+        const completedExamIds = new Set(
+          data.submissions
+            .filter(
+              (submission) =>
+                submission.student_id === studentId &&
+                (submission.status === "submitted" ||
+                  submission.status === "reviewed"),
+            )
+            .map((submission) => submission.exam_id),
+        );
+
+        const nextExams = buildUpcomingExamCards(data.courses)
+          .filter((exam) => !completedExamIds.has(exam.id))
           .map((exam) => ({
             id: exam.id,
             subject: exam.subject,
@@ -121,7 +211,7 @@ export default function UpcomingExams() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [isLoaded, user?.primaryEmailAddress?.emailAddress]);
 
   return (
     <div>
@@ -131,8 +221,30 @@ export default function UpcomingExams() {
       </h2>
 
       {loading ? (
-        <div className="rounded-2xl border border-gray-200 bg-gray-50 px-5 py-4 text-sm text-gray-500">
-          Шалгалтуудыг ачаалж байна...
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          {Array.from({ length: 4 }, (_, index) => (
+            <div
+              key={`upcoming-skeleton-${index + 1}`}
+              className="h-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3"
+            >
+              <div className="flex h-full min-h-30 w-full flex-col justify-between gap-4">
+                <div className="space-y-2">
+                  <Skeleton className="h-3 w-24 bg-slate-200" />
+                  <Skeleton className="h-5 w-4/5 bg-slate-200" />
+                  <Skeleton className="h-5 w-3/5 bg-slate-200" />
+                </div>
+
+                <div className="flex w-full items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <Skeleton className="h-4 w-20 bg-slate-200" />
+                    <Skeleton className="h-4 w-16 bg-slate-200" />
+                  </div>
+
+                  <Skeleton className="h-9 w-28 rounded-md bg-slate-200" />
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       ) : null}
 
@@ -148,46 +260,48 @@ export default function UpcomingExams() {
         </div>
       ) : null}
 
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-        {exams.map((exam) => (
-          <div
-            key={exam.id}
-            className="h-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3"
-          >
-            <div className="flex h-full min-h-30 w-full flex-col justify-between gap-4">
-              <div>
-                <p className="text-[11px] font-medium text-[#006d77]">
-                  {exam.subject}
-                </p>
+      {!loading ? (
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          {exams.map((exam) => (
+            <div
+              key={exam.id}
+              className="h-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3"
+            >
+              <div className="flex h-full min-h-30 w-full flex-col justify-between gap-4">
+                <div>
+                  <p className="text-[11px] font-medium text-[#006d77]">
+                    {exam.subject}
+                  </p>
 
-                <h3 className="text-[18px] font-semibold text-gray-900">
-                  {exam.title}
-                </h3>
-              </div>
-
-              <div className="flex w-full items-center justify-between gap-4">
-                <div className="flex items-center gap-3 text-gray-500 text-xs">
-                  <div className="flex items-center gap-1">
-                    <Calendar className="w-3 h-3" />
-                    <span>{exam.date}</span>
-                  </div>
-
-                  <div className="flex items-center gap-1">
-                    <Clock className="w-3 h-3" />
-                    <span>{exam.time}</span>
-                  </div>
+                  <h3 className="text-[18px] font-semibold text-gray-900">
+                    {exam.title}
+                  </h3>
                 </div>
 
-                <Link href={`/exam?examId=${exam.id}`}>
-                  <Button className="hover:cursor-pointer flex items-center gap-2 bg-[#006d77]">
-                    Шалгалт өгөх <ChevronRight className="w-3 h-3" />
-                  </Button>
-                </Link>
+                <div className="flex w-full items-center justify-between gap-4">
+                  <div className="flex items-center gap-3 text-gray-500 text-xs">
+                    <div className="flex items-center gap-1">
+                      <Calendar className="w-3 h-3" />
+                      <span>{exam.date}</span>
+                    </div>
+
+                    <div className="flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      <span>{exam.time}</span>
+                    </div>
+                  </div>
+
+                  <Link href={`/exam?examId=${exam.id}`}>
+                    <Button className="hover:cursor-pointer flex items-center gap-2 bg-[#006d77]">
+                      Шалгалт өгөх <ChevronRight className="w-3 h-3" />
+                    </Button>
+                  </Link>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }
