@@ -4,6 +4,7 @@ import {
   StatCards,
   StudyProgressChart,
 } from "./_components";
+import MyCourses from "./_components/MyCourses";
 
 const DashboardPage = () => {
   return (
@@ -14,6 +15,7 @@ const DashboardPage = () => {
         <StudyProgressChart className="min-w-0 lg:basis-0 lg:flex-[1.7]" />
         <ExamCalendar className="min-w-0 lg:basis-0 lg:flex-1" />
       </div>
+      <MyCourses />
     </div>
   );
 };
