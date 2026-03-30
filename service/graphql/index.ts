@@ -34,6 +34,9 @@ import { enrollmentTypeDefs } from "./modules/enrollments/schema";
 import { enrollmentQueries } from "./modules/enrollments/queries";
 import { enrollmentMutations } from "./modules/enrollments/mutations";
 import { relationResolvers } from "./relations";
+import { examQuestionTypeDefs } from "./modules/exam-questions/schema";
+import { examQuestionQueries } from "./modules/exam-questions/queries";
+import { examQuestionMutations } from "./modules/exam-questions/mutations";
 
 export const typeDefs = `#graphql
   type Query { _: Boolean }
@@ -48,6 +51,7 @@ export const typeDefs = `#graphql
   ${answerTypeDefs}
   ${submissionAnswerTypeDefs}
   ${enrollmentTypeDefs}
+  ${examQuestionTypeDefs}
 `;
 
 export const resolvers = {
@@ -61,6 +65,7 @@ export const resolvers = {
     ...answerQueries,
     ...submissionAnswerQueries,
     ...enrollmentQueries,
+    ...examQuestionQueries,
   },
   Mutation: {
     ...teacherMutations,
@@ -72,6 +77,7 @@ export const resolvers = {
     ...answerMutations,
     ...submissionAnswerMutations,
     ...enrollmentMutations,
+    ...examQuestionMutations,
   },
   Course: relationResolvers.Course,
   Exam: relationResolvers.Exam,

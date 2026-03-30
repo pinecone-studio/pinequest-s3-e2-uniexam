@@ -1,11 +1,10 @@
 export const questionTypeDefs = `#graphql
   type Question {
     id: String
-    exam_id: String
     text: String
     type: String
-    order_index: Int
     difficulty: String
+    category: String
     answers: [Answer]
   }
 
@@ -15,22 +14,21 @@ export const questionTypeDefs = `#graphql
   }
 
   extend type Mutation {
-    createQuestion(exam_id: String!, text: String!, type: String!, order_index: Int!): Question
-    updateQuestion(id: String!, exam_id: String, text: String, type: String, order_index: Int, difficulty: String): Question
-    addManualQuestionToExam(
-      exam_id: String!
-      content: String!
-      difficulty: QuestionDifficulty!
-      options: [String!]!
-      correctOptionIndex: Int!
+    createQuestion(
+      text: String!
+      type: String!
+      difficulty: String
+      category: String
     ): Question
-    updateManualQuestion(
+
+    updateQuestion(
       id: String!
-      content: String!
-      difficulty: QuestionDifficulty!
-      options: [String!]!
-      correctOptionIndex: Int!
+      text: String
+      type: String
+      difficulty: String
+      category: String
     ): Question
+
     deleteQuestion(id: String!): Boolean
   }
 `;

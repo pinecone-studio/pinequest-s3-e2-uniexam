@@ -9,6 +9,7 @@ export const examTypeDefs = `#graphql
     duration: Int
     questions: [Question]
     course: Course
+    type: String
   }
 
   extend type Query {
@@ -20,6 +21,7 @@ export const examTypeDefs = `#graphql
     text: String!
     type: String!
     order_index: Int!
+  
   }
 
   enum QuestionDifficulty {
@@ -43,6 +45,7 @@ export const examTypeDefs = `#graphql
       start_time: String!
       end_time: String!
       duration: Int!
+      type: String!
     ): Exam
     createExamWithQuestions(
       course_id: String!
@@ -51,6 +54,7 @@ export const examTypeDefs = `#graphql
       start_time: String!
       end_time: String!
       duration: Int!
+      type: String!
       questions: [CreateQuestionInput!]!
     ): Exam
     saveExamManual(
@@ -60,6 +64,7 @@ export const examTypeDefs = `#graphql
       start_time: String!
       end_time: String!
       duration: Int!
+      type: String!
       questions: [ManualExamQuestionInput!]!
     ): Exam
     updateExam(
@@ -70,6 +75,7 @@ export const examTypeDefs = `#graphql
       start_time: String
       end_time: String
       duration: Int
+      type: String!
     ): Exam
     deleteExam(id: String!): Boolean
   }

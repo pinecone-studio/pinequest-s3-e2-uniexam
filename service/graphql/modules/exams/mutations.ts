@@ -30,6 +30,7 @@ type CreateExamArgs = {
   start_time: string;
   end_time: string;
   duration: number;
+  type?: string;
 };
 
 export const examMutations = {
@@ -51,6 +52,7 @@ export const examMutations = {
       start_time: string;
       end_time: string;
       duration: number;
+      type?: string;
       questions: Array<{ text: string; type: string; order_index: number }>;
     },
   ) => {
@@ -87,6 +89,7 @@ export const examMutations = {
       start_time: string;
       end_time: string;
       duration: number;
+      type?: string;
       questions: ManualQuestionArgs[];
     },
   ) => {
@@ -131,6 +134,7 @@ export const examMutations = {
       start_time: examFields.start_time,
       end_time: examFields.end_time,
       duration: examFields.duration,
+      type: examFields.type,
     };
 
     const { data: exam, error: examError } = await supabase
@@ -151,7 +155,9 @@ export const examMutations = {
         difficulty: q.difficulty,
       }));
 
-      let insertedQuestions: { id: string; order_index: number | null }[] | null;
+      let insertedQuestions:
+        | { id: string; order_index: number | null }[]
+        | null;
       {
         const first = await supabase
           .from("questions")
@@ -177,7 +183,10 @@ export const examMutations = {
           insertedQuestions = first.data;
         }
       }
-      if (!insertedQuestions?.length || insertedQuestions.length !== questions.length) {
+      if (
+        !insertedQuestions?.length ||
+        insertedQuestions.length !== questions.length
+      ) {
         throw new Error("Failed to insert all questions.");
       }
 
@@ -223,6 +232,7 @@ export const examMutations = {
       start_time?: string;
       end_time?: string;
       duration?: number;
+      type: string;
     },
   ) => {
     const payload = pickDefined({
@@ -232,6 +242,7 @@ export const examMutations = {
       start_time: args.start_time,
       end_time: args.end_time,
       duration: args.duration,
+      type: args.type,
     });
 
     const { data, error } = await supabase

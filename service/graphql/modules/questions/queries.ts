@@ -6,12 +6,14 @@ export const questionQueries = {
     if (error) throw new Error(error.message);
     return data;
   },
+
   question: async (_: unknown, args: { id: string }) => {
     const { data, error } = await supabase
       .from("questions")
       .select("*")
       .eq("id", args.id)
       .single();
+
     if (error) throw new Error(error.message);
     return data;
   },
