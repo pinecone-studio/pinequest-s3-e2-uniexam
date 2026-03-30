@@ -49,14 +49,20 @@ const SidebarClient = ({ displayName, isSignedIn }: Props) => {
       <Link
         key={href}
         href={href}
-        className={`flex h-12 w-12 items-center justify-center rounded-2xl transition-all duration-300 group-hover:w-full group-hover:justify-start group-hover:gap-4 group-hover:px-4 group-hover:py-3 ${
+        className={`flex h-12 w-full items-center rounded-2xl px-1 transition-colors duration-200 ${
           isActive
-            ? "bg-[#e6f4f1] text-[#006d77] group-hover:font-semibold"
+            ? "bg-[#e6f4f1] text-[#006d77]"
             : "text-[#0c464c] hover:bg-gray-100"
         }`}
       >
-        <Icon size={22} className="shrink-0" />
-        <span className="max-w-0 overflow-hidden whitespace-nowrap text-sm opacity-0 transition-all duration-200 group-hover:max-w-40 group-hover:opacity-100">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center">
+          <Icon size={22} className="shrink-0" />
+        </span>
+        <span
+          className={`ml-3 max-w-0 overflow-hidden whitespace-nowrap text-sm opacity-0 transition-all duration-200 group-hover:max-w-40 group-hover:opacity-100 ${
+            isActive ? "font-semibold" : ""
+          }`}
+        >
           {label}
         </span>
       </Link>
@@ -68,36 +74,42 @@ const SidebarClient = ({ displayName, isSignedIn }: Props) => {
       <div className="flex w-full flex-col justify-between">
         <div className="flex flex-col gap-8">
           <div
-            className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#006d77] text-base font-semibold text-white transition-all duration-300 hover:cursor-pointer hover:scale-[1.02] group-hover:w-full group-hover:justify-start group-hover:px-4 group-hover:py-3"
+            className="flex h-12 items-center"
             onClick={() => router.push("/")}
           >
-            <span className="shrink-0">U</span>
-            <span className="ml-0 max-w-0 overflow-hidden whitespace-nowrap opacity-0 transition-all duration-200 group-hover:ml-3 group-hover:max-w-40 group-hover:opacity-100">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#006d77] text-base font-semibold text-white transition-transform duration-200 hover:cursor-pointer hover:scale-[1.02]">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center">
+                U
+              </span>
+            </div>
+            <span className="ml-3 max-w-0 overflow-hidden whitespace-nowrap text-base font-semibold text-[#0c464c] opacity-0 transition-all duration-200 group-hover:max-w-40 group-hover:opacity-100">
               UniExam
             </span>
           </div>
 
-          <nav className="flex flex-col items-center gap-2 group-hover:items-stretch">
+          <nav className="flex flex-col gap-2">
             {items.map(({ icon: Icon, label, href }) =>
               renderNavItem({ Icon, label, href }),
             )}
           </nav>
         </div>
 
-        <div className="flex flex-col items-center gap-3 group-hover:items-stretch">
+        <div className="flex flex-col gap-3">
           {isSignedIn ? (
-            <div className="flex h-12 w-full items-center justify-center gap-3 rounded-2xl border border-gray-200 px-3 group-hover:justify-start group-hover:px-4">
+            <div className="flex h-12 w-full items-center rounded-2xl border border-gray-200 px-1">
               <ClerkLoading>
-                <div className="h-10 w-10 animate-pulse rounded-full border border-gray-100 bg-gray-200" />
+                <div className="ml-0.5 h-10 w-10 animate-pulse rounded-full border border-gray-100 bg-gray-200" />
               </ClerkLoading>
               <ClerkLoaded>
-                <UserButton
-                  appearance={{
-                    elements: { userButtonAvatarBox: "w-10 h-10" },
-                  }}
-                />
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center">
+                  <UserButton
+                    appearance={{
+                      elements: { userButtonAvatarBox: "w-10 h-10" },
+                    }}
+                  />
+                </div>
               </ClerkLoaded>
-              <div className="min-w-0 max-w-0 overflow-hidden opacity-0 transition-all duration-200 group-hover:max-w-40 group-hover:opacity-100">
+              <div className="ml-3 min-w-0 max-w-0 overflow-hidden opacity-0 transition-all duration-200 group-hover:max-w-40 group-hover:opacity-100">
                 <p className="truncate text-sm font-medium text-gray-900">
                   {displayName}
                 </p>
@@ -109,18 +121,22 @@ const SidebarClient = ({ displayName, isSignedIn }: Props) => {
               <SignInButton>
                 <Button
                   variant="outline"
-                  className="h-12 w-12 rounded-2xl border-gray-200 px-0 transition-all duration-300 group-hover:w-full group-hover:justify-start group-hover:gap-3 group-hover:px-4"
+                  className="h-12 w-full justify-start rounded-2xl border-gray-200 px-1"
                 >
-                  <LogIn size={20} />
-                  <span className="max-w-0 overflow-hidden whitespace-nowrap opacity-0 transition-all duration-200 group-hover:max-w-30 group-hover:opacity-100">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center">
+                    <LogIn size={20} />
+                  </span>
+                  <span className="ml-3 max-w-0 overflow-hidden whitespace-nowrap opacity-0 transition-all duration-200 group-hover:max-w-30 group-hover:opacity-100">
                     Нэвтрэх
                   </span>
                 </Button>
               </SignInButton>
               <SignUpButton>
-                <Button className="h-12 w-12 rounded-2xl bg-[#006d77] px-0 transition-all duration-300 group-hover:w-full group-hover:justify-start group-hover:gap-3 group-hover:px-4">
-                  <LogOut size={20} />
-                  <span className="max-w-0 overflow-hidden whitespace-nowrap opacity-0 transition-all duration-200 group-hover:max-w-30 group-hover:opacity-100">
+                <Button className="h-12 w-full justify-start rounded-2xl bg-[#006d77] px-1">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center">
+                    <LogOut size={20} />
+                  </span>
+                  <span className="ml-3 max-w-0 overflow-hidden whitespace-nowrap opacity-0 transition-all duration-200 group-hover:max-w-30 group-hover:opacity-100">
                     Бүртгүүлэх
                   </span>
                 </Button>
