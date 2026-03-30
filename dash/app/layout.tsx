@@ -10,7 +10,8 @@ import {
 } from "@clerk/nextjs";
 // import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/sonner";
-import Sidebar from "./_components/Sidebar";
+import { Sidebar } from "./_components/Sidebar";
+import { Topbar } from "./_components/Topbar";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -33,11 +34,12 @@ export default function RootLayout({
         lang="en"
         className={`${inter.className} h-full antialiased`}
       >
-        <body className="min-h-full bg-slate-50">
-          <div className="flex min-h-screen">
+        <body className="flex min-h-screen bg-[#f0f4f8]">
+          <div className="flex flex-1">
             <Sidebar />
-            <main className="min-w-0 flex-1">
-            {/* <header className="flex justify-end items-center p-4 gap-4 h-16 bg-blue-50">
+            <main className="flex flex-col flex-1 ml-[220px]">
+              <Topbar />
+              {/* <header className="flex justify-end items-center p-4 gap-4 h-16 bg-blue-50">
               <Show when="signed-out">
                 <SignInButton />
                 <SignUpButton>
