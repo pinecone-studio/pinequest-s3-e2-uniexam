@@ -8,7 +8,6 @@ import {
   Minus,
   Mail,
   Download,
-  X,
 } from "lucide-react";
 import { Student } from "../type";
 import {
@@ -19,7 +18,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogDescription,
   DialogTitle,
@@ -30,326 +28,212 @@ interface StudentTableProps {
 }
 
 const trendMeta = {
-  up: {
-    icon: TrendingUp,
-    label: "Өссөн",
-    className: "text-green-600",
-  },
-  down: {
-    icon: TrendingDown,
-    label: "Буурсан",
-    className: "text-red-500",
-  },
-  stable: {
-    icon: Minus,
-    label: "Тогтвортой",
-    className: "text-gray-500",
-  },
-} satisfies Record<
-  Student["trend"],
-  {
-    icon: typeof TrendingUp;
-    label: string;
-    className: string;
-  }
->;
+  up: { icon: TrendingUp, className: "text-green-600" },
+  down: { icon: TrendingDown, className: "text-red-500" },
+  stable: { icon: Minus, className: "text-gray-500" },
+};
 
 const getInitials = (name: string) =>
   name
     .split(" ")
-    .map((part) => part[0])
+    .map((p) => p[0])
     .join("")
     .toUpperCase();
 
-const getExamScoreClass = (score: number, maxScore: number) =>
-  score / maxScore >= 0.9 ? "text-green-600" : "text-blue-600";
-
 const StudentTable = ({ students }: StudentTableProps) => {
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
-  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [open, setOpen] = useState(false);
 
-  const handleViewDetails = (student: Student) => {
+  const handleView = (student: Student) => {
     setSelectedStudent(student);
-    setDetailsOpen(true);
+    setOpen(true);
   };
 
-  const handleRowKeyDown = (
-    event: KeyboardEvent<HTMLTableRowElement>,
-    student: Student,
+  const handleKey = (
+    e: KeyboardEvent<HTMLTableRowElement>,
+    student: Student
   ) => {
-    if (event.key === "Enter" || event.key === " ") {
-      event.preventDefault();
-      handleViewDetails(student);
-    }
+    if (e.key === "Enter") handleView(student);
   };
-
-  const activeTrend = selectedStudent ? trendMeta[selectedStudent.trend] : null;
-  const ActiveTrendIcon = activeTrend?.icon;
 
   return (
     <>
-      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
-        <table className="w-full border-collapse text-left">
+      <div className="rounded-2xl border bg-white overflow-hidden">
+        <table className="w-full text-left">
           <thead>
-            <tr className="border-b border-gray-100 bg-white">
-              <th className="px-6 py-4 text-sm font-semibold text-gray-900">
-                Оюутан
-              </th>
-              <th className="px-6 py-4 text-sm font-semibold text-gray-900">
-                Курс
-              </th>
-              <th className="px-6 py-4 text-sm font-semibold text-gray-900">
-                Дундаж оноо
-              </th>
-              <th className="px-6 py-4 text-sm font-semibold text-gray-900">
-                Өгсөн шалгалт
-              </th>
-              <th className="px-4 py-4 text-center text-sm font-semibold text-gray-900">
-                Ахиц
-              </th>
-              <th className="px-6 py-4 text-sm font-semibold text-gray-900">
-                Сүүлд
-              </th>
-              <th className="px-6 py-4"></th>
+            <tr className="border-b bg-white">
+              <th className="px-6 py-4 text-sm font-semibold">Оюутан</th>
+              <th className="px-6 py-4 text-sm font-semibold">Курс</th>
+              <th className="px-6 py-4 text-sm font-semibold">Дундаж</th>
+              <th className="px-6 py-4 text-sm font-semibold">Шалгалт</th>
+              <th className="px-6 py-4 text-sm font-semibold">Ахиц</th>
+              <th className="px-6 py-4 text-sm font-semibold">Сүүлд</th>
+              <th></th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-50">
-            {students.map((student) => {
-              const rowTrend = trendMeta[student.trend];
-              const RowTrendIcon = rowTrend.icon;
+
+          <tbody>
+            {students.map((s) => {
+              const TrendIcon = trendMeta[s.trend].icon;
+
+              /* 🔥 CONDITION */
+              const isMissing = s.examsTaken === 0;
+              const isLow = s.averageScore < 70 && !isMissing;
 
               return (
                 <tr
-                  key={student.id}
-                  role="button"
+                  key={s.id}
+                  onClick={() => handleView(s)}
+                  onKeyDown={(e) => handleKey(e, s)}
                   tabIndex={0}
-                  onClick={() => handleViewDetails(student)}
-                  onKeyDown={(event) => handleRowKeyDown(event, student)}
-                  className="group cursor-pointer transition-colors hover:bg-gray-50/50 focus:outline-none focus-visible:bg-gray-50/70"
+                  className={`cursor-pointer transition
+                    ${
+                      isMissing
+                        ? "bg-red-50 hover:bg-red-100"
+                        : isLow
+                        ? "bg-yellow-50 hover:bg-yellow-100"
+                        : "hover:bg-gray-50"
+                    }`}
                 >
+                  {/* NAME */}
                   <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 text-sm font-semibold text-blue-600">
-                        {getInitials(student.name)}
+                    <div className="flex gap-3 items-center">
+                      <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center text-sm font-bold">
+                        {getInitials(s.name)}
                       </div>
                       <div>
-                        <div className="text-sm font-semibold text-gray-900">
-                          {student.name}
-                        </div>
+                        <div className="font-semibold">{s.name}</div>
                         <div className="text-xs text-gray-500">
-                          {student.email}
+                          {s.email}
                         </div>
                       </div>
                     </div>
                   </td>
+
+                  {/* COURSE */}
+                  <td className="px-6 py-4">{s.course}</td>
+
+                  {/* SCORE */}
                   <td className="px-6 py-4">
-                    <span className="rounded-md border border-gray-200 bg-gray-50 px-2.5 py-1 text-xs font-medium text-gray-600">
-                      {student.course}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
                       <span
-                        className={`text-sm font-bold ${
-                          student.averageScore > 90
-                            ? "text-green-600"
-                            : "text-blue-600"
-                        }`}
+                        className={`font-bold
+                          ${
+                            isMissing
+                              ? "text-red-500"
+                              : isLow
+                              ? "text-yellow-600"
+                              : s.averageScore > 80
+                              ? "text-green-600"
+                              : "text-blue-600"
+                          }`}
                       >
-                        {student.averageScore}%
+                        {isMissing ? "—" : `${s.averageScore}%`}
                       </span>
-                      <div className="h-2 w-24 flex-1 overflow-hidden rounded-full bg-gray-100">
-                        <div
-                          className="h-full rounded-full bg-blue-500"
-                          style={{ width: `${student.averageScore}%` }}
-                        />
-                      </div>
+
+                      {!isMissing && (
+                        <div className="w-24 h-2 bg-gray-100 rounded-full">
+                          <div
+                            className={`h-full rounded-full
+                              ${
+                                isLow
+                                  ? "bg-yellow-500"
+                                  : "bg-blue-500"
+                              }`}
+                            style={{ width: `${s.averageScore}%` }}
+                          />
+                        </div>
+                      )}
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-700">
-                    {student.examsTaken} шалгалт
+
+                  {/* EXAMS */}
+                  <td className="px-6 py-4 text-sm">
+                    {isMissing ? (
+                      <span className="text-red-500 font-medium">
+                        Шалгалт өгөөгүй
+                      </span>
+                    ) : isLow ? (
+                      <span className="text-yellow-600 font-medium">
+                        ⚠ Тэнцээгүй
+                      </span>
+                    ) : (
+                      `${s.examsTaken} шалгалт`
+                    )}
                   </td>
-                  <td className="px-4 py-7">
-                    <div className="flex justify-center">
-                      <RowTrendIcon
-                        className={`h-4 w-4 ${rowTrend.className}`}
-                      />
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-500">
-                    {student.lastActive}
-                  </td>
+
+                  {/* TREND */}
                   <td className="px-6 py-4">
-                    <div className="flex justify-end">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <button
-                            type="button"
-                            aria-label={`${student.name} үйлдлүүд`}
-                            onClick={(event) => event.stopPropagation()}
-                            className="rounded-md p-2 outline-none transition-colors hover:bg-gray-100"
-                          >
-                            <MoreHorizontal className="h-5 w-5 text-gray-400" />
-                          </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-48 p-1">
-                          <DropdownMenuItem className="cursor-pointer gap-2 pt-2 text-gray-700">
-                            <Mail className="h-4 w-4" />
-                            И-мэйл илгээх
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="mt-1 cursor-pointer gap-2 pt-2 text-gray-700">
-                            <Download className="h-4 w-4" />
-                            Дүн татах
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
+                    <TrendIcon className={trendMeta[s.trend].className} />
+                  </td>
+
+                  {/* LAST */}
+                  <td className="px-6 py-4 text-gray-500">
+                    {s.lastActive}
+                  </td>
+
+                  {/* ACTION */}
+                  <td className="px-6 py-4 text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button
+                          onClick={(e) => e.stopPropagation()}
+                          className="p-2 hover:bg-gray-100 rounded"
+                        >
+                          <MoreHorizontal className="w-5 h-5" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem>
+                          <Mail className="w-4 h-4 mr-2" />
+                          И-мэйл
+                        </DropdownMenuItem>
+                        <DropdownMenuItem>
+                          <Download className="w-4 h-4 mr-2" />
+                          Татах
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </td>
                 </tr>
               );
             })}
           </tbody>
         </table>
+
         {students.length === 0 && (
-          <div className="p-10 text-center text-sm text-gray-500">
-            Илэрц олдсонгүй.
+          <div className="p-6 text-center text-gray-500">
+            Илэрц олдсонгүй
           </div>
         )}
       </div>
 
-      <Dialog
-        open={detailsOpen}
-        onOpenChange={(open) => {
-          setDetailsOpen(open);
-          if (!open) {
-            setSelectedStudent(null);
-          }
-        }}
-      >
-        <DialogContent
-          showCloseButton={false}
-          className="gap-0 overflow-hidden border border-gray-200 bg-white p-0 ring-0 shadow-[0_24px_90px_rgba(15,23,42,0.2)] sm:max-w-[560px] sm:rounded-[22px]"
-        >
+      {/* MODAL */}
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
           {selectedStudent && (
-            <div className="relative p-4 sm:p-5">
-              <DialogClose asChild>
-                <button
-                  type="button"
-                  aria-label="Дэлгэрэнгүйг хаах"
-                  className="absolute right-4 top-4 flex h-6 w-6 items-center justify-center rounded-md border-2 border-sky-500 bg-white text-sky-500 shadow-sm transition-colors hover:bg-sky-50"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              </DialogClose>
+            <>
+              <DialogTitle>{selectedStudent.name}</DialogTitle>
+              <DialogDescription>
+                {selectedStudent.email}
+              </DialogDescription>
 
-              <div className="mb-5 flex items-start justify-between pr-8">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-sky-100 text-[1.2rem] font-semibold text-blue-600">
-                    {getInitials(selectedStudent.name)}
+              <div className="mt-4">
+                {selectedStudent.examsTaken === 0 ? (
+                  <div className="text-red-500">
+                    ⚠ Шалгалт өгөөгүй
                   </div>
+                ) : selectedStudent.averageScore < 60 ? (
+                  <div className="text-yellow-600">
+                    ⚠ Тэнцээгүй
+                  </div>
+                ) : (
                   <div>
-                    <DialogTitle className="text-[1.3rem] font-bold tracking-tight text-gray-900">
-                      {selectedStudent.name}
-                    </DialogTitle>
-                    <DialogDescription className="mt-0.5 text-sm text-gray-500">
-                      {selectedStudent.email}
-                    </DialogDescription>
+                    Дундаж: {selectedStudent.averageScore}%
                   </div>
-                </div>
+                )}
               </div>
-
-              <div className="mb-5 grid grid-cols-3 gap-2.5">
-                <div className="flex min-h-[100px] flex-col items-center justify-center rounded-[16px] border border-gray-200 bg-white p-3 text-center shadow-[0_3px_12px_rgba(15,23,42,0.08)]">
-                  <div className="mb-1 text-[1.45rem] font-bold text-gray-900">
-                    {selectedStudent.averageScore}%
-                  </div>
-                  <div className="text-xs text-gray-500">Дундаж оноо</div>
-                </div>
-                <div className="flex min-h-[100px] flex-col items-center justify-center rounded-[16px] border border-gray-200 bg-white p-3 text-center shadow-[0_3px_12px_rgba(15,23,42,0.08)]">
-                  <div className="mb-1 text-[1.45rem] font-bold text-gray-900">
-                    {selectedStudent.examsTaken}
-                  </div>
-                  <div className="text-xs text-gray-500">Шалгалтын тоо</div>
-                </div>
-                <div className="flex min-h-[100px] flex-col items-center justify-center rounded-[16px] border border-gray-200 bg-white p-3 text-center shadow-[0_3px_12px_rgba(15,23,42,0.08)]">
-                  {ActiveTrendIcon && activeTrend && (
-                    <div
-                      className={`mb-1 flex items-center gap-1 text-base font-medium ${activeTrend.className}`}
-                    >
-                      <ActiveTrendIcon className="h-3.5 w-3.5" />
-                      {activeTrend.label}
-                    </div>
-                  )}
-                  <div className="max-w-[6rem] text-center text-xs leading-4 text-gray-500">
-                    Гүйцэтгэлийн
-                    <br />
-                    чиг хандлага
-                  </div>
-                </div>
-              </div>
-
-              <div className="overflow-hidden rounded-[18px] border border-gray-200 bg-white shadow-[0_4px_16px_rgba(15,23,42,0.08)]">
-                <div className="px-4 pb-3 pt-4">
-                  <h3 className="text-base font-semibold text-gray-900">
-                    Шалгалтын түүх
-                  </h3>
-                </div>
-                <table className="w-full text-sm">
-                  <thead className="border-b border-gray-200 text-sm text-gray-800">
-                    <tr>
-                      <th className="px-4 py-2.5 text-left font-semibold">
-                        Шалгалт
-                      </th>
-                      <th className="px-4 py-2.5 text-left font-semibold">
-                        Огноо
-                      </th>
-                      <th className="px-4 py-2.5 text-left font-semibold">
-                        Оноо
-                      </th>
-                      <th className="px-4 py-2.5 text-left font-semibold">
-                        Үнэлгээ
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    {selectedStudent.examHistory.length > 0 ? (
-                      selectedStudent.examHistory.map((exam) => (
-                        <tr key={exam.id}>
-                          <td className="px-4 py-2.5 text-[13px] font-semibold text-gray-900">
-                            {exam.name}
-                          </td>
-                          <td className="px-4 py-2.5 text-[13px] text-gray-500">
-                            {exam.date}
-                          </td>
-                          <td
-                            className={`px-4 py-2.5 text-[13px] font-semibold ${getExamScoreClass(
-                              exam.score,
-                              exam.maxScore,
-                            )}`}
-                          >
-                            {exam.score}/{exam.maxScore}
-                          </td>
-                          <td className="px-4 py-2.5">
-                            <span className="inline-flex min-w-9 items-center justify-center rounded-md border border-gray-200 bg-white px-2 py-0.5 text-[11px] font-semibold text-gray-700">
-                              {exam.grade}
-                            </span>
-                          </td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td
-                          colSpan={4}
-                          className="px-4 py-8 text-center text-sm text-gray-500"
-                        >
-                          Шалгалтын түүх алга.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+            </>
           )}
         </DialogContent>
       </Dialog>
