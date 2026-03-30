@@ -3,12 +3,12 @@ import { Button } from "@/components/ui/button";
 import { useExamState } from "../_hooks/use-exam-states";
 import ExamTimer from "./ExamTimer";
 import { CircleCheckBig, Flag, Send } from "lucide-react";
-import { examName } from "../mockExamData";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
 export const ExamProgressBar = () => {
   const {
+    exam,
     totalQuestions,
     currentId,
     answers,
@@ -28,7 +28,10 @@ export const ExamProgressBar = () => {
 
   return (
     <div className="border-l bg-muted/30 p-6 flex flex-col w-80">
-      <ExamTimer durationSeconds={examName.durationSeconds} />
+      <ExamTimer
+        durationSeconds={exam.durationSeconds}
+        storageKey={`exam-ends-at:${exam.id}`}
+      />
       <div className="flex-1">
         <h3 className="text-sm font-medium mb-3 ">Асуултууд</h3>
         <div className="grid grid-cols-5 gap-2">

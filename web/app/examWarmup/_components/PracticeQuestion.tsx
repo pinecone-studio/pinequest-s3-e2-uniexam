@@ -1,11 +1,6 @@
 ﻿"use client";
 
-import {
-  ArrowRight,
-  BrainCircuit,
-  CheckCircle2,
-  XCircle,
-} from "lucide-react";
+import { ArrowRight, BrainCircuit, CheckCircle2, XCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -56,7 +51,7 @@ export default function PracticeQuestion({
         </div>
         <Progress
           value={((session.currentQuestion + 1) / totalQuestions) * 100}
-          className="h-2"
+          className="h-2 "
         />
       </div>
 
@@ -103,7 +98,10 @@ export default function PracticeQuestion({
                     value={index.toString()}
                     id={`option-${index}`}
                   />
-                  <Label htmlFor={`option-${index}`} className="flex-1 cursor-pointer">
+                  <Label
+                    htmlFor={`option-${index}`}
+                    className="flex-1 cursor-pointer"
+                  >
                     {option}
                   </Label>
                   {showExplanation && isCorrect && (
@@ -132,7 +130,7 @@ export default function PracticeQuestion({
           <div className="flex gap-3">
             {!showExplanation ? (
               <Button
-                className="flex-1"
+                className="flex-1 bg-[#006d77]"
                 onClick={onSubmitAnswer}
                 disabled={selectedAnswer === null}
               >

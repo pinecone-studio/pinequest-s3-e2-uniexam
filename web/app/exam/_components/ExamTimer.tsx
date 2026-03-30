@@ -2,14 +2,15 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Clock } from "lucide-react";
 
-const EXAM_ENDS_AT_STORAGE_KEY = "exam-ends-at";
-
-const getInitialTimeLeft = (durationSeconds: number) => {
+const getInitialTimeLeft = (
+  durationSeconds: number,
+  storageKey: string,
+) => {
   if (typeof window === "undefined") {
     return durationSeconds;
   }
 
-  const savedEndsAt = localStorage.getItem(EXAM_ENDS_AT_STORAGE_KEY);
+  const savedEndsAt = localStorage.getItem(storageKey);
 
   if (!savedEndsAt) {
     return durationSeconds;
@@ -28,21 +29,23 @@ function formatTime(seconds: number) {
 
 const ExamTimer = ({
   durationSeconds = 4500,
+  storageKey,
 }: {
   durationSeconds?: number;
+  storageKey: string;
 }) => {
   const [timeLeft, setTimeLeft] = useState<number>(() =>
-    getInitialTimeLeft(durationSeconds),
+    getInitialTimeLeft(durationSeconds, storageKey),
   );
 
   useEffect(() => {
-    const savedEndsAt = localStorage.getItem(EXAM_ENDS_AT_STORAGE_KEY);
+    const savedEndsAt = localStorage.getItem(storageKey);
 
     if (!savedEndsAt) {
       const endsAt = Date.now() + durationSeconds * 1000;
-      localStorage.setItem(EXAM_ENDS_AT_STORAGE_KEY, endsAt.toString());
+      localStorage.setItem(storageKey, endsAt.toString());
     }
-  }, [durationSeconds]);
+  }, [durationSeconds, storageKey]);
 
   useEffect(() => {
     if (timeLeft <= 0) return;

@@ -6,10 +6,7 @@ import {
   useEffect,
   useState,
 } from "react";
-import { examName, mockExam } from "../mockExamData";
-
-const EXAM_DRAFT_STORAGE_KEY = "exam-draft";
-const EXAM_ENDS_AT_STORAGE_KEY = "exam-ends-at";
+import { ExamMeta, ExamQuestion } from "../exam-types";
 
 type SavedExamState = {
   currentId: number;
@@ -17,7 +14,10 @@ type SavedExamState = {
   flagged: number[];
 };
 
-const getInitialExamState = (): SavedExamState => {
+const getExamDraftStorageKey = (examId: string) => `exam-draft:${examId}`;
+const getExamEndsAtStorageKey = (examId: string) => `exam-ends-at:${examId}`;
+
+const getInitialExamState = (examId: string): SavedExamState => {
   if (typeof window === "undefined") {
     return {
       currentId: 1,
@@ -26,7 +26,7 @@ const getInitialExamState = (): SavedExamState => {
     };
   }
 
-  const savedDraft = localStorage.getItem(EXAM_DRAFT_STORAGE_KEY);
+  const savedDraft = localStorage.getItem(getExamDraftStorageKey(examId));
 
   if (!savedDraft) {
     return {
@@ -44,7 +44,7 @@ const getInitialExamState = (): SavedExamState => {
       flagged: parsedDraft.flagged ?? [],
     };
   } catch {
-    localStorage.removeItem(EXAM_DRAFT_STORAGE_KEY);
+    localStorage.removeItem(getExamDraftStorageKey(examId));
     return {
       currentId: 1,
       answers: {},
@@ -57,8 +57,14 @@ const ExamContext = createContext<ReturnType<
   typeof useExamStateInternal
 > | null>(null);
 
-const useExamStateInternal = () => {
-  const initialState = getInitialExamState();
+const useExamStateInternal = ({
+  exam,
+  questions,
+}: {
+  exam: ExamMeta;
+  questions: ExamQuestion[];
+}) => {
+  const initialState = getInitialExamState(exam.id);
   const [currentId, setCurrentId] = useState<number>(initialState.currentId);
   const [answers, setAnswers] = useState<Record<number, string | null>>(
     initialState.answers,
@@ -66,13 +72,14 @@ const useExamStateInternal = () => {
   const [flagged, setFlagged] = useState<number[]>(initialState.flagged);
 
   useEffect(() => {
-    const savedEndsAt = localStorage.getItem(EXAM_ENDS_AT_STORAGE_KEY);
+    const endsAtStorageKey = getExamEndsAtStorageKey(exam.id);
+    const savedEndsAt = localStorage.getItem(endsAtStorageKey);
 
     if (!savedEndsAt) {
-      const endsAt = Date.now() + examName.durationSeconds * 1000;
-      localStorage.setItem(EXAM_ENDS_AT_STORAGE_KEY, endsAt.toString());
+      const endsAt = Date.now() + exam.durationSeconds * 1000;
+      localStorage.setItem(endsAtStorageKey, endsAt.toString());
     }
-  }, []);
+  }, [exam.durationSeconds, exam.id]);
 
   useEffect(() => {
     const payload: SavedExamState = {
@@ -81,20 +88,26 @@ const useExamStateInternal = () => {
       flagged,
     };
 
-    localStorage.setItem(EXAM_DRAFT_STORAGE_KEY, JSON.stringify(payload));
-  }, [answers, currentId, flagged]);
+    localStorage.setItem(
+      getExamDraftStorageKey(exam.id),
+      JSON.stringify(payload),
+    );
+  }, [answers, currentId, exam.id, flagged]);
 
-  const totalQuestions = mockExam.length;
-  const currentQuestion = mockExam[currentId - 1];
+  const totalQuestions = questions.length;
+  const safeCurrentId =
+    totalQuestions === 0 ? 1 : Math.min(Math.max(currentId, 1), totalQuestions);
+  const currentQuestion = questions[safeCurrentId - 1] ?? questions[0];
   const answeredCount = Object.values(answers).filter((a) => a !== null).length;
 
   const clearSavedExam = () => {
-    localStorage.removeItem(EXAM_DRAFT_STORAGE_KEY);
-    localStorage.removeItem(EXAM_ENDS_AT_STORAGE_KEY);
+    localStorage.removeItem(getExamDraftStorageKey(exam.id));
+    localStorage.removeItem(getExamEndsAtStorageKey(exam.id));
   };
 
   return {
-    currentId,
+    exam,
+    currentId: safeCurrentId,
     answers,
     flagged,
     totalQuestions,
@@ -107,8 +120,16 @@ const useExamStateInternal = () => {
   };
 };
 
-export const ExamProvider = ({ children }: { children: ReactNode }) => {
-  const value = useExamStateInternal();
+export const ExamProvider = ({
+  children,
+  exam,
+  questions,
+}: {
+  children: ReactNode;
+  exam: ExamMeta;
+  questions: ExamQuestion[];
+}) => {
+  const value = useExamStateInternal({ exam, questions });
   return <ExamContext.Provider value={value}>{children}</ExamContext.Provider>;
 };
 

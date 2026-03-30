@@ -115,7 +115,10 @@ export default function PracticeSetup({
           {practiceMode === "exam" ? (
             <div className="space-y-2">
               <Label>Ойрын шалгалтыг сонгох</Label>
-              <Select value={selectedExam || ""} onValueChange={setSelectedExam}>
+              <Select
+                value={selectedExam || ""}
+                onValueChange={setSelectedExam}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Давтлага хийх шалгалтаа сонгоно уу" />
                 </SelectTrigger>
@@ -191,7 +194,7 @@ export default function PracticeSetup({
           )}
 
           <Button
-            className="w-full"
+            className="w-full bg-[#006d77]"
             size="lg"
             onClick={onStartPractice}
             disabled={
