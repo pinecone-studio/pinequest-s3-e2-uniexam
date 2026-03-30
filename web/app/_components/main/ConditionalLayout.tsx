@@ -1,8 +1,7 @@
 "use client";
 import { usePathname } from "next/navigation";
 
-const hideSidebarRoutes = ["/exams"];
-// const hideSidebarRoutes = ["/exams", "/login", "/onboarding"];
+const hideSidebarRoutes = ["/exam", "/examPage"];
 
 const ConditionalLayout = ({
   children,
@@ -13,7 +12,9 @@ const ConditionalLayout = ({
 }) => {
   const pathname = usePathname();
   const hideSidebar = hideSidebarRoutes.some((route) =>
-    pathname.startsWith(route),
+    route === "/exam"
+      ? pathname === route
+      : pathname.startsWith(route),
   );
 
   if (hideSidebar) return <>{children}</>;

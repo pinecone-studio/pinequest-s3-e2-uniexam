@@ -61,7 +61,7 @@ export default function UpcomingExams() {
                 </div>
 
                 {exam.hasInProgress ? (
-                  <Link href={"./exam"}>
+                  <Link href="/exam">
                     <Button className="hover:cursor-pointer flex items-center gap-2">
                       Шалгалт өгөх <ChevronRight className="w-3 h-3" />
                     </Button>
