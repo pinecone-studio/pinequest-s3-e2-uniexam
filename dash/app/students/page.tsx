@@ -142,6 +142,50 @@ const courses = [
   { id: "4-р курс", title: "CS 401", subtitle: "Инженерчлэл" },
 ];
 
+/* ================= ANALYTICS ================= */
+
+const getAnalytics = (students: Student[]) => {
+  const total = students.length;
+
+  const avgScore =
+    total === 0
+      ? 0
+      : Math.round(
+          students.reduce((acc, s) => acc + s.averageScore, 0) / total
+        );
+
+  const topStudent =
+    students.length > 0
+      ? students.reduce((prev, current) =>
+          prev.averageScore > current.averageScore ? prev : current
+        )
+      : null;
+
+  const trend = {
+    up: students.filter((s) => s.trend === "up").length,
+    down: students.filter((s) => s.trend === "down").length,
+    stable: students.filter((s) => s.trend === "stable").length,
+  };
+
+  return { total, avgScore, topStudent, trend };
+};
+
+/* ================= STATS ================= */
+
+function getCourseStats(courseId: string) {
+  const students = initialStudents.filter(
+    (s) => s.course === courseId
+  );
+
+  const total = students.length;
+
+  const progress = students.filter(
+    (s) => s.examsTaken > 0
+  ).length;
+
+  return { total, progress };
+}
+
 /* ================= PAGE ================= */
 
 export default function StudentsPage() {
@@ -155,7 +199,6 @@ export default function StudentsPage() {
     filteredItems,
   } = useStudentSearch(initialStudents);
 
-  /* dynamic majors */
   const availableMajors = Array.from(
     new Set(
       initialStudents
@@ -166,10 +209,11 @@ export default function StudentsPage() {
     )
   );
 
-  /* reset major */
   useEffect(() => {
     setMajorFilter("all");
   }, [courseFilter, setMajorFilter]);
+
+  const analytics = getAnalytics(filteredItems);
 
   return (
     <div className="p-6">
@@ -193,6 +237,40 @@ export default function StudentsPage() {
             />
           );
         })}
+      </div>
+
+      {/* ANALYTICS */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div className="p-5 bg-white rounded-2xl border">
+          <div className="text-sm text-gray-500">Нийт оюутан</div>
+          <div className="text-2xl font-bold">{analytics.total}</div>
+        </div>
+
+        <div className="p-5 bg-white rounded-2xl border">
+          <div className="text-sm text-gray-500">Дундаж оноо</div>
+          <div className="text-2xl font-bold text-blue-600">
+            {analytics.avgScore}%
+          </div>
+        </div>
+
+        <div className="p-5 bg-white rounded-2xl border">
+          <div className="text-sm text-gray-500">Шилдэг оюутан</div>
+          <div className="text-lg font-semibold">
+            {analytics.topStudent?.name}
+          </div>
+          <div className="text-sm text-gray-500">
+            {analytics.topStudent?.averageScore}%
+          </div>
+        </div>
+
+        <div className="p-5 bg-white rounded-2xl border">
+          <div className="text-sm text-gray-500 mb-2">Ахиц</div>
+          <div className="flex gap-3 text-sm">
+            <span className="text-green-600">↑ {analytics.trend.up}</span>
+            <span className="text-gray-500">→ {analytics.trend.stable}</span>
+            <span className="text-red-500">↓ {analytics.trend.down}</span>
+          </div>
+        </div>
       </div>
 
       {/* FILTERS */}
@@ -222,7 +300,6 @@ export default function StudentsPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Бүх мэргэжил</SelectItem>
-
             {availableMajors.map((m) => (
               <SelectItem key={m} value={m}>
                 {m}
@@ -237,20 +314,4 @@ export default function StudentsPage() {
 
     </div>
   );
-}
-
-/* ================= STATS ================= */
-
-function getCourseStats(courseId: string) {
-  const students = initialStudents.filter(
-    (s) => s.course === courseId
-  );
-
-  const total = students.length;
-
-  const progress = students.filter(
-    (s) => s.examsTaken > 0
-  ).length;
-
-  return { total, progress };
 }
