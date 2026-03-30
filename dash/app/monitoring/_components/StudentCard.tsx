@@ -21,14 +21,18 @@ import {
 } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 
-import { getInitials, getStatusLabel } from "../_lib/helpers";
-import type { Student } from "../_lib/types";
+import {
+  getAlertTypeLabel,
+  getInitials,
+  getStatusLabel,
+} from "../_lib/helpers";
+import type { Student, StudentAlert } from "../_lib/types";
 
 type Props = {
   student: Student;
 };
 
-function getAlertIcon(type?: "phone" | "tab" | "headpose" | "people") {
+function getAlertIcon(type?: StudentAlert["type"]) {
   switch (type) {
     case "phone":
       return <Smartphone className="h-5 w-5" />;
@@ -39,22 +43,13 @@ function getAlertIcon(type?: "phone" | "tab" | "headpose" | "people") {
   }
 }
 
-function getAlertTypeLabel(type?: "phone" | "tab" | "headpose" | "people") {
-  switch (type) {
-    case "phone":
-      return "Утас илэрсэн";
-    case "tab":
-      return "Tab сольсон";
-    case "headpose":
-      return "Дэлгэцээс өөр тийш харсан";
-    case "people":
-      return "Нэмэлт хүн илэрсэн";
-    default:
-      return "Анхааруулга";
-  }
-}
-
-function StudentCardView({ student }: Props) {
+function StudentCardContent({
+  student,
+  clickable = false,
+}: {
+  student: Student;
+  clickable?: boolean;
+}) {
   const progressPercent =
     (student.currentQuestion / student.totalQuestions) * 100;
 
@@ -62,56 +57,53 @@ function StudentCardView({ student }: Props) {
 
   const statusIcon =
     student.status === "online" ? (
-      <Wifi className="h-4 w-4 text-green-600" />
+      <Wifi className="h-4 w-4 text-[var(--monitoring-primary)]" />
     ) : student.status === "offline" ? (
-      <WifiOff className="h-4 w-4 text-gray-500" />
+      <WifiOff className="h-4 w-4 text-[var(--monitoring-muted)]" />
     ) : (
-      <CheckCircle2 className="h-4 w-4 text-blue-600" />
+      <CheckCircle2 className="h-4 w-4 text-[var(--monitoring-dark)]" />
     );
 
   const statusTextClassName =
     student.status === "online"
-      ? "text-green-600"
+      ? "text-[var(--monitoring-primary)]"
       : student.status === "offline"
-        ? "text-gray-500"
-        : "text-blue-600";
+        ? "text-[var(--monitoring-muted)]"
+        : "text-[var(--monitoring-dark)]";
 
   return (
     <Card
-      className={`rounded-2xl bg-white shadow-sm transition ${
+      className={`rounded-2xl border shadow-sm transition ${
         hasAlert
-          ? "cursor-pointer border-red-300 bg-red-50/40 hover:bg-red-50/60"
-          : ""
-      }`}
-    >
-      <CardContent className="p-5 py-2">
-        <div className="mb-2 flex items-start justify-between ">
-          <div className="flex items-start gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 font-semibold text-blue-700">
+          ? "border-[var(--monitoring-warning-border)] bg-[var(--monitoring-warning-surface)]"
+          : "border-[var(--monitoring-dark-border)] bg-white"
+      } ${clickable ? "cursor-pointer hover:bg-[var(--monitoring-warning-surface-strong)]" : ""}`}>
+      <CardContent className="p-2">
+        <div className="mb-2 flex items-start justify-between gap-3">
+          <div className="flex items-start gap-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--monitoring-primary-soft)] font-semibold text-[var(--monitoring-primary)]">
               {getInitials(student.name)}
             </div>
 
-            <div>
-              <h3 className="text-sm font-semibold leading-none">
+            <div className="min-w-0">
+              <h3 className="truncate text-sm font-semibold leading-none text-[var(--monitoring-dark)]">
                 {student.name}
               </h3>
-              <p className="mt-1 text-xs text-muted-foreground">
+              <p className="mt-1 truncate text-xs text-[var(--monitoring-muted)]">
                 {student.email}
               </p>
             </div>
           </div>
 
           {hasAlert && (
-            <Badge className="bg-red-600 text-white hover:bg-red-600">
+            <Badge className="border-0 bg-[var(--monitoring-warning)] text-white hover:bg-[var(--monitoring-warning)]">
               <AlertTriangle className="mr-1 h-3.5 w-3.5" />
-              {student.tabSwitches > 0
-                ? `${student.tabSwitches} удаа`
-                : "Анхааруулга"}
+              Зөрчил
             </Badge>
           )}
         </div>
 
-        <div className="mb-2 flex items-center gap-2 text-xs">
+        <div className="mb-5 flex items-center gap-2 text-sm">
           {statusIcon}
           <span className={statusTextClassName}>
             {getStatusLabel(student.status)}
@@ -119,21 +111,23 @@ function StudentCardView({ student }: Props) {
         </div>
 
         {student.status === "submitted" ? (
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-[var(--monitoring-muted)]">
             Илгээсэн {student.submittedMinutesAgo} минутын өмнө
           </p>
         ) : (
           <div className="space-y-2">
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-muted-foreground">Ахиц</span>
-              <span className="font-normal">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-xs leading-0 text-[var(--monitoring-muted)]">
+                Ахиц
+              </span>
+              <span className="font-medium text-xs leading-0 text-[var(--monitoring-dark)]">
                 Асуулт {student.currentQuestion}/{student.totalQuestions}
               </span>
             </div>
 
             <Progress
               value={progressPercent}
-              className="h-2 [&>div]:bg-blue-600"
+              className="h-2 bg-(--monitoring-dark-soft) [&>div]:bg-(--monitoring-primary)"
             />
           </div>
         )}
@@ -146,34 +140,38 @@ export function StudentCard({ student }: Props) {
   const hasAlert = student.tabSwitches > 0 || Boolean(student.latestAlert);
 
   if (!hasAlert) {
-    return <StudentCardView student={student} />;
+    return <StudentCardContent student={student} />;
   }
 
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <div>
-          <StudentCardView student={student} />
-        </div>
+        <button type="button" className="w-full text-left">
+          <StudentCardContent student={student} clickable />
+        </button>
       </DialogTrigger>
 
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="border-(--monitoring-dark-border) bg-white text-(--monitoring-dark) sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Зөрчлийн мэдээлэл</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-(--monitoring-dark)">
+            Зөрчлийн мэдээлэл
+          </DialogTitle>
+          <DialogDescription className="text-(--monitoring-muted)">
             Сурагч дээр илэрсэн анхааруулгын дэлгэрэнгүй
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
-          <div className="rounded-xl border bg-slate-50 p-4">
-            <p className="text-sm text-muted-foreground">Сурагч</p>
-            <p className="font-semibold">{student.name}</p>
-            <p className="text-sm text-muted-foreground">{student.email}</p>
+          <div className="rounded-xl border border-(--monitoring-dark-border) bg-(--monitoring-primary-surface) p-4">
+            <p className="text-sm text-(--monitoring-muted)">Сурагч</p>
+            <p className="font-semibold text-(--monitoring-dark)">
+              {student.name}
+            </p>
+            <p className="text-sm text-(--monitoring-muted)">{student.email}</p>
           </div>
 
-          <div className="rounded-xl border border-red-200 bg-red-50 p-4">
-            <div className="mb-3 flex items-center gap-2 text-red-700">
+          <div className="rounded-xl border border-(--monitoring-warning-border) bg-(--monitoring-warning-surface) p-4">
+            <div className="mb-3 flex items-center gap-2 text-(--monitoring-warning)">
               {getAlertIcon(student.latestAlert?.type)}
               <span className="font-semibold">
                 {student.latestAlert?.message ??
@@ -183,36 +181,42 @@ export function StudentCard({ student }: Props) {
 
             <div className="space-y-2 text-sm">
               <div className="flex justify-between gap-4">
-                <span className="text-muted-foreground">Зөрчлийн төрөл</span>
-                <span className="font-medium">
+                <span className="text-(--monitoring-muted)">
+                  Зөрчлийн төрөл
+                </span>
+                <span className="font-medium text-(--monitoring-dark)">
                   {getAlertTypeLabel(student.latestAlert?.type)}
                 </span>
               </div>
 
               <div className="flex justify-between gap-4">
-                <span className="text-muted-foreground">Илэрсэн хугацаа</span>
-                <span className="font-medium">
+                <span className="text-(--monitoring-muted)">
+                  Илэрсэн хугацаа
+                </span>
+                <span className="font-medium text-(--monitoring-dark)">
                   {student.latestAlert?.time ?? "Саяхан"}
                 </span>
               </div>
 
               <div className="flex justify-between gap-4">
-                <span className="text-muted-foreground">Tab сольсон тоо</span>
-                <span className="font-medium">{student.tabSwitches} удаа</span>
+                <span className="text-(--monitoring-muted)">
+                  Tab сольсон тоо
+                </span>
+                <span className="font-medium text-(--monitoring-dark)">
+                  {student.tabSwitches} удаа
+                </span>
               </div>
 
               <div className="flex justify-between gap-4">
-                <span className="text-muted-foreground">Одоогийн төлөв</span>
-                <span className="font-medium">
+                <span className="text-(--monitoring-muted)">
+                  Одоогийн төлөв
+                </span>
+                <span className="font-medium text-(--monitoring-dark)">
                   {getStatusLabel(student.status)}
                 </span>
               </div>
             </div>
           </div>
-
-          <p className="text-xs text-muted-foreground">
-            Энэ карт дээр дарж зөрчлийн дэлгэрэнгүй мэдээллийг үзэж болно.
-          </p>
         </div>
       </DialogContent>
     </Dialog>

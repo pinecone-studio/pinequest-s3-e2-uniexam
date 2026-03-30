@@ -2,31 +2,51 @@ import type { LucideIcon } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
 
+type Tone = "dark" | "primary" | "warning";
+
 type Props = {
   title: string;
   value: number;
   icon: LucideIcon;
-  iconWrapperClassName: string;
-  iconClassName: string;
+  tone?: Tone;
 };
 
-export function StatCard({
-  title,
-  value,
-  icon: Icon,
-  iconWrapperClassName,
-  iconClassName,
-}: Props) {
+const toneStyles: Record<
+  Tone,
+  {
+    iconBgClassName: string;
+    iconTextClassName: string;
+  }
+> = {
+  dark: {
+    iconBgClassName: "bg-[var(--monitoring-dark-soft)]",
+    iconTextClassName: "text-[var(--monitoring-dark)]",
+  },
+  primary: {
+    iconBgClassName: "bg-[var(--monitoring-primary-soft)]",
+    iconTextClassName: "text-[var(--monitoring-primary)]",
+  },
+  warning: {
+    iconBgClassName: "bg-[var(--monitoring-warning-soft)]",
+    iconTextClassName: "text-[var(--monitoring-warning)]",
+  },
+};
+
+export function StatCard({ title, value, icon: Icon, tone = "dark" }: Props) {
+  const styles = toneStyles[tone];
+
   return (
-    <Card className="rounded-2xl shadow-sm flex justify-center h-[60%]">
-      <CardContent className="flex items-center gap-4 p-6">
-        <div className={`rounded-2xl p-3 ${iconWrapperClassName}`}>
-          <Icon className={`h-5 w-5 ${iconClassName}`} />
+    <Card className="rounded-2xl border-[var(--monitoring-dark-border)] bg-white shadow-sm ">
+      <CardContent className="flex items-center gap-4 p-2">
+        <div className={`rounded-2xl p-4 ${styles.iconBgClassName}`}>
+          <Icon className={`h-7 w-7 ${styles.iconTextClassName}`} />
         </div>
 
         <div>
-          <div className="text-xl font-semibold">{value}</div>
-          <p className="text-sm text-muted-foreground">{title}</p>
+          <div className="text-3xl font-bold text-[var(--monitoring-dark)]">
+            {value}
+          </div>
+          <p className="text-sm text-[var(--monitoring-muted)]">{title}</p>
         </div>
       </CardContent>
     </Card>

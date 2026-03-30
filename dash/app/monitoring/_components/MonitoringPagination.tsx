@@ -20,9 +20,12 @@ export function MonitoringPagination({
   const pages = Array.from({ length: totalPages }, (_, index) => index + 1);
 
   return (
-    <div className="mt-6 flex flex-col items-center justify-between gap-3 border-t pt-6 sm:flex-row">
-      <p className="text-sm text-muted-foreground">
-        Нийт <span className="font-medium text-foreground">{totalPages}</span>{" "}
+    <div className="mt-6 flex flex-col items-center justify-between gap-3 border-t border-[var(--monitoring-dark-border)] pt-6 sm:flex-row">
+      <p className="text-sm text-[var(--monitoring-muted)]">
+        Нийт{" "}
+        <span className="font-medium text-[var(--monitoring-dark)]">
+          {totalPages}
+        </span>{" "}
         хуудас
       </p>
 
@@ -32,7 +35,7 @@ export function MonitoringPagination({
           size="icon"
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1}
-        >
+          className="border-[var(--monitoring-dark-border)] bg-white text-[var(--monitoring-dark)] hover:bg-[var(--monitoring-dark-soft)]">
           <ChevronLeft className="h-4 w-4" />
         </Button>
 
@@ -43,11 +46,14 @@ export function MonitoringPagination({
             return (
               <Button
                 key={page}
-                variant={isActive ? "default" : "outline"}
                 size="icon"
+                variant={isActive ? "default" : "outline"}
                 onClick={() => onPageChange(page)}
-                className={isActive ? "bg-blue-600 hover:bg-blue-600" : ""}
-              >
+                className={
+                  isActive
+                    ? "border-[#00B89C] bg-[#00B89C] text-white hover:bg-[#00B89C]"
+                    : "border-[var(--monitoring-dark-border)] bg-white text-[var(--monitoring-dark)] hover:bg-[var(--monitoring-dark-soft)]"
+                }>
                 {page}
               </Button>
             );
@@ -59,7 +65,7 @@ export function MonitoringPagination({
           size="icon"
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
-        >
+          className="border-[var(--monitoring-dark-border)] bg-white text-[var(--monitoring-dark)] hover:bg-[var(--monitoring-dark-soft)]">
           <ChevronRight className="h-4 w-4" />
         </Button>
       </div>

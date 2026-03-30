@@ -1,4 +1,4 @@
-import type { StudentStatus } from "./types";
+import type { StudentAlert, StudentStatus } from "./types";
 
 export function getInitials(name: string) {
   return name
@@ -19,5 +19,20 @@ export function getStatusLabel(status: StudentStatus) {
       return "Илгээсэн";
     default:
       return "";
+  }
+}
+
+export function getAlertTypeLabel(type?: StudentAlert["type"]) {
+  switch (type) {
+    case "phone":
+      return "Утас илэрсэн";
+    case "tab":
+      return "Tab сольсон";
+    case "headpose":
+      return "Дэлгэцээс өөр тийш харсан";
+    case "people":
+      return "Нэмэлт хүн илэрсэн";
+    default:
+      return "Зөрчил илэрсэн";
   }
 }

@@ -3,190 +3,132 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  LayoutDashboard,
+  LayoutGrid,
   FileText,
-  GraduationCap,
-  Monitor,
+  Activity,
   Users,
-  BookOpen,
+  ShieldCheck,
 } from "lucide-react";
-import { SignInButton, SignUpButton, UserButton, useUser } from "@clerk/nextjs";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
+import { UserButton, useUser } from "@clerk/nextjs";
 
-const SidebarSkeleton = () => {
-  return (
-    <aside className="flex h-screen w-68 shrink-0 flex-col border-r border-gray-200 bg-white p-4">
-      <div className="mb-3 flex items-center gap-3 py-1">
-        <Skeleton className="h-7 w-7 rounded-[10px] bg-slate-200" />
-        <Skeleton className="h-4.5 w-11 rounded-sm bg-slate-200" />
-      </div>
-      <div className="border-t border-gray-200 pt-1" />
+const navItems = [
+  {
+    href: "/",
+    label: "Нүүр",
+    icon: LayoutGrid,
+    match: (pathname: string) => pathname === "/",
+  },
+  {
+    href: "/exams",
+    label: "Шалгалт",
+    icon: FileText,
+    match: (pathname: string) => pathname.startsWith("/exams"),
+    badge: "3",
+  },
+  {
+    href: "/grading",
+    label: "Үнэлгээ",
+    icon: Activity,
+    match: (pathname: string) => pathname.startsWith("/grading"),
+  },
+  {
+    href: "/students",
+    label: "Оюутнууд",
+    icon: Users,
+    match: (pathname: string) => pathname.startsWith("/students"),
+  },
+];
 
-      <div className="flex-1 space-y-1 pt-4 text-sm">
-        <div className="flex items-center gap-3 rounded-[10px] px-4 py-2">
-          <Skeleton className="h-[17px] w-[17px] rounded-sm bg-slate-200" />
-          <Skeleton className="h-3.5 w-9 rounded-sm bg-slate-200" />
-        </div>
-        <div className="flex items-center gap-3 rounded-[10px] px-4 py-2">
-          <Skeleton className="h-[18px] w-[18px] rounded-sm bg-slate-200" />
-          <Skeleton className="h-[14px] w-14 rounded-sm bg-slate-200" />
-        </div>
-        <div className="flex items-center gap-3 rounded-[10px] px-4 py-2">
-          <Skeleton className="h-[18px] w-[18px] rounded-sm bg-slate-200" />
-          <Skeleton className="h-[14px] w-14 rounded-sm bg-slate-200" />
-        </div>
-        <div className="flex items-center gap-3 rounded-[10px] px-4 py-2">
-          <Skeleton className="h-[18px] w-[18px] rounded-sm bg-slate-200" />
-          <Skeleton className="h-[14px] w-12 rounded-sm bg-slate-200" />
-        </div>
-        <div className="flex items-center gap-3 rounded-[10px] px-4 py-2">
-          <Skeleton className="h-[18px] w-[18px] rounded-sm bg-slate-200" />
-          <Skeleton className="h-[14px] w-[70px] rounded-sm bg-slate-200" />
-        </div>
-      </div>
-
-      <div className="mt-auto border-t border-gray-100 pt-4">
-        <div className="flex items-center gap-3 px-2 py-3">
-          <Skeleton className="h-10 w-10 rounded-full bg-slate-200" />
-          <div className="min-w-0 flex-1 space-y-2">
-            <Skeleton className="h-[14px] w-24 rounded-sm bg-slate-200" />
-            <Skeleton className="h-3 w-32 rounded-sm bg-slate-200" />
-          </div>
-        </div>
-      </div>
-    </aside>
-  );
-};
-
-const Sidebar = () => {
+export default function Sidebar() {
   const pathname = usePathname();
-  const { user, isLoaded } = useUser();
-
-  if (!isLoaded) return <SidebarSkeleton />;
+  const { user } = useUser();
 
   const displayName =
     user?.fullName ||
     user?.username ||
     user?.primaryEmailAddress?.emailAddress ||
-    "Account";
-
-  const secondaryLabel = user?.primaryEmailAddress?.emailAddress || "Signed in";
+    "Мөнхбаяр багш";
 
   return (
-    <aside className="flex h-screen w-68 shrink-0 flex-col border-r border-gray-200 bg-white p-4">
-      <div className="mb-3 flex items-center gap-3  py-1">
-        <div className="rounded-[10px] bg-[#2658c4] p-2">
-          <BookOpen className="h-3 w-3 text-white" />
+    <aside className="flex h-screen w-[352px] shrink-0 flex-col overflow-hidden bg-[#0F1923] text-white">
+      <div className="px-8 pb-7 pt-9">
+        <div className="flex items-center gap-4">
+          <div className="flex h-13 w-13 items-center justify-center rounded-2xl bg-[#00B89C] shadow-[0_10px_24px_rgba(0,184,156,0.18)]">
+            <ShieldCheck className="h-6 w-6 text-white" />
+          </div>
+
+          <div className="min-w-0">
+            <h1 className="truncate text-[18px] font-bold leading-none text-white">
+              LMS Proctor
+            </h1>
+            <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-white/26">
+              Teacher Portal
+            </p>
+          </div>
         </div>
-        <span className="text-[18px] font-bold text-gray-800">LMS</span>
       </div>
-      <div className="border-t border-gray-200 pt-1" />
 
-      <nav className="flex-1 space-y-1 pt-4 text-sm">
-        <Link
-          href="/"
-          className={`flex items-center gap-3 rounded-[10px] px-4 py-2 transition-colors ${
-            pathname === "/"
-              ? "bg-[#2658c4] text-white"
-              : "text-gray-900 hover:bg-gray-50"
-          }`}
-        >
-          <LayoutDashboard size={17} />
-          <span className="font-medium ">Нүүр</span>
-        </Link>
+      <div className="h-px bg-white/8" />
 
-        <Link
-          href="/exams"
-          className={`flex items-center gap-3 rounded-[10px] px-4 py-2 transition-colors ${
-            pathname.startsWith("/exams")
-              ? "bg-[#2658c4] text-white"
-              : "text-gray-900 hover:bg-gray-50"
-          }`}
-        >
-          <FileText size={18} />
-          <span className="font-medium">Шалгалт</span>
-        </Link>
+      <div className="px-8 pb-3 pt-9">
+        <p className="text-[12px] font-semibold uppercase tracking-[0.18em] text-white/18">
+          Үндсэн цэс
+        </p>
+      </div>
 
-        <Link
-          href="/grading"
-          className={`flex items-center gap-3 rounded-[10px] px-4 py-2 transition-colors ${
-            pathname.startsWith("/grading")
-              ? "bg-[#2658c4] text-white"
-              : "text-gray-900 hover:bg-gray-50"
-          }`}
-        >
-          <GraduationCap size={18} />
-          <span className="font-medium">Үнэлгээ</span>
-        </Link>
+      <nav className="flex-1 space-y-1.5 px-4">
+        {navItems.map((item) => {
+          const Icon = item.icon;
+          const active = item.match(pathname);
 
-        <Link
-          href="/monitoring"
-          className={`flex items-center gap-3 rounded-[10px] px-4 py-2 transition-colors ${
-            pathname.startsWith("/monitoring")
-              ? "bg-[#2658c4] text-white"
-              : "text-gray-900 hover:bg-gray-50"
-          }`}
-        >
-          <Monitor size={18} />
-          <span className="font-medium">Хяналт</span>
-        </Link>
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`group flex items-center justify-between rounded-2xl border px-4 py-3 transition ${
+                active
+                  ? "border-[#00B89C]/35 bg-[#00B89C]/12 text-[#00B89C]"
+                  : "border-transparent text-white/50 hover:border-white/8 hover:bg-white/4 hover:text-white"
+              }`}>
+              <div className="flex items-center gap-3.5">
+                <Icon className="h-5 w-5" />
+                <span className="text-[17px] font-medium">{item.label}</span>
+              </div>
 
-        <Link
-          href="/students"
-          className={`flex items-center gap-3 rounded-[10px] px-4 py-2 transition-colors ${
-            pathname.startsWith("/students")
-              ? "bg-[#2658c4] text-white"
-              : "text-gray-900 hover:bg-gray-50"
-          }`}
-        >
-          <Users size={18} />
-          <span className="font-medium">Оюутнууд</span>
-        </Link>
+              {item.badge ? (
+                <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-full bg-[#F0A500] px-2 text-[12px] font-bold text-[#0F1923]">
+                  {item.badge}
+                </span>
+              ) : null}
+            </Link>
+          );
+        })}
       </nav>
 
-      <div className="mt-auto border-t border-gray-100 pt-4">
-        {user ? (
-          <div className="flex items-center gap-3 px-2 py-3">
-            <div className="flex h-10 w-10 items-center justify-center">
+      <div className="mt-auto border-t border-white/8 px-4 py-5">
+        <div className="flex items-center gap-3 rounded-2xl px-3 py-2.5">
+          <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-[#00B89C] text-base font-bold text-[#0F1923]">
+            {user ? (
               <UserButton
                 appearance={{
                   elements: {
-                    userButtonAvatarBox: "h-10 w-10",
+                    userButtonAvatarBox: "h-12 w-12",
                   },
                 }}
               />
-            </div>
-            <div className="min-w-0 flex flex-col overflow-hidden">
-              <span className="truncate text-sm font-semibold text-gray-800">
-                {displayName}
-              </span>
-              <span className="truncate text-xs text-gray-400">
-                {secondaryLabel}
-              </span>
-            </div>
+            ) : (
+              "МБ"
+            )}
           </div>
-        ) : (
-          <div className="flex flex-row items-center gap-2 px-1 py-1 w-full">
-            <SignInButton mode="modal">
-              <Button
-                variant="outline"
-                className="flex-1 h-9 text-xs font-medium text-gray-600 border-gray-200 hover:bg-gray-50"
-              >
-                Sign In
-              </Button>
-            </SignInButton>
 
-            <SignUpButton mode="modal">
-              <Button className="flex-1 h-9 text-xs font-medium bg-[#2658c4] text-white hover:bg-blue-700 shadow-sm">
-                Sign Up
-              </Button>
-            </SignUpButton>
+          <div className="min-w-0">
+            <p className="truncate text-[16px] font-medium text-white">
+              {displayName}
+            </p>
+            <p className="truncate text-[13px] text-white/26">Профессор</p>
           </div>
-        )}
+        </div>
       </div>
     </aside>
   );
-};
-
-export default Sidebar;
+}

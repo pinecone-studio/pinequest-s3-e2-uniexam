@@ -1,137 +1,145 @@
-import {
-  FileText,
-  Users,
-  CheckCircle,
-  AlertTriangle,
-  Calendar,
-  TrendingUp,
-  GraduationCap,
-} from "lucide-react";
-import { StatCard } from "./_components/StatCard";
-import { ExamItem } from "./_components/ExamItem";
-import { ActivityItem } from "./_components/ActivityItem";
-import { PerformanceCard } from "./_components/PerformanceCard";
+import { Clock3, TriangleAlert, Users, Bell, PanelTopOpen } from "lucide-react";
+import { SummaryCard } from "./_components/SummaryCard";
+import { ActiveExamCard } from "./_components/ActiveExamCard";
+import { UpcomingExamItem } from "./_components/UpcomingExamItem";
 
 export default function DashboardPage() {
   return (
-    <div className=" min-h-screen space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-semibold">Dashboard</h1>
-        <p className="text-gray-500 mt-1">
-          Багш та дахин тавтай морил. Энд таны тойм байна.
-        </p>
-      </div>
+    <div className="h-full bg-[#F3F5F7]">
+      <div className="h-full px-7 py-6">
+        <div className="mx-auto flex h-full max-w-[1100px] flex-col">
+          {/* Header */}
+          <div className="mb-5 flex shrink-0 items-start justify-between gap-6">
+            <div>
+              <h1 className="text-[26px] font-bold tracking-tight text-[#0F1923]">
+                Хяналтын самбар
+              </h1>
+              <p className="mt-1 text-[15px] text-slate-400">
+                2025 оны хавар · Долоо хоног 12
+              </p>
+            </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-4 gap-6">
-        <StatCard
-          title="Active Exams"
-          value="3"
-          subtitle="Одоогоор хийгдэж байна"
-          color="bg-blue-100 text-blue-600"
-          icon={<FileText size={18} />}
-        />
-        <StatCard
-          title="Total Students"
-          value="248"
-          subtitle="Бүх ангиудад"
-          color="bg-green-100 text-green-600"
-          icon={<Users size={18} />}
-        />
-        <StatCard
-          title="Submissions"
-          value="186"
-          subtitle="Хяналт хүлээгдэж байна"
-          color="bg-green-100 text-green-600"
-          icon={<CheckCircle size={18} />}
-        />
-        <StatCard
-          title="Alerts"
-          value="12"
-          subtitle="Таб шилжүүлэгчийг илрүүлсэн"
-          color="bg-red-100 text-red-600"
-          icon={<AlertTriangle size={18} />}
-        />
-      </div>
+            <div className="flex items-center gap-3">
+              <button className="inline-flex h-10 items-center gap-3 rounded-full border border-[#F0A500]/35 bg-[#F0A500]/8 px-4 text-[13px] font-semibold text-[#F0A500]">
+                <span className="h-2.5 w-2.5 rounded-full bg-[#F0A500]" />
+                Шууд хяналт
+              </button>
 
-      {/* Middle */}
-      <div className="grid grid-cols-3 gap-6">
-        <div className="col-span-2 bg-white rounded-2xl p-4 border space-y-4">
-          <div className="flex justify-between items-center">
-            <h3 className="font-semibold">Удахгүй болох шалгалтууд</h3>
-            <Calendar size={18} />
+              <button className="flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-white text-[#F0A500]">
+                <Bell className="h-4 w-4" />
+              </button>
+            </div>
           </div>
 
-          <ExamItem
-            title="Computer Science Fundamentals"
-            date="Mar 26, 2026"
-            time="10:00 AM"
-            students={45}
-            duration="2 hours"
-          />
-          <ExamItem
-            title="Data Structures & Algorithms"
-            date="Mar 28, 2026"
-            time="2:00 PM"
-            students={38}
-            duration="1.5 hours"
-          />
-          <ExamItem
-            title="Database Systems"
-            date="Apr 2, 2026"
-            time="9:00 AM"
-            students={52}
-            duration="2 hours"
-          />
-        </div>
+          {/* Summary cards */}
+          <div className="mb-5 grid shrink-0 grid-cols-3 gap-3">
+            <SummaryCard
+              title="Идэвхтэй шалгалт"
+              value="03"
+              badge="12"
+              tone="primary"
+              icon={<Clock3 className="h-5 w-5" />}
+            />
 
-        <div className="bg-white rounded-2xl p-4 border space-y-4">
-          <div className="flex justify-between items-center">
-            <h3 className="font-semibold">Сүүлийн үеийн үйл ажиллагаа</h3>
-            <TrendingUp size={18} />
+            <SummaryCard
+              title="Анхааруулга"
+              value="12"
+              badge="15"
+              tone="warning"
+              icon={<TriangleAlert className="h-5 w-5" />}
+            />
+
+            <SummaryCard
+              title="Шалгалт өгч буй"
+              value="48"
+              badge="+3"
+              tone="neutral"
+              icon={<Users className="h-5 w-5" />}
+            />
           </div>
 
-          <ActivityItem
-            text="Morgan Davis submitted Computer Science exam"
-            time="5 minutes ago"
-            color="bg-green-500"
-          />
-          <ActivityItem
-            text="Tab switch detected for Casey Brown"
-            time="12 minutes ago"
-            color="bg-red-500"
-          />
-          <ActivityItem
-            text="Jamie Chen started Data Structures exam"
-            time="18 minutes ago"
-            color="bg-blue-500"
-          />
-          <ActivityItem
-            text="You graded Alex Thompson's submission"
-            time="32 minutes ago"
-            color="bg-blue-500"
-          />
-          <ActivityItem
-            text="New exam scheduled: Database Systems"
-            time="1 hour ago"
-            color="bg-blue-500"
-          />
-        </div>
-      </div>
+          {/* Content */}
+          <div className="flex min-h-0 flex-1 flex-col gap-5">
+            {/* Active exams */}
+            <section className="shrink-0">
+              <div className="mb-3 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <h2 className="text-[18px] font-bold text-[#0F1923]">
+                    Явагдаж буй шалгалтууд
+                  </h2>
+                  <span className="inline-flex h-7 items-center rounded-full bg-[#00B89C]/10 px-3 text-[12px] font-bold text-[#00B89C]">
+                    2 шалгалт
+                  </span>
+                </div>
 
-      {/* Performance */}
-      <div className="bg-white rounded-2xl p-4 border space-y-4">
-        <div className="flex justify-between items-center">
-          <h3 className="font-semibold">Ангийн гүйцэтгэл</h3>
-          <GraduationCap size={18} />
-        </div>
+                <button className="text-[13px] font-medium text-slate-400 transition hover:text-[#0F1923]">
+                  Бүгдийг харах
+                </button>
+              </div>
 
-        <div className="grid grid-cols-4 gap-4">
-          <PerformanceCard title="CS 101" students={45} score={78} />
-          <PerformanceCard title="CS 201" students={38} score={82} />
-          <PerformanceCard title="CS 301" students={52} score={75} />
-          <PerformanceCard title="CS 401" students={31} score={88} />
+              <div className="space-y-3">
+                <ActiveExamCard
+                  title="Архитектурын үндэс II"
+                  meta="APCH-201 · Б-402 · Онлайн"
+                  students={42}
+                  alerts={3}
+                  href="/monitoring/arch-201"
+                />
+
+                <ActiveExamCard
+                  title="Өгөгдлийн сангийн удирдлага"
+                  meta="CS-305 · Онлайн · 119 оюутан"
+                  students={119}
+                  alerts={0}
+                  online
+                  href="/monitoring/cs-305"
+                />
+              </div>
+            </section>
+
+            {/* Upcoming exams */}
+            <section className="min-h-0 flex-1">
+              <div className="mb-3 flex items-center justify-between gap-4">
+                <h2 className="text-[18px] font-bold text-[#0F1923]">
+                  Удахгүй болох шалгалтууд
+                </h2>
+
+                <button className="inline-flex items-center gap-2 text-[13px] font-medium text-slate-400 transition hover:text-[#0F1923]">
+                  <PanelTopOpen className="h-4 w-4" />
+                  Хуваарь
+                </button>
+              </div>
+
+              <div className="overflow-hidden rounded-[22px] border border-slate-200 bg-white shadow-[0_6px_18px_rgba(15,25,35,0.035)]">
+                <UpcomingExamItem
+                  dayShort="МЯГ"
+                  dayLabel=""
+                  time="14:30"
+                  title="Математик анализ IV"
+                  meta="MATH-402 · 56 оюутан"
+                  dotColor="yellow"
+                />
+
+                <UpcomingExamItem
+                  dayShort="ЛХА"
+                  dayLabel="Маргааш"
+                  time=""
+                  title="Харагдлын физик"
+                  meta="PHYS-301 · 38 оюутан"
+                  dotColor="green"
+                />
+
+                <UpcomingExamItem
+                  dayShort="БАА"
+                  dayLabel=""
+                  time="10:00"
+                  title="Алгоритм дизайн"
+                  meta="CS-211 · 72 оюутан"
+                  dotColor="dark"
+                />
+              </div>
+            </section>
+          </div>
         </div>
       </div>
     </div>

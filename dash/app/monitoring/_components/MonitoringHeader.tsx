@@ -24,28 +24,30 @@ export function MonitoringHeader({
     <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
       <div className="min-w-0">
         <div className="flex items-center gap-3">
-          <h1 className="text-3xl font-bold tracking-tight">
+          <h1 className="text-3xl font-bold tracking-tight text-[var(--monitoring-dark)]">
             Шалгалтын хяналт
           </h1>
 
-          <Badge className="bg-green-100 text-green-700 hover:bg-green-100">
+          <Badge className="border-0 bg-[var(--monitoring-primary-soft)] text-[var(--monitoring-primary)] hover:bg-[var(--monitoring-primary-soft)]">
             Шууд
           </Badge>
         </div>
 
-        <p className="mt-2 truncate text-muted-foreground">
+        <p className="mt-2 truncate text-[var(--monitoring-muted)]">
           {selectedClassTitle} - Шууд хяналтын самбар
         </p>
       </div>
 
       <div className="w-full shrink-0 lg:w-[320px]">
         <Select value={classFilter} onValueChange={onClassChange}>
-          <SelectTrigger className="w-full bg-white">
+          <SelectTrigger className="w-full border-[var(--monitoring-dark-border)] bg-white text-[var(--monitoring-dark)] focus:border-[#00B89C] focus:ring-2 focus:ring-[#00B89C]/15 focus:ring-offset-0 data-[placeholder]:text-[var(--monitoring-muted)]">
             <SelectValue placeholder="Анги сонгох" />
           </SelectTrigger>
 
-          <SelectContent className="w-[--radix-select-trigger-width] min-w-[--radix-select-trigger-width]">
-            <SelectItem value="all" className="truncate">
+          <SelectContent className="w-[--radix-select-trigger-width] min-w-[--radix-select-trigger-width] border-[var(--monitoring-dark-border)] bg-white">
+            <SelectItem
+              value="all"
+              className="truncate text-[var(--monitoring-dark)] focus:bg-[var(--monitoring-primary-soft)] focus:text-[var(--monitoring-dark)]">
               Бүх анги
             </SelectItem>
 
@@ -53,8 +55,7 @@ export function MonitoringHeader({
               <SelectItem
                 key={className}
                 value={className}
-                className="truncate"
-              >
+                className="truncate text-[var(--monitoring-dark)] focus:bg-[var(--monitoring-primary-soft)] focus:text-[var(--monitoring-dark)]">
                 {className}
               </SelectItem>
             ))}

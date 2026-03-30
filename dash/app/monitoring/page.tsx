@@ -5,13 +5,14 @@ import { AlertTriangle, CheckCircle2, Monitor, Wifi } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
 
-import { StatCard } from "./_components/StatCard";
 import { MonitoringFilters } from "./_components/MonitoringFilters";
 import { MonitoringHeader } from "./_components/MonitoringHeader";
 import { MonitoringPagination } from "./_components/MonitoringPagination";
 import { MonitoringPageSkeleton } from "./_components/MonitoringPageSkeleton";
+import { StatCard } from "./_components/StatCard";
 import { StudentCard } from "./_components/StudentCard";
 import { students } from "./_data/students";
+import { monitoringCssVars } from "./_lib/theme";
 
 type StudentFilter = "all" | "alert";
 
@@ -27,10 +28,25 @@ export default function MonitoringPage() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 900);
+    }, 800);
 
     return () => clearTimeout(timer);
   }, []);
+
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    setCurrentPage(1);
+  };
+
+  const handleStudentFilterChange = (value: StudentFilter) => {
+    setStudentFilter(value);
+    setCurrentPage(1);
+  };
+
+  const handleClassChange = (value: string) => {
+    setClassFilter(value);
+    setCurrentPage(1);
+  };
 
   const classOptions = useMemo(() => {
     return Array.from(new Set(students.map((student) => student.className)));
@@ -60,23 +76,17 @@ export default function MonitoringPage() {
   }, [classFilteredStudents, searchTerm, studentFilter]);
 
   const totalPages = Math.max(1, Math.ceil(visibleStudents.length / PAGE_SIZE));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+
+  const handlePageChange = (page: number) => {
+    const nextPage = Math.max(1, Math.min(page, totalPages));
+    setCurrentPage(nextPage);
+  };
 
   const paginatedStudents = useMemo(() => {
-    const startIndex = (currentPage - 1) * PAGE_SIZE;
-    const endIndex = startIndex + PAGE_SIZE;
-
-    return visibleStudents.slice(startIndex, endIndex);
-  }, [visibleStudents, currentPage]);
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, studentFilter, classFilter]);
-
-  useEffect(() => {
-    if (currentPage > totalPages) {
-      setCurrentPage(totalPages);
-    }
-  }, [currentPage, totalPages]);
+    const startIndex = (safeCurrentPage - 1) * PAGE_SIZE;
+    return visibleStudents.slice(startIndex, startIndex + PAGE_SIZE);
+  }, [visibleStudents, safeCurrentPage]);
 
   const stats = useMemo(() => {
     return {
@@ -98,54 +108,52 @@ export default function MonitoringPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6">
+    <div className="min-h-screen bg-gray-50 p-6" style={monitoringCssVars}>
       <div className="mx-auto max-w-7xl space-y-4">
         <MonitoringHeader
           classFilter={classFilter}
           classOptions={classOptions}
-          onClassChange={setClassFilter}
+          onClassChange={handleClassChange}
         />
 
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-8 md:grid-cols-2 xl:grid-cols-4 ">
           <StatCard
             title="Нийт сурагч"
             value={stats.total}
             icon={Monitor}
-            iconWrapperClassName="bg-slate-100"
-            iconClassName="text-slate-700"
+            tone="dark"
           />
 
           <StatCard
             title="Одоо онлайн"
             value={stats.online}
             icon={Wifi}
-            iconWrapperClassName="bg-green-100"
-            iconClassName="text-green-700"
+            tone="primary"
           />
 
           <StatCard
             title="Илгээсэн"
             value={stats.submitted}
             icon={CheckCircle2}
-            iconWrapperClassName="bg-blue-100"
-            iconClassName="text-blue-700"
+            tone="primary"
           />
 
           <StatCard
             title="Нийт анхааруулга"
             value={stats.alerts}
             icon={AlertTriangle}
-            iconWrapperClassName="bg-red-100"
-            iconClassName="text-red-700"
+            tone="warning"
           />
         </div>
 
-        <Card className="rounded-2xl shadow-sm">
+        <Card className="rounded-2xl border-[var(--monitoring-dark-border)] bg-white shadow-sm">
           <CardContent className="p-6">
             <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div>
-                <h2 className="text-2xl font-semibold">Сурагчдын явц</h2>
-                <p className="mt-1 text-sm text-muted-foreground">
+                <h2 className="text-2xl font-semibold text-[var(--monitoring-dark)]">
+                  Сурагчдын явц
+                </h2>
+                <p className="mt-1 text-sm text-[var(--monitoring-muted)]">
                   Нийт {visibleStudents.length} сурагчийн илэрц
                 </p>
               </div>
@@ -153,13 +161,13 @@ export default function MonitoringPage() {
               <MonitoringFilters
                 searchTerm={searchTerm}
                 studentFilter={studentFilter}
-                onSearchChange={setSearchTerm}
-                onStudentFilterChange={setStudentFilter}
+                onSearchChange={handleSearchChange}
+                onStudentFilterChange={handleStudentFilterChange}
               />
             </div>
 
             {visibleStudents.length === 0 ? (
-              <div className="rounded-2xl border border-dashed bg-white p-10 text-center text-muted-foreground">
+              <div className="rounded-2xl border border-dashed border-[var(--monitoring-dark-border)] bg-white p-10 text-center text-[var(--monitoring-muted)]">
                 Илэрц олдсонгүй.
               </div>
             ) : (
@@ -171,9 +179,9 @@ export default function MonitoringPage() {
                 </div>
 
                 <MonitoringPagination
-                  currentPage={currentPage}
+                  currentPage={safeCurrentPage}
                   totalPages={totalPages}
-                  onPageChange={setCurrentPage}
+                  onPageChange={handlePageChange}
                 />
               </>
             )}
