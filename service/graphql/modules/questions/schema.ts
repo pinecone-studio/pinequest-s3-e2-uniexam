@@ -11,6 +11,7 @@ enum QuestionDifficulty {
     type: String
     difficulty: QuestionDifficulty
     category: String
+    order_index: Int
     answers: [Answer]
   }
 

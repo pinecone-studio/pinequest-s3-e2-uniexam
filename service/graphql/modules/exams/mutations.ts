@@ -11,15 +11,19 @@ type ManualQuestionArgs = {
 };
 
 async function rollbackExamInsert(examId: string) {
-  const { data: qRows } = await supabase
-    .from("questions")
-    .select("id")
+  // Remove junction rows first
+  const { data: eqRows } = await supabase
+    .from("exam_questions")
+    .select("question_id")
     .eq("exam_id", examId);
-  const qIds = (qRows ?? []).map((r) => r.id);
+  const qIds = (eqRows ?? []).map((r: { question_id: string }) => r.question_id);
+
+  await supabase.from("exam_questions").delete().eq("exam_id", examId);
+
   if (qIds.length > 0) {
     await supabase.from("answers").delete().in("question_id", qIds);
+    await supabase.from("questions").delete().in("id", qIds);
   }
-  await supabase.from("questions").delete().eq("exam_id", examId);
   await supabase.from("exams").delete().eq("id", examId);
 }
 
@@ -73,10 +77,23 @@ export const examMutations = {
       order_index: q.order_index,
     }));
 
-    const { error: qError } = await supabase
+    const { data: insertedQs, error: qError } = await supabase
       .from("questions")
-      .insert(questionRows);
+      .insert(questionRows)
+      .select("id, order_index");
     if (qError) throw new Error(qError.message);
+
+    // Link through exam_questions junction table
+    if (insertedQs && insertedQs.length > 0) {
+      const junctionRows = insertedQs.map((q: { id: string; order_index: number | null }, i: number) => ({
+        exam_id: exam.id,
+        question_id: q.id,
+        order_index: q.order_index ?? i,
+        points: 1,
+      }));
+      const { error: jErr } = await supabase.from("exam_questions").insert(junctionRows);
+      if (jErr) throw new Error(jErr.message);
+    }
 
     return exam;
   },
@@ -216,6 +233,16 @@ export const examMutations = {
       const { error: aErr } = await supabase.from("answers").insert(answerRows);
       if (aErr) throw new Error(aErr.message);
 
+      // Link all inserted questions through exam_questions junction table
+      const junctionRows = byOrder.map((row: { id: string; order_index: number | null }, i: number) => ({
+        exam_id: exam.id,
+        question_id: row.id,
+        order_index: row.order_index ?? i,
+        points: 1,
+      }));
+      const { error: jErr } = await supabase.from("exam_questions").insert(junctionRows);
+      if (jErr) throw new Error(jErr.message);
+
       return exam;
     } catch (e) {
       await rollbackExamInsert(exam.id);
@@ -232,7 +259,7 @@ export const examMutations = {
       start_time?: string;
       end_time?: string;
       duration?: number;
-      type: string;
+      type?: string;
     },
   ) => {
     const payload = pickDefined({
@@ -262,5 +289,103 @@ export const examMutations = {
     } catch (e) {
       throw new Error(e instanceof Error ? e.message : "Failed to delete exam");
     }
+  },
+
+  addManualQuestionToExam: async (
+    _: unknown,
+    args: {
+      exam_id: string;
+      content: string;
+      difficulty: "easy" | "medium" | "hard";
+      options: string[];
+      correctOptionIndex: number;
+    },
+  ) => {
+    const OPTION_COUNT = 5;
+    // 1. Insert question row
+    const { data: question, error: qErr } = await supabase
+      .from("questions")
+      .insert([{
+        text: args.content.trim(),
+        type: "multiple_choice",
+        difficulty: args.difficulty,
+      }])
+      .select()
+      .single();
+    if (qErr) throw new Error(qErr.message);
+
+    // 2. Get current max order_index in exam_questions for this exam
+    const { data: existing } = await supabase
+      .from("exam_questions")
+      .select("order_index")
+      .eq("exam_id", args.exam_id)
+      .order("order_index", { ascending: false })
+      .limit(1);
+    const nextOrder = existing && existing.length > 0
+      ? ((existing[0].order_index ?? 0) + 1)
+      : 0;
+
+    // 3. Link to exam via junction table
+    const { error: eqErr } = await supabase
+      .from("exam_questions")
+      .insert([{ exam_id: args.exam_id, question_id: question.id, order_index: nextOrder, points: 1 }]);
+    if (eqErr) {
+      // rollback question
+      await supabase.from("questions").delete().eq("id", question.id);
+      throw new Error(eqErr.message);
+    }
+
+    // 4. Insert answer options
+    const opts = [...args.options];
+    while (opts.length < OPTION_COUNT) opts.push("-");
+    const answerRows = opts.slice(0, OPTION_COUNT).map((text, i) => ({
+      question_id: question.id,
+      text: text.trim() || "-",
+      is_correct: i === args.correctOptionIndex,
+    }));
+    const { error: aErr } = await supabase.from("answers").insert(answerRows);
+    if (aErr) throw new Error(aErr.message);
+
+    return { ...question, order_index: nextOrder };
+  },
+
+  updateManualQuestion: async (
+    _: unknown,
+    args: {
+      id: string;
+      content: string;
+      difficulty: "easy" | "medium" | "hard";
+      options: string[];
+      correctOptionIndex: number;
+    },
+  ) => {
+    const OPTION_COUNT = 5;
+    // 1. Update question text + difficulty
+    const { data: question, error: qErr } = await supabase
+      .from("questions")
+      .update({ text: args.content.trim(), difficulty: args.difficulty })
+      .eq("id", args.id)
+      .select()
+      .single();
+    if (qErr) throw new Error(qErr.message);
+
+    // 2. Delete existing answers and re-insert
+    const { error: delErr } = await supabase
+      .from("answers")
+      .delete()
+      .eq("question_id", args.id);
+    if (delErr) throw new Error(delErr.message);
+
+    const opts = [...args.options];
+    while (opts.length < OPTION_COUNT) opts.push("-");
+    const answerRows = opts.slice(0, OPTION_COUNT).map((text, i) => ({
+      question_id: args.id,
+      text: text.trim() || "-",
+      is_correct: i === args.correctOptionIndex,
+    }));
+    const { error: aErr } = await supabase.from("answers").insert(answerRows);
+    if (aErr) throw new Error(aErr.message);
+
+    return question;
   },
 };

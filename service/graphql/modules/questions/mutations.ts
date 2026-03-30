@@ -49,6 +49,13 @@ export const questionMutations = {
   },
 
   deleteQuestion: async (_: unknown, args: { id: string }) => {
+    // Remove junction rows
+    const { error: jErr } = await supabase
+      .from("exam_questions")
+      .delete()
+      .eq("question_id", args.id);
+    if (jErr) throw new Error(jErr.message);
+
     const { error: aErr } = await supabase
       .from("answers")
       .delete()

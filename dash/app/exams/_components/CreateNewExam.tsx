@@ -44,6 +44,7 @@ const CREATE_EXAM = `#graphql
     $start_time: String!
     $end_time: String!
     $duration: Int!
+    $type: String!
   ) {
     createExam(
       course_id: $course_id
@@ -52,6 +53,7 @@ const CREATE_EXAM = `#graphql
       start_time: $start_time
       end_time: $end_time
       duration: $duration
+      type: $type
     ) {
       id
       title
@@ -160,6 +162,7 @@ export const CreateNewExam = () => {
         start_time: timing.start_time,
         end_time: timing.end_time,
         duration: timing.duration,
+        type: "manual",
       });
       const id = data.createExam?.id;
       if (!id) throw new Error("Шалгалтын ID ирээгүй.");
