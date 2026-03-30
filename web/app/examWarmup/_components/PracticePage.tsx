@@ -6,6 +6,7 @@ import PracticeHeader from "./PracticeHeader";
 import PracticeQuestion from "./PracticeQuestion";
 import PracticeResults from "./PracticeResults";
 import PracticeSetup from "./PracticeSetup";
+import PracticePageSkeleton from "./PracticePageSkeleton";
 import type { PracticeMode, PracticeSession } from "./practiceTypes";
 
 export default function PracticePage() {
@@ -90,7 +91,9 @@ export default function PracticePage() {
     <div className="space-y-6 ">
       <PracticeHeader />
 
-      {!session ? (
+      {!session && isGenerating ? (
+        <PracticePageSkeleton />
+      ) : !session ? (
         <PracticeSetup
           practiceMode={practiceMode}
           setPracticeMode={setPracticeMode}
