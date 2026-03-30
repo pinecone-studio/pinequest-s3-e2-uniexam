@@ -3,6 +3,9 @@ import { Button } from "@/components/ui/button";
 import { useExamState } from "../_hooks/use-exam-states";
 import ExamTimer from "./ExamTimer";
 import { CircleCheckBig, Flag, Send } from "lucide-react";
+import { examName } from "../mockExamData";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 export const ExamProgressBar = () => {
   const {
@@ -12,12 +15,20 @@ export const ExamProgressBar = () => {
     flagged,
     setCurrentId,
     answeredCount,
+    clearSavedExam,
   } = useExamState();
+  const router = useRouter();
   const progress = Math.round((answeredCount / totalQuestions) * 100);
+
+  const handleFinishExam = () => {
+    clearSavedExam();
+    toast.success("Шалгалтын хариулт хадгалагдаж, localStorage цэвэрлэгдлээ.");
+    router.push("/exams");
+  };
 
   return (
     <div className="border-l bg-muted/30 p-6 flex flex-col w-80">
-      <ExamTimer />
+      <ExamTimer durationSeconds={examName.durationSeconds} />
       <div className="flex-1">
         <h3 className="text-sm font-medium mb-3 ">Асуултууд</h3>
         <div className="grid grid-cols-5 gap-2">
@@ -80,7 +91,10 @@ export const ExamProgressBar = () => {
           </div>
         </div>
       </div>
-      <Button className="flex items-center font-semibold gap-3 rounded-md w-full px-6 py-5 bg-indigo-700">
+      <Button
+        onClick={handleFinishExam}
+        className="flex items-center font-semibold gap-3 rounded-md w-full px-6 py-5 bg-indigo-700"
+      >
         <Send />
         Шалгалт Дуусгах
       </Button>
