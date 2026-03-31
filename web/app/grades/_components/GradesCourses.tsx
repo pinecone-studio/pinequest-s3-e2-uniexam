@@ -118,22 +118,12 @@ export default function GradesCourses() {
                             Дээд оноо
                           </TableHead>
                           <TableHead className="text-center">Хувь</TableHead>
-                          <TableHead className="text-center">Жин</TableHead>
-                          <TableHead className="text-right">
-                            Жинлэсэн оноо
-                          </TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {course.exams.map((exam, index) => {
                           const percentage = exam.score
                             ? Math.round((exam.score / exam.maxScore) * 100)
-                            : null;
-                          const weightedScore = exam.score
-                            ? (
-                                (exam.score / exam.maxScore) *
-                                exam.weight
-                              ).toFixed(1)
                             : null;
 
                           return (
@@ -160,18 +150,6 @@ export default function GradesCourses() {
                                 {percentage !== null ? (
                                   <span className={getGradeColor(percentage)}>
                                     {percentage}%
-                                  </span>
-                                ) : (
-                                  "-"
-                                )}
-                              </TableCell>
-                              <TableCell className="text-center">
-                                {exam.weight}%
-                              </TableCell>
-                              <TableCell className="text-right">
-                                {weightedScore !== null ? (
-                                  <span className="font-medium">
-                                    {weightedScore}
                                   </span>
                                 ) : (
                                   "-"

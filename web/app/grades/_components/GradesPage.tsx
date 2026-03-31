@@ -7,9 +7,9 @@ export default function GradesPage() {
   return (
     <div className="space-y-6">
       <GradesOverview />
-      <GradesCharts />
+      {/* <GradesCharts /> */}
       <GradesCourses />
-      <GradesSkills />
+      {/* <GradesSkills /> */}
     </div>
   );
 }
