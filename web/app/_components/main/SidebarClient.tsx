@@ -19,7 +19,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
 const items = [
-  { icon: Home, label: "Нүүр", href: "/" },
+  { icon: Home, label: "Нүүр", href: "/dashboard" },
   { icon: BookCheck, label: "Шалгалт", href: "/exams" },
   { icon: BookOpenCheck, label: "Шалгалтанд бэлдэх", href: "/examWarmup" },
   { icon: ChartCandlestick, label: "Дүн", href: "/grades" },
@@ -96,7 +96,7 @@ const SidebarClient = ({ displayName, isSignedIn }: Props) => {
 
         <div className="flex flex-col gap-3">
           {isSignedIn ? (
-            <div className="flex h-12 w-full items-center rounded-2xl border border-gray-200 px-1">
+            <div className="flex h-12 w-full items-center rounded-2xl px-1">
               <ClerkLoading>
                 <div className="ml-0.5 h-10 w-10 animate-pulse rounded-full border border-gray-100 bg-gray-200" />
               </ClerkLoading>

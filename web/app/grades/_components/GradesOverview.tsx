@@ -25,44 +25,46 @@ export default function GradesOverview() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="gap-0">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">GPA</CardTitle>
-            {/* <Award className="h-4 w-4 text-primary" /> */}
-          </CardHeader>
-          <CardContent>
+        <Card className="gap-2 p-6">
+          {/* <CardHeader className="flex flex-row items-center justify-between pb-2"> */}
+          <CardTitle className="text-sm font-medium">GPA</CardTitle>
+          {/* <Award className="h-4 w-4 text-primary" /> */}
+          {/* </CardHeader> */}
+          <CardContent className="p-0">
             <div className="text-3xl font-bold">{overallGPA.toFixed(2)}</div>
-            <p className="text-xs text-muted-foreground">4.0-аас</p>
+            <p className="text-xs text-muted-foreground mt-2">4.0-аас</p>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Кредит</CardTitle>
-            <BookOpen className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
+        <Card className="gap-2 p-6">
+          {/* <CardHeader className="flex flex-row items-center justify-between pb-2"> */}
+          <CardTitle className="text-sm font-medium">Кредит</CardTitle>
+          {/* <BookOpen className="h-4 w-4 text-muted-foreground" /> */}
+          {/* </CardHeader> */}
+          <CardContent className="p-0">
             <div className="text-3xl font-bold">{totalCredits}</div>
-            <p className="text-xs text-muted-foreground">Энэ улирал</p>
+            <p className="text-xs text-muted-foreground mt-2">Энэ улирал</p>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Дундаж дүн</CardTitle>
-            <BarChart3 className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
+        <Card className="gap-2 p-6">
+          {/* <CardHeader className="flex flex-row items-center justify-between pb-2"> */}
+          <CardTitle className="text-sm font-medium">Дундаж дүн</CardTitle>
+          {/* <BarChart3 className="h-4 w-4 text-muted-foreground" /> */}
+          {/* </CardHeader> */}
+          <CardContent className="p-0">
             <div className="text-3xl font-bold">{averageGrade}%</div>
-            <p className="text-xs text-muted-foreground">Бүх хичээлээр</p>
+            <p className="text-xs text-muted-foreground mt-2">Бүх хичээлээр</p>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <Card className="gap-2 p-6">
+          <CardHeader className="flex flex-row items-center justify-between px-0">
             <CardTitle className="text-sm font-medium">Үзүүлэлт</CardTitle>
             <TrendingUp className="h-4 w-4 text-green-500" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-0">
             <div className="text-3xl font-bold text-[#42c66e]">+0.15</div>
-            <p className="text-xs text-muted-foreground">Энэ сард GPA өссөн</p>
+            <p className="text-xs text-muted-foreground mt-2">
+              Энэ сард GPA өссөн
+            </p>
           </CardContent>
         </Card>
       </div>

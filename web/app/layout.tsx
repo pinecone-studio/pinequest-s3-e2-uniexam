@@ -39,7 +39,7 @@ export default function RootLayout({
         lang="en"
         className={`${inter.className} ${jetbrainsMono.variable} ${robotoMono.variable} h-full antialiased`}
       >
-        <body className="min-h-full flex">
+        <body className="min-h-full flex max-w-360 mx-auto">
           {/* <Sidebar /> */}
           <main className="flex-1">
             <ConditionalLayout sidebar={<Sidebar />}>
