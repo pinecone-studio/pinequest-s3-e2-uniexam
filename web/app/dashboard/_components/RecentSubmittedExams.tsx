@@ -263,7 +263,7 @@ export function RecentSubmittedExams() {
               key={item.id}
               className="overflow-hidden rounded-2xl border-slate-100 bg-white/70 shadow-sm transition-hover hover:bg-white"
             >
-              <CardContent className="px-3 py-1">
+              <CardContent className="px-3 py-1.5">
                 <div className="flex items-center justify-between gap-2">
                   {/* Зүүн тал: Icon болон Text */}
                   <div className="flex min-w-0 items-center gap-2">

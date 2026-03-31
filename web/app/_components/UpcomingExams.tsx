@@ -22,6 +22,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { isHiddenStudentExam } from "@/lib/exam-visibility";
 import { graphqlRequest } from "@/lib/graphql";
 
@@ -62,6 +68,8 @@ type UpcomingExamCard = {
   time: string;
   duration: number | null;
   hasKnownStartTime: boolean;
+  startsAt: string;
+  endsAt: string;
 };
 
 const parseExamDate = (value: string | null | undefined) => {
@@ -159,6 +167,71 @@ const getExamDurationLabel = (value: number | null | undefined) => {
   return `Нийт ${value} минут үргэлжилнэ`;
 };
 
+const getExamEndsAt = (exam: UpcomingExamCard) => {
+  const explicitEnd = parseExamDate(exam.endsAt);
+
+  if (explicitEnd) {
+    return explicitEnd;
+  }
+
+  const startsAt = parseExamDate(exam.startsAt);
+
+  if (!startsAt) {
+    return null;
+  }
+
+  if (
+    typeof exam.duration === "number" &&
+    !Number.isNaN(exam.duration) &&
+    exam.duration > 0
+  ) {
+    return new Date(startsAt.getTime() + exam.duration * 60 * 1000);
+  }
+
+  return null;
+};
+
+const isExamExpired = (exam: UpcomingExamCard, currentTime: number) => {
+  const endsAt = getExamEndsAt(exam);
+
+  if (!endsAt) {
+    return false;
+  }
+
+  return endsAt.getTime() < currentTime;
+};
+
+const canStartExam = (exam: UpcomingExamCard, currentTime: number) => {
+  const startsAt = parseExamDate(exam.startsAt);
+
+  if (!startsAt) {
+    return false;
+  }
+
+  if (isExamExpired(exam, currentTime)) {
+    return false;
+  }
+
+  return startsAt.getTime() <= currentTime;
+};
+
+const getExamStartAvailabilityMessage = (
+  exam: UpcomingExamCard,
+  currentTime: number,
+) => {
+  const startsAt = parseExamDate(exam.startsAt);
+
+  if (!startsAt) {
+    return "Эхлэх хугацаа тодорхойгүй";
+  }
+
+  if (startsAt.getTime() > currentTime) {
+    return "Шалгалт өгөх хугацаа болоогүй байна";
+  }
+
+  return null;
+};
+
 const buildUpcomingExamCards = (courses: CourseExamResponse["courses"]) =>
   courses
     .flatMap((course) =>
@@ -173,6 +246,7 @@ const buildUpcomingExamCards = (courses: CourseExamResponse["courses"]) =>
           duration: exam.duration,
           hasKnownStartTime: Boolean(parseExamDate(exam.start_time)),
           startsAt: exam.start_time ?? "",
+          endsAt: exam.end_time ?? "",
         })),
     )
     .sort(
@@ -185,12 +259,23 @@ export default function UpcomingExams() {
   const [exams, setExams] = useState<UpcomingExamCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentTime, setCurrentTime] = useState(() => Date.now());
   const [selectedExam, setSelectedExam] = useState<UpcomingExamCard | null>(
     null,
   );
   const [isWarningOpen, setIsWarningOpen] = useState(false);
   const { user, isLoaded } = useUser();
   const router = useRouter();
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      setCurrentTime(Date.now());
+    }, 1000);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -222,6 +307,8 @@ export default function UpcomingExams() {
               time: exam.time,
               duration: exam.duration,
               hasKnownStartTime: exam.hasKnownStartTime,
+              startsAt: exam.startsAt,
+              endsAt: exam.endsAt,
             }),
           );
 
@@ -260,6 +347,8 @@ export default function UpcomingExams() {
             time: exam.time,
             duration: exam.duration,
             hasKnownStartTime: exam.hasKnownStartTime,
+            startsAt: exam.startsAt,
+            endsAt: exam.endsAt,
           }));
 
         setExams(nextExams);
@@ -285,12 +374,16 @@ export default function UpcomingExams() {
   }, [isLoaded, user?.primaryEmailAddress?.emailAddress]);
 
   const handleOpenWarning = (exam: UpcomingExamCard) => {
+    if (!canStartExam(exam, currentTime)) {
+      return;
+    }
+
     setSelectedExam(exam);
     setIsWarningOpen(true);
   };
 
   const handleStartExam = () => {
-    if (!selectedExam) {
+    if (!selectedExam || !canStartExam(selectedExam, currentTime)) {
       return;
     }
 
@@ -298,8 +391,11 @@ export default function UpcomingExams() {
     router.push(`/exam?examId=${selectedExam.id}`);
   };
 
+  const visibleExams = exams.filter((exam) => !isExamExpired(exam, currentTime));
+
   return (
-    <div>
+    <TooltipProvider>
+      <div>
       <h2 className="font-bold pb-7 text-[16px] text-slate-800 whitespace-nowrap transition-colors">
         Өгөх шалгалтууд
       </h2>
@@ -338,66 +434,94 @@ export default function UpcomingExams() {
         </div>
       ) : null}
 
-      {!loading && !error && exams.length === 0 ? (
+      {!loading && !error && visibleExams.length === 0 ? (
         <div className="rounded-2xl border border-gray-200 bg-gray-50 px-5 py-4 text-sm text-gray-500">
           Одоогоор шалгалттай хичээл алга.
         </div>
       ) : null}
 
-      {!loading ? (
+      {!loading && visibleExams.length > 0 ? (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-          {exams.map((exam) => (
-            <div
-              key={exam.id}
-              className="h-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-4"
-            >
-              <div className="flex h-full min-h-30 w-full flex-col justify-between gap-4">
-                <div>
-                  <p className="text-[11px] font-medium text-[#006d77]">
-                    {exam.subject}
-                  </p>
+          {visibleExams.map((exam) => {
+            const examCanStart = canStartExam(exam, currentTime);
+            const examStartMessage = getExamStartAvailabilityMessage(
+              exam,
+              currentTime,
+            );
 
-                  <h3 className="text-[18px] font-semibold text-gray-900">
-                    {exam.title}
-                  </h3>
+            return (
+              <div
+                key={exam.id}
+                className="h-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-4"
+              >
+                <div className="flex h-full min-h-30 w-full flex-col justify-between gap-4">
+                  <div>
+                    <p className="text-[11px] font-medium text-[#006d77]">
+                      {exam.subject}
+                    </p>
 
-                  <p className="mt-1 text-[11px] text-slate-500">
-                    {getExamDurationLabel(exam.duration)}
-                  </p>
-                </div>
+                    <h3 className="text-[18px] font-semibold text-gray-900">
+                      {exam.title}
+                    </h3>
 
-                <div className="flex w-full flex-wrap items-center justify-between gap-2">
-                  <div className="flex min-w-0 flex-wrap items-center gap-2 text-gray-500 text-[10px]">
-                    {exam.hasKnownStartTime ? (
-                      <>
-                        <div className="flex items-center gap-0.5 whitespace-nowrap">
-                          <Calendar className="w-2.5 h-2.5" />
-                          <span>{exam.date}</span>
-                        </div>
-
-                        <div className="flex items-center gap-0.5 whitespace-nowrap">
-                          <Clock className="w-2.5 h-2.5" />
-                          <span>{exam.time}</span>
-                        </div>
-                      </>
-                    ) : (
-                      <div className="whitespace-nowrap">
-                        <span>Эхлэх хугацаа тодорхойгүй</span>
-                      </div>
-                    )}
+                    <p className="mt-1 text-[11px] text-slate-500">
+                      {getExamDurationLabel(exam.duration)}
+                    </p>
                   </div>
 
-                  <Button
-                    type="button"
-                    onClick={() => handleOpenWarning(exam)}
-                    className="hover:cursor-pointer flex shrink-0 rounded-md items-center gap-0.5 bg-[#006d77] px-2 py-0 h-6 text-[11px]"
-                  >
-                    Шалгалт өгөх <ChevronRight className="w-1.5 h-1.5" />
-                  </Button>
+                  <div className="flex w-full flex-wrap items-center justify-between gap-2">
+                    <div className="flex min-w-0 flex-wrap items-center gap-2 text-gray-500 text-[10px]">
+                      {exam.hasKnownStartTime ? (
+                        <>
+                          <div className="flex items-center gap-0.5 whitespace-nowrap">
+                            <Calendar className="w-2.5 h-2.5" />
+                            <span>{exam.date}</span>
+                          </div>
+
+                          <div className="flex items-center gap-0.5 whitespace-nowrap">
+                            <Clock className="w-2.5 h-2.5" />
+                            <span>{exam.time}</span>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="whitespace-nowrap">
+                          <span>Эхлэх хугацаа тодорхойгүй</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {examCanStart ? (
+                      <Button
+                        type="button"
+                        onClick={() => handleOpenWarning(exam)}
+                        className="hover:cursor-pointer flex shrink-0 rounded-md items-center gap-0.5 bg-[#006d77] px-2 py-0 h-6 text-[11px]"
+                      >
+                        Шалгалт өгөх <ChevronRight className="w-1.5 h-1.5" />
+                      </Button>
+                    ) : (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="inline-flex shrink-0">
+                            <Button
+                              type="button"
+                              disabled
+                              className="flex h-6 shrink-0 items-center gap-0.5 rounded-md bg-[#006d77] px-2 py-0 text-[11px] text-white/90 hover:cursor-not-allowed"
+                            >
+                              Шалгалт өгөх{" "}
+                              <ChevronRight className="h-1.5 w-1.5" />
+                            </Button>
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" sideOffset={6}>
+                          {examStartMessage}
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       ) : null}
 
@@ -503,12 +627,14 @@ export default function UpcomingExams() {
               type="button"
               onClick={handleStartExam}
               className="bg-[#006d77]"
+              disabled={!selectedExam || !canStartExam(selectedExam, currentTime)}
             >
               Шалгалт өгөх
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+      </div>
+    </TooltipProvider>
   );
 }

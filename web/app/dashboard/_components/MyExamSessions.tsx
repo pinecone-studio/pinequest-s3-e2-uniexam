@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { CalendarDays, ChevronRight, Clock3 } from "lucide-react";
@@ -40,8 +40,8 @@ type DashboardExamSessionsResponse = {
       id: string;
       title: string;
       start_time: string;
-      end_time: string;
-      duration: number;
+      end_time: string | null;
+      duration: number | null;
       type: string;
     }[];
   }[];
@@ -52,7 +52,8 @@ type SessionExamCard = {
   title: string;
   subject: string;
   startTime: string;
-  endTime: string;
+  endTime: string | null;
+  duration: number | null;
   isInProgress: boolean;
 };
 
@@ -106,17 +107,69 @@ const formatDateTime = (value: string) =>
     hour12: false,
   }).format(new Date(value));
 
-const formatTimeRange = (startTime: string, endTime: string) => {
+const parseExamDate = (value: string | null | undefined) => {
+  if (!value || value.trim().length === 0) {
+    return null;
+  }
+
+  const parsed = new Date(value);
+
+  if (Number.isNaN(parsed.getTime())) {
+    return null;
+  }
+
+  return parsed;
+};
+
+const getExamEndsAt = (
+  startTime: string,
+  endTime: string | null,
+  duration: number | null,
+) => {
+  const explicitEnd = parseExamDate(endTime);
+
+  if (explicitEnd) {
+    return explicitEnd;
+  }
+
+  const startsAt = parseExamDate(startTime);
+
+  if (!startsAt) {
+    return null;
+  }
+
+  if (
+    typeof duration === "number" &&
+    !Number.isNaN(duration) &&
+    duration > 0
+  ) {
+    return new Date(startsAt.getTime() + duration * 60 * 1000);
+  }
+
+  return null;
+};
+
+const formatTimeRange = (
+  startTime: string,
+  endTime: string | null,
+  duration: number | null,
+) => {
   const start = new Intl.DateTimeFormat("en-GB", {
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
   }).format(new Date(startTime));
+  const resolvedEnd = getExamEndsAt(startTime, endTime, duration);
+
+  if (!resolvedEnd) {
+    return `${start} - Тодорхойгүй`;
+  }
+
   const end = new Intl.DateTimeFormat("en-GB", {
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
-  }).format(new Date(endTime));
+  }).format(resolvedEnd);
 
   return `${start} - ${end}`;
 };
@@ -127,8 +180,9 @@ const startOfToday = (date: Date) =>
 const buildExamBuckets = (
   data: DashboardExamSessionsResponse,
   studentId: string,
+  currentDate: Date,
 ): ExamBuckets => {
-  const now = new Date();
+  const now = currentDate;
   const todayStart = startOfToday(now).getTime();
   const tomorrowStart = todayStart + 24 * 60 * 60 * 1000;
 
@@ -137,6 +191,7 @@ const buildExamBuckets = (
       .filter((enrollment) => enrollment.student_id === studentId)
       .map((enrollment) => enrollment.course_id),
   );
+  const hasStudentEnrollments = enrolledCourseIds.size > 0;
 
   const completedExamIds = new Set(
     data.submissions
@@ -160,7 +215,9 @@ const buildExamBuckets = (
   );
 
   const exams = data.courses
-    .filter((course) => enrolledCourseIds.has(course.id))
+    .filter((course) =>
+      hasStudentEnrollments ? enrolledCourseIds.has(course.id) : true,
+    )
     .flatMap((course) =>
       (course.exams ?? [])
         .filter((exam) => !isHiddenStudentExam(exam.title))
@@ -170,45 +227,60 @@ const buildExamBuckets = (
           subject: course.name || course.code,
           startTime: exam.start_time,
           endTime: exam.end_time,
+          duration: exam.duration,
           isInProgress: inProgressExamIds.has(exam.id),
         })),
     )
     .filter((exam) => {
-      const startsAt = new Date(exam.startTime).getTime();
-      const endsAt = new Date(exam.endTime).getTime();
+      const startsAt = parseExamDate(exam.startTime);
 
-      return (
-        Number.isFinite(startsAt) &&
-        Number.isFinite(endsAt) &&
-        !completedExamIds.has(exam.id)
-      );
+      return startsAt && !completedExamIds.has(exam.id);
     });
 
   const current = exams
     .filter((exam) => {
-      const startsAt = new Date(exam.startTime).getTime();
-      const endsAt = new Date(exam.endTime).getTime();
+      const startsAt = parseExamDate(exam.startTime);
+      const endsAt = getExamEndsAt(exam.startTime, exam.endTime, exam.duration);
       const nowTime = now.getTime();
 
-      return startsAt <= nowTime && nowTime <= endsAt;
+      if (!startsAt) {
+        return false;
+      }
+
+      if (!endsAt) {
+        return startsAt.getTime() <= nowTime;
+      }
+
+      return startsAt.getTime() <= nowTime && nowTime <= endsAt.getTime();
     })
     .sort(
       (left, right) =>
-        new Date(left.endTime).getTime() - new Date(right.endTime).getTime(),
+        (getExamEndsAt(left.startTime, left.endTime, left.duration)?.getTime() ??
+          Number.MAX_SAFE_INTEGER) -
+        (getExamEndsAt(right.startTime, right.endTime, right.duration)?.getTime() ??
+          Number.MAX_SAFE_INTEGER),
     );
 
   const today = exams
     .filter((exam) => {
-      const startsAt = new Date(exam.startTime).getTime();
-      const endsAt = new Date(exam.endTime).getTime();
+      const startsAt = parseExamDate(exam.startTime);
+      const endsAt = getExamEndsAt(exam.startTime, exam.endTime, exam.duration);
       const nowTime = now.getTime();
-      const isCurrent = startsAt <= nowTime && nowTime <= endsAt;
+
+      if (!startsAt) {
+        return false;
+      }
+
+      const startTime = startsAt.getTime();
+      const endTime = endsAt?.getTime();
+      const isCurrent =
+        startTime <= nowTime && (endTime === undefined || nowTime <= endTime);
 
       return (
         !isCurrent &&
-        startsAt >= todayStart &&
-        startsAt < tomorrowStart &&
-        endsAt >= nowTime
+        startTime >= todayStart &&
+        startTime < tomorrowStart &&
+        (endTime === undefined || endTime >= nowTime)
       );
     })
     .sort(
@@ -281,7 +353,7 @@ const SectionList = ({
                 </span>
                 <span className="flex items-center gap-1.5">
                   <Clock3 className="h-3.5 w-3.5" />
-                  {formatTimeRange(exam.startTime, exam.endTime)}
+                  {formatTimeRange(exam.startTime, exam.endTime, exam.duration)}
                 </span>
               </div>
             </div>
@@ -301,13 +373,34 @@ const SectionList = ({
 export function MyExamSessions({ className }: MyExamSessionsProps) {
   const { user, isLoaded } = useUser();
   const router = useRouter();
-  const [buckets, setBuckets] = useState<ExamBuckets>({
-    current: [],
-    today: [],
-  });
+  const [examSessionsData, setExamSessionsData] =
+    useState<DashboardExamSessionsResponse | null>(null);
+  const [studentId, setStudentId] = useState<string | null>(null);
+  const [currentTime, setCurrentTime] = useState(() => Date.now());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+
+  const buckets = useMemo(() => {
+    if (!examSessionsData || !studentId) {
+      return {
+        current: [],
+        today: [],
+      };
+    }
+
+    return buildExamBuckets(examSessionsData, studentId, new Date(currentTime));
+  }, [currentTime, examSessionsData, studentId]);
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      setCurrentTime(Date.now());
+    }, 1000);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -326,7 +419,8 @@ export function MyExamSessions({ className }: MyExamSessionsProps) {
         if (!studentEmail) {
           if (cancelled) return;
 
-          setBuckets({ current: [], today: [] });
+          setExamSessionsData(null);
+          setStudentId(null);
           setMessage("Шалгалтуудаа харахын тулд нэвтэрнэ үү.");
           setLoading(false);
           return;
@@ -342,18 +436,15 @@ export function MyExamSessions({ className }: MyExamSessionsProps) {
         const studentId = response.studentByEmail?.id;
 
         if (!studentId) {
-          setBuckets({ current: [], today: [] });
+          setExamSessionsData(null);
+          setStudentId(null);
           setMessage("Таны оюутны мэдээлэл олдсонгүй.");
           return;
         }
 
-        const nextBuckets = buildExamBuckets(response, studentId);
-        setBuckets(nextBuckets);
-        setMessage(
-          nextBuckets.current.length === 0 && nextBuckets.today.length === 0
-            ? "Танд яг одоо эсвэл өнөөдөр товлогдсон шалгалт алга."
-            : null,
-        );
+        setExamSessionsData(response);
+        setStudentId(studentId);
+        setMessage(null);
       } catch (fetchError) {
         if (cancelled) return;
 
@@ -434,11 +525,13 @@ export function MyExamSessions({ className }: MyExamSessionsProps) {
           <div className="rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-600">
             {error}
           </div>
-        ) : message &&
-          buckets.current.length === 0 &&
-          buckets.today.length === 0 ? (
+        ) : message ? (
           <div className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 text-sm text-slate-500">
             {message}
+          </div>
+        ) : buckets.current.length === 0 && buckets.today.length === 0 ? (
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 text-sm text-slate-500">
+            Танд яг одоо эсвэл өнөөдөр товлогдсон шалгалт алга.
           </div>
         ) : (
           <div className="grid gap-4 xl:grid-cols-2">

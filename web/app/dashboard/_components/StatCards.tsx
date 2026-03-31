@@ -53,7 +53,6 @@ type StatItem = {
   value: string;
   sub: string;
   icon: React.ReactNode;
-  extra?: React.ReactNode;
 };
 
 const DASHBOARD_STATS_QUERY = `
@@ -138,6 +137,30 @@ const getLatestSubmissionPerExam = (
     });
 
   return [...latestByExam.values()];
+};
+
+const getAverageScoreSummary = (value: number | null | undefined) => {
+  if (typeof value !== "number" || Number.isNaN(value)) {
+    return null;
+  }
+
+  if (value >= 90) {
+    return "Маш сайн";
+  }
+
+  if (value >= 80) {
+    return "Сайн";
+  }
+
+  if (value >= 70) {
+    return "Хэвийн";
+  }
+
+  if (value >= 60) {
+    return "Анхаарах хэрэгтэй";
+  }
+
+  return "Сайжруулах хэрэгтэй";
 };
 
 const buildStats = (
@@ -284,6 +307,8 @@ export function StatCards() {
     };
   }, [isLoaded, user?.primaryEmailAddress?.emailAddress]);
 
+  const averageScoreSummary = getAverageScoreSummary(stats.averageScore);
+
   const statItems: StatItem[] = [
     {
       label: "Бүртгэлтэй хичээл",
@@ -315,22 +340,15 @@ export function StatCards() {
       label: "Дундаж үнэлгээ",
       value:
         stats.averageScore !== null
-          ? `${stats.averageScore}%`
+          ? `${stats.averageScore} оноо`
           : "Хүлээгдэж байна...",
       sub:
         stats.reviewedCount > 0
-          ? `${stats.reviewedCount} шалгалт үнэлэгдсэн`
+          ? averageScoreSummary
+            ? `${averageScoreSummary} · ${stats.reviewedCount} шалгалт үнэлэгдсэн`
+            : `${stats.reviewedCount} шалгалт үнэлэгдсэн`
           : "Шалгасан үнэлгээ хараахан алга",
       icon: <Target className="w-4 h-4 text-slate-400" />,
-      extra:
-        stats.averageScore !== null ? (
-          <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-[#e6f4f1]">
-            <div
-              className="h-full rounded-full bg-[#006d77] transition-all duration-700"
-              style={{ width: `${stats.averageScore}%` }}
-            />
-          </div>
-        ) : undefined,
     },
   ];
 
@@ -351,8 +369,7 @@ export function StatCards() {
 
                 <div>
                   <Skeleton className="h-6 w-16 bg-slate-200" />
-                  <Skeleton className="mt-2 h-1 w-full rounded-full bg-slate-200" />
-                  <Skeleton className="mt-2 h-3 w-24 bg-slate-200" />
+                  <Skeleton className="mt-2 h-3 w-28 bg-slate-200" />
                 </div>
               </CardContent>
             </Card>
@@ -386,8 +403,6 @@ export function StatCards() {
                     <div className="py-1 text-lg font-bold leading-none text-slate-900">
                       {stat.value}
                     </div>
-
-                    {stat.extra ? stat.extra : null}
 
                     <div className="mt-2 text-[10px] font-medium leading-tight text-slate-400">
                       {stat.sub}
