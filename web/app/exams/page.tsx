@@ -3,8 +3,8 @@ import UpcomingExams from "../_components/UpcomingExams";
 
 const ExamsPage = () => {
   return (
-    <div className="min-h-screen bg-background px-10 py-8">
-      <div className="mx-auto max-w-6xl">
+    <div className="min-h-screen bg-background">
+      <div className="mx-14 mt-8">
         <UpcomingExams />
         <CompletedExams />
       </div>

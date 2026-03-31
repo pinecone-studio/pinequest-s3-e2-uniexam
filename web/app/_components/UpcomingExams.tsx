@@ -255,13 +255,13 @@ export default function UpcomingExams() {
 
   return (
     <div>
-      <h2 className="font-bold pb-4 text-[16px] text-slate-800 whitespace-nowrap transition-colors">
+      <h2 className="font-bold pb-7 text-[16px] text-slate-800 whitespace-nowrap transition-colors">
         {" "}
         Өгөх шалгалтууд
       </h2>
 
       {loading ? (
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
           {Array.from({ length: 4 }, (_, index) => (
             <div
               key={`upcoming-skeleton-${index + 1}`}
@@ -301,7 +301,7 @@ export default function UpcomingExams() {
       ) : null}
 
       {!loading ? (
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
           {exams.map((exam) => (
             <div
               key={exam.id}
