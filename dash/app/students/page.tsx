@@ -623,6 +623,17 @@ export default function Page() {
 
   return (
   <div className="p-6 lg:p-8 bg-gray-50 min-h-screen space-y-6">
+
+    {/* 🔷 HEADER */}
+    <div>
+      <h1 className="text-2xl font-semibold text-gray-900">
+        Оюутны Dashboard
+      </h1>
+      <p className="text-sm text-gray-500">
+        Оюутны мэдээлэл, гүйцэтгэл, аналитик
+      </p>
+    </div>
+
     {/* 🔷 ANALYTICS */}
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
       <div className="bg-white rounded-2xl p-5 shadow-sm border">

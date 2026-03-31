@@ -1,6 +1,8 @@
 ﻿"use client";
 
+import { useEffect, useRef, useState } from "react";
 import { ArrowRight, CheckCircle2, XCircle } from "lucide-react";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,10 +32,70 @@ export default function PracticeQuestion({
   onNextQuestion,
   totalQuestions,
 }: PracticeQuestionProps) {
+  const [warningCount, setWarningCount] = useState<number>(0);
+  const leaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isLastQuestion = session.currentQuestion >= totalQuestions - 1;
 
+  useEffect(() => {
+    const handleWindowLeave = () => {
+      if (document.hidden) return;
+      setWarningCount((prev) => prev + 1);
+      toast.warning(`Анхааруулга ${warningCount + 1}: Цонхноос гарлаа!`, {
+        className: "bg-red-600 text-white font-bold border border-red-800",
+      });
+    };
+
+    document.addEventListener("mouseleave", handleWindowLeave);
+
+    return () => document.removeEventListener("mouseleave", handleWindowLeave);
+  }, [warningCount]);
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        setWarningCount((prev) => prev + 1);
+        toast.warning(`Анхааруулга ${warningCount + 1}: Tab сольж болохгүй!`, {
+          className: "bg-red-600 text-white font-bold border border-red-800",
+        });
+      }
+    };
+
+    const handleWindowBlur = () => {
+      if (document.hidden) return;
+      setWarningCount((prev) => prev + 1);
+      toast.warning(`Анхааруулга ${warningCount + 1}: Цонхноос гарлаа!`, {
+        className: "bg-red-600 text-white font-bold border border-red-800",
+      });
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("blur", handleWindowBlur);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("blur", handleWindowBlur);
+    };
+  }, [warningCount]);
+
+  const handlePracticeLeave = () => {
+    leaveTimeoutRef.current = setTimeout(() => {
+      toast.error("Шалгалтын хэсгээс гарах оролдлого илэрлээ");
+    }, 100);
+  };
+
+  const handlePracticeEnter = () => {
+    if (leaveTimeoutRef.current) {
+      clearTimeout(leaveTimeoutRef.current);
+    }
+  };
+
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
+    <div
+      className="mx-auto max-w-3xl space-y-6"
+      id="exam-warmup-area"
+      onMouseEnter={handlePracticeEnter}
+      onMouseLeave={handlePracticeLeave}
+    >
       <div className="space-y-2">
         <div className="flex items-center justify-between text-sm">
           <span className="text-muted-foreground">
