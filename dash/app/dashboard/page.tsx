@@ -8,20 +8,21 @@ import { UpcomingExams } from "./_components/upcoming-exams";
 
 export default function DashboardPage() {
   return (
-    <div className="flex gap-5 p-6 ">
+    <div className="flex flex-1 flex-col gap-5">
       {/* ── Left Column ── */}
-      <div className="flex flex-col gap-5 flex-1 min-w-0">
-        <ActiveExams />
-
-        <div className="flex gap-5 w-full">
-          <LatestGrades />
-          <TodaySchedule />
-          <Announcements />
+      <div className="flex gap-5 w-full">
+        <div className="flex flex-col gap-5 flex-1 min-w-0">
+          <ActiveExams />
+        </div>
+        {/* ── Right Column ── */}
+        <div className="flex flex-col gap-5 w-[280px] shrink-0">
+          <UpcomingExams />
         </div>
       </div>
-      {/* ── Right Column ── */}
-      <div className="flex flex-col gap-5 w-[280px] shrink-0">
-        <UpcomingExams />
+      <div className="flex gap-5 w-full">
+        <LatestGrades />
+        <TodaySchedule />
+        <Announcements />
       </div>
     </div>
   );

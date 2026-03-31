@@ -106,8 +106,8 @@ function classNameMatchesCourse(className: string, exam: GqlExam) {
   const title = exam.title?.toLowerCase();
   return Boolean(
     (code && hay.includes(code)) ||
-      (name && hay.includes(name)) ||
-      (title && hay.includes(title)),
+    (name && hay.includes(name)) ||
+    (title && hay.includes(title)),
   );
 }
 
@@ -128,8 +128,8 @@ export function ActiveExams() {
           graphqlRequest<{ enrollments: GqlEnrollment[] | null }>(
             ENROLLMENTS_QUERY,
           ),
-          fetch("/api/proctor-alerts").then((r) =>
-            r.json() as Promise<ProctorAlertsResponse>,
+          fetch("/api/proctor-alerts").then(
+            (r) => r.json() as Promise<ProctorAlertsResponse>,
           ),
         ]);
 
@@ -150,13 +150,13 @@ export function ActiveExams() {
 
         const dashboard = active.map((exam) => {
           const courseCode = exam.course?.code ?? exam.course_id ?? "";
-          const timeRange = exam.start_time && exam.end_time
-            ? `${formatWhen(exam.start_time)}`
-            : "";
+          const timeRange =
+            exam.start_time && exam.end_time
+              ? `${formatWhen(exam.start_time)}`
+              : "";
 
           const students =
-            (exam.course_id &&
-              studentsByCourseId.get(exam.course_id)?.size) ??
+            (exam.course_id && studentsByCourseId.get(exam.course_id)?.size) ??
             0;
 
           const violations = alerts.filter((a) =>
@@ -175,7 +175,11 @@ export function ActiveExams() {
         if (!cancelled) setActiveExams(dashboard as DashboardExam[]);
       } catch (e) {
         if (cancelled) return;
-        setError(e instanceof Error ? e.message : "Шалгалтын мэдээлэл ачаалж чадсангүй");
+        setError(
+          e instanceof Error
+            ? e.message
+            : "Шалгалтын мэдээлэл ачаалж чадсангүй",
+        );
         setActiveExams([]);
       } finally {
         if (!cancelled) setIsLoading(false);
@@ -196,13 +200,15 @@ export function ActiveExams() {
 
   return (
     <Card className="shadow-[0_1px_4px_rgba(0,0,0,0.06)] border-[#e8eef4]">
-      <CardHeader className="pb-0 pt-5 px-5">
+      <CardHeader>
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="text-[14px] font-bold text-[#2c3e50]">
               Явагдаж буй шалгалтууд
             </CardTitle>
-            <p className="text-[11.5px] text-[#8a9bb0] mt-0.5">{headerSubtitle}</p>
+            <p className="text-[11.5px] text-[#8a9bb0] mt-0.5">
+              {headerSubtitle}
+            </p>
           </div>
           <button className="text-[12px] text-[#31A8E0] font-semibold hover:underline">
             Бүгдийг харах →
@@ -211,7 +217,9 @@ export function ActiveExams() {
       </CardHeader>
       <CardContent className="px-5 pb-5 pt-4 flex flex-col gap-3">
         {isLoading ? (
-          <div className="text-[12px] text-[#8a9bb0] py-2">Ачааллаж байна...</div>
+          <div className="text-[12px] text-[#8a9bb0] py-2">
+            Ачааллаж байна...
+          </div>
         ) : activeExams.length === 0 ? (
           <div className="text-[12px] text-[#8a9bb0] py-2">
             Одоогоор идэвхтэй шалгалт алга байна
@@ -220,9 +228,15 @@ export function ActiveExams() {
           activeExams.map((e, idx) => {
             const hasViolations = e.violations > 0;
             const Icon = hasViolations ? Monitor : Info;
-            const iconBg = hasViolations ? "bg-[#31A8E0]/10" : "bg-[#27ae60]/10";
-            const iconColor = hasViolations ? "text-[#31A8E0]" : "text-[#27ae60]";
-            const violationsColor = hasViolations ? "text-red-500" : "text-[#27ae60]";
+            const iconBg = hasViolations
+              ? "bg-[#31A8E0]/10"
+              : "bg-[#27ae60]/10";
+            const iconColor = hasViolations
+              ? "text-[#31A8E0]"
+              : "text-[#27ae60]";
+            const violationsColor = hasViolations
+              ? "text-red-500"
+              : "text-[#27ae60]";
             const btnBg = hasViolations
               ? "bg-[#31A8E0] hover:bg-[#1fa8bb]"
               : "bg-[#27ae60] hover:bg-[#219a52]";

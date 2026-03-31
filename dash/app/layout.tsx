@@ -27,12 +27,12 @@ export default function RootLayout({
         className={`${inter.className} h-full antialiased`}
       >
         <body className="min-h-screen bg-[#f0f4f8]">
-          <Sidebar />
-
-          <main className="ml-[220px] min-h-screen">
-            <div className="w-full max-w-[1440px] mx-auto">{children}</div>
-          </main>
-
+          <div className="w-full max-w-[1440px] mx-auto">
+            <div className="flex min-h-screen">
+              <Sidebar />
+              <main className="flex flex-col flex-1">{children}</main>
+            </div>
+          </div>
           <Toaster position="top-center" />
         </body>
       </html>
