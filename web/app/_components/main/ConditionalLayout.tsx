@@ -2,6 +2,7 @@
 import { usePathname } from "next/navigation";
 
 const hideSidebarRoutes = ["/exam", "/examPage"];
+const authRoutes = ["/sign-in", "/sign-up"];
 
 const ConditionalLayout = ({
   children,
@@ -16,8 +17,9 @@ const ConditionalLayout = ({
       ? pathname === route
       : pathname.startsWith(route),
   );
+  const isAuthRoute = authRoutes.some((route) => pathname.startsWith(route));
 
-  if (hideSidebar) return <>{children}</>;
+  if (hideSidebar || isAuthRoute) return <>{children}</>;
 
   return (
     <div className="flex h-screen">

@@ -1,14 +1,11 @@
-import DashboardPage from "./dashboard/page";
+import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
 
-const Page = () => {
-  return (
-    <div>
-      <DashboardPage />
-    </div>
-  );
-};
+export default async function Page() {
+  const { userId } = await auth();
 
-export default Page;
+  redirect(userId ? "/dashboard" : "/sign-in");
+}
 
 // import UpcomingExams from "./_components/UpcomingExams";
 // import RecentResults from "./_components/RecentResults";
