@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { submitExamToBackend } from "@/lib/exam-submissions";
 import { useExamState } from "../_hooks/use-exam-states";
 import ExamTimer from "./ExamTimer";
-import { CircleCheckBig, Flag, Send } from "lucide-react";
+import { Send, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
@@ -18,6 +18,7 @@ export const ExamProgressBar = () => {
     answers,
     flagged,
     setCurrentId,
+    setAnswers,
     answeredCount,
     clearSavedExam,
   } = useExamState();
@@ -44,6 +45,27 @@ export const ExamProgressBar = () => {
     }
 
     return new Date(endsAtTime - exam.durationSeconds * 1000).toISOString();
+  };
+
+  const handleDemoFill = () => {
+    const demoAnswers = questions.reduce<Record<number, string | null>>(
+      (result, question) => {
+        if (question.type === "Short Answer") {
+          result[question.id] =
+            question.correctAnswer.trim() || `Demo хариулт ${question.id}`;
+          return result;
+        }
+
+        result[question.id] =
+          question.correctAnswer || question.choices?.[0]?.id || null;
+        return result;
+      },
+      {},
+    );
+
+    setAnswers(demoAnswers);
+    setCurrentId(1);
+    toast.success("Demo хариултууд автоматаар бөглөгдлөө.");
   };
 
   const handleFinishExam = async () => {
@@ -107,11 +129,11 @@ export const ExamProgressBar = () => {
               onClick={() => setCurrentId(q)}
               className={`rounded-full p-5 items-center border-2! ${
                 q === currentId
-                  ? "bg-indigo-700 text-white hover:bg-indigo-800 border-transparent"
+                  ? "border-transparent bg-[#006d77] text-white hover:bg-[#00565e]"
                   : flagged.includes(q)
                     ? "bg-amber-200 border-amber-400 text-amber-800 hover:bg-amber-300"
                     : answers[q] !== undefined && answers[q] !== null
-                      ? "bg-indigo-200 border-indigo-700 text-indigo-800 hover:bg-indigo-300"
+                      ? "border-[#006d77] bg-[#e6f4f1] text-[#006d77] hover:bg-[#d7ebe6]"
                       : "bg-muted hover:bg-muted/80 text-muted-foreground border-transparent"
               }`}
             >
@@ -125,11 +147,11 @@ export const ExamProgressBar = () => {
             Хариулаагүй
           </span>
           <span className="flex items-center gap-2">
-            <span className="w-3 h-3 rounded-full bg-indigo-700 inline-block" />
+            <span className="inline-block h-3 w-3 rounded-full bg-[#006d77]" />
             Одоогийн
           </span>
           <span className="flex items-center gap-2">
-            <span className="w-3 h-3 rounded-full border-2 border-indigo-700 bg-indigo-200 inline-block" />
+            <span className="inline-block h-3 w-3 rounded-full border-2 border-[#006d77] bg-[#e6f4f1]" />
             Хариулсан
           </span>
           <span className="flex items-center gap-2">
@@ -145,29 +167,30 @@ export const ExamProgressBar = () => {
           </div>
           <div className="w-full bg-muted overflow-hidden rounded-full h-2">
             <div
-              className="bg-indigo-500 h-2 rounded-full transition-all"
+              className="h-2 rounded-full bg-[#006d77] transition-all"
               style={{ width: `${progress}%` }}
             />
           </div>
-          <div className="flex items-center justify-between text-sm mt-3">
-            <span className="flex gap-1.5 items-center">
-              <CircleCheckBig size={15} color="#303F9F" /> {answeredCount}/
-              {totalQuestions}
-            </span>
-            <span className="flex gap-1.5 items-center">
-              <Flag size={15} color="#FFA000" /> {flagged.length} тэмдэглэсэн
-            </span>
-          </div>
         </div>
       </div>
-      <Button
-        onClick={handleFinishExam}
-        disabled={isSubmitting}
-        className="flex items-center font-semibold gap-3 rounded-md w-full px-6 py-5 bg-indigo-700"
-      >
-        <Send />
-        {isSubmitting ? "Хадгалж байна..." : "Шалгалт Дуусгах"}
-      </Button>
+      <div className="space-y-3">
+        <Button
+          onClick={handleDemoFill}
+          disabled={isSubmitting}
+          className="flex w-full items-center gap-3 rounded-md border border-[#bfe3dd] bg-[#e6f4f1] px-6 py-5 font-semibold text-[#006d77] hover:bg-[#d7ebe6]"
+        >
+          <Sparkles />
+          Demo бөглөх
+        </Button>
+        <Button
+          onClick={handleFinishExam}
+          disabled={isSubmitting}
+          className="flex w-full items-center gap-3 rounded-md bg-[#006d77] px-6 py-5 font-semibold text-white hover:bg-[#00565e]"
+        >
+          <Send />
+          {isSubmitting ? "Хадгалж байна..." : "Шалгалт Дуусгах"}
+        </Button>
+      </div>
     </div>
   );
 };

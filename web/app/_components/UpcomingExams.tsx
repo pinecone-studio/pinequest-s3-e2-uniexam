@@ -2,9 +2,25 @@
 
 import { useEffect, useState } from "react";
 import { useUser } from "@clerk/nextjs";
-import Link from "next/link";
-import { Calendar, Clock, ChevronRight } from "lucide-react";
+import { useRouter } from "next/navigation";
+import {
+  AlertTriangle,
+  Calendar,
+  Camera,
+  ChevronRight,
+  Clock,
+  Keyboard,
+  Shield,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { graphqlRequest } from "@/lib/graphql";
 
@@ -125,7 +141,12 @@ export default function UpcomingExams() {
   const [exams, setExams] = useState<UpcomingExamCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedExam, setSelectedExam] = useState<UpcomingExamCard | null>(
+    null,
+  );
+  const [isWarningOpen, setIsWarningOpen] = useState(false);
   const { user, isLoaded } = useUser();
+  const router = useRouter();
 
   useEffect(() => {
     let cancelled = false;
@@ -148,13 +169,15 @@ export default function UpcomingExams() {
 
           if (cancelled) return;
 
-          const nextExams = buildUpcomingExamCards(data.courses).map((exam) => ({
-            id: exam.id,
-            subject: exam.subject,
-            title: exam.title,
-            date: exam.date,
-            time: exam.time,
-          }));
+          const nextExams = buildUpcomingExamCards(data.courses).map(
+            (exam) => ({
+              id: exam.id,
+              subject: exam.subject,
+              title: exam.title,
+              date: exam.date,
+              time: exam.time,
+            }),
+          );
 
           setExams(nextExams);
           return;
@@ -212,6 +235,20 @@ export default function UpcomingExams() {
       cancelled = true;
     };
   }, [isLoaded, user?.primaryEmailAddress?.emailAddress]);
+
+  const handleOpenWarning = (exam: UpcomingExamCard) => {
+    setSelectedExam(exam);
+    setIsWarningOpen(true);
+  };
+
+  const handleStartExam = () => {
+    if (!selectedExam) {
+      return;
+    }
+
+    setIsWarningOpen(false);
+    router.push(`/exam?examId=${selectedExam.id}`);
+  };
 
   return (
     <div>
@@ -291,17 +328,128 @@ export default function UpcomingExams() {
                     </div>
                   </div>
 
-                  <Link href={`/exam?examId=${exam.id}`}>
-                    <Button className="hover:cursor-pointer flex items-center gap-2 bg-[#006d77]">
-                      Шалгалт өгөх <ChevronRight className="w-3 h-3" />
-                    </Button>
-                  </Link>
+                  <Button
+                    type="button"
+                    onClick={() => handleOpenWarning(exam)}
+                    className="hover:cursor-pointer flex items-center gap-2 bg-[#006d77]"
+                  >
+                    Шалгалт өгөх <ChevronRight className="w-3 h-3" />
+                  </Button>
                 </div>
               </div>
             </div>
           ))}
         </div>
       ) : null}
+
+      <Dialog
+        open={isWarningOpen}
+        onOpenChange={(open) => {
+          setIsWarningOpen(open);
+
+          if (!open) {
+            setSelectedExam(null);
+          }
+        }}
+      >
+        <DialogContent className="p-0 sm:max-w-xl" showCloseButton={false}>
+          <DialogHeader className=" gap-1 border-b border-slate-100 px-7 py-5">
+            <DialogTitle className="flex items-center gap-2 text-lg font-semibold text-slate-900">
+              <AlertTriangle className="h-5 w-5 text-[#d97706]" />
+              Шалгалтын өмнөх сануулга
+            </DialogTitle>
+            <DialogDescription className="text-xs pl-7 text-slate-500">
+              Шалгалтаа эхлүүлэхээс өмнө дараах мэдээлэлтэй танилцана уу.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3 px-6 py-4">
+            {selectedExam ? (
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                <p className="text-[11px] font-medium text-[#006d77]">
+                  {selectedExam.subject}
+                </p>
+                <h3 className="mt-1 text-base font-semibold text-slate-900">
+                  {selectedExam.title}
+                </h3>
+              </div>
+            ) : null}
+
+            <div className="space-y-3">
+              <div className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3">
+                <Shield className="mt-0.5 h-4 w-4 shrink-0 text-[#006d77]" />
+                <div>
+                  <p className="text-sm font-medium text-slate-800">
+                    Tab, focus, гарах оролдлогууд хянагдана
+                  </p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    Шалгалтын үеэр tab солих, цонхны focus алдах, window blur,
+                    цонхноос гарах, мөн шалгалтын хэсгээс гарах оролдлогууд
+                    анхааруулгад бүртгэгдэнэ.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3">
+                <Camera className="mt-0.5 h-4 w-4 shrink-0 text-[#006d77]" />
+                <div>
+                  <p className="text-sm font-medium text-slate-800">
+                    Камерын хяналт ажиллаж байна
+                  </p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    Олон хүн илрэх, царай харагдахгүй болох, доош удаан харах,
+                    эсвэл утас харагдах үед систем анхааруулга өгнө.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3">
+                <Keyboard className="mt-0.5 h-4 w-4 shrink-0 text-[#006d77]" />
+                <div>
+                  <p className="text-sm font-medium text-slate-800">
+                    Shortcut болон хуулах үйлдэл хориотой
+                  </p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    Ctrl, Alt, Meta товчлол, F12, PrintScreen, баруун товч,
+                    copy, paste, cut зэрэг үйлдлүүдийг систем хориглоно.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3">
+                <Clock className="mt-0.5 h-4 w-4 shrink-0 text-[#006d77]" />
+                <div>
+                  <p className="text-sm font-medium text-slate-800">
+                    {/* Бэлэн болсон үедээ шалгалтаа эхлүүлнэ үү */}
+                    Анхааруулга !!!
+                  </p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    Оюутанд өгсөн бүх анхааруулга багшийн хяналтын самбарт бодит
+                    хугацаанд (Real-time) бүртгэгдэж очихыг анхаарна уу.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className="-mx-0 -mb-0 rounded-b-none border-t-0 bg-transparent px-6 pb-5 pt-0">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsWarningOpen(false)}
+            >
+              Буцах
+            </Button>
+            <Button
+              type="button"
+              onClick={handleStartExam}
+              className="bg-[#006d77]"
+            >
+              Шалгалт өгөх
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

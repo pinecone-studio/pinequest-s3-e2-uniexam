@@ -106,8 +106,8 @@ export const ExamQA = () => {
                 key={choice.id}
                 className={`flex items-center gap-3 border rounded-lg px-4 py-3 cursor-pointer text-sm transition-all ${
                   answer === choice.id
-                    ? "border-indigo-500 bg-indigo-50 text-indigo-800"
-                    : "border-gray-200 hover:border-indigo-300 text-gray-700"
+                    ? "border-[#006d77] bg-[#e6f4f1] text-[#006d77]"
+                    : "border-gray-200 text-gray-700 hover:border-[#bfe3dd]"
                 }`}
               >
                 <input
@@ -116,7 +116,7 @@ export const ExamQA = () => {
                   value={choice.id}
                   checked={answer === choice.id}
                   onChange={() => handleAnswerChange(choice.id)}
-                  className="accent-indigo-600"
+                  className="accent-[#006d77]"
                 />
                 <span className="font-medium uppercase text-xs text-gray-400 mr-1">
                   {choice.id}.
@@ -131,7 +131,7 @@ export const ExamQA = () => {
           <button
             onClick={handleBack}
             disabled={currentQuestion.id === 1}
-            className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-800 disabled:opacity-30 disabled:cursor-not-allowed transition"
+            className="flex items-center gap-1 text-sm text-gray-500 transition hover:text-[#006d77] disabled:cursor-not-allowed disabled:opacity-30"
           >
             <ChevronLeft size={16} /> Буцах
           </button>
@@ -150,7 +150,7 @@ export const ExamQA = () => {
           <button
             onClick={handleNext}
             disabled={currentQuestion.id === totalQuestions}
-            className="flex items-center gap-2 text-sm px-5 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed transition"
+            className="flex items-center gap-2 rounded-lg bg-[#006d77] px-5 py-2 text-sm text-white transition hover:bg-[#00565e] disabled:cursor-not-allowed disabled:opacity-40"
           >
             Цааш <ChevronRight size={16} />
           </button>
