@@ -54,11 +54,13 @@ export const SubmissionsList = ({
                   <Clock size={14} strokeWidth={2.5} />
                   {student.submittedAt}
                 </div>
-                {student.status === "Дүгнэгдсэн" && (
-                  <span className="font-medium text-gray-800">
-                    {student.mcScore}/{student.mcTotal * 3 + student.mcTotal}
-                  </span>
-                )}
+                {student.status === "Дүгнэгдсэн" &&
+                  student.finalScore !== null &&
+                  student.finalScore !== undefined && (
+                    <span className="font-medium text-gray-800">
+                      {student.finalScore}
+                    </span>
+                  )}
               </div>
               <div className="w-36">
                 {student.status === "Дүгнэгдсэн" ? (

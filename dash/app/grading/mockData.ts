@@ -86,6 +86,8 @@ type SubmissionAnswer = {
   question_id: string;
   answer_id?: string | null;
   text_answer?: string | null;
+  score?: number | null;
+  feedback?: string | null;
 };
 type Submission = {
   id: string;
@@ -93,6 +95,8 @@ type Submission = {
   exam_id: string;
   started_at?: string | null;
   submitted_at?: string | null;
+  score_auto?: number | null;
+  score_manual?: number | null;
   final_score?: number | null;
   answers?: SubmissionAnswer[] | null;
 };
@@ -104,12 +108,33 @@ type Question = {
   order_index?: number | null;
 };
 
+function isManualQuestionType(type?: string | null): boolean {
+  if (!type) return true;
+  const normalized = type.toLowerCase();
+  return (
+    normalized.includes("essay") ||
+    normalized.includes("written") ||
+    normalized.includes("text") ||
+    normalized.includes("open") ||
+    normalized.includes("subjective") ||
+    normalized.includes("short")
+  );
+}
 const BOOT_QUERY = `
 query GradingBoot {
   courses { id code name exams { id title } }
   enrollments { id student_id course_id }
   students { id name email }
-  submissions { id student_id exam_id started_at submitted_at final_score }
+  submissions {
+    id
+    student_id
+    exam_id
+    started_at
+    submitted_at
+    score_auto
+    score_manual
+    final_score
+  }
 }
 `;
 
@@ -206,7 +231,8 @@ export async function fetchClassStudents(classId: string): Promise<{
         initials: toInitials(s.name),
         submittedAt: toRelative(sub?.submitted_at ?? sub?.started_at),
         status: graded ? "Дүгнэгдсэн" : "Хүлээгдэж байна",
-        mcScore: sub?.final_score ?? 0,
+        mcScore: sub?.score_auto ?? 0,
+        finalScore: sub?.final_score ?? null,
         mcTotal: 100,
         essays: [],
       } satisfies Student;
@@ -225,38 +251,7 @@ export async function fetchClassStudents(classId: string): Promise<{
     students,
   };
 }
-
 const STUDENT_QUERY = `
-query GradingStudent($courseId: String!, $studentId: String!) {
-  course(id: $courseId) {
-    id
-    code
-    name
-    exams {
-      id
-      title
-      questions { id text type order_index }
-    }
-  }
-  student(id: $studentId) { id name email }
-  enrollments { id student_id course_id }
-  submissions {
-    id student_id exam_id started_at submitted_at final_score
-    answers { id question_id answer_id text_answer }
-  }
-}
-`;
-
-export async function fetchStudentGradingContext(
-  classId: string,
-  studentId: string,
-): Promise<{
-  course: ClassCourse | null;
-  classStudents: Student[];
-  student: Student | null;
-  submissionId: string | null;
-}> {
-  const STUDENT_QUERY = `
 query GradingStudent($courseId: String!, $studentId: String!) {
   course(id: $courseId) {
     id
@@ -272,11 +267,28 @@ query GradingStudent($courseId: String!, $studentId: String!) {
   students { id name email }
   enrollments { id student_id course_id }
   submissions {
-    id student_id exam_id started_at submitted_at final_score
-    answers { id question_id answer_id text_answer }
+    id
+    student_id
+    exam_id
+    started_at
+    submitted_at
+    score_auto
+    score_manual
+    final_score
+    answers { id question_id answer_id text_answer score feedback }
   }
 }
 `;
+
+export async function fetchStudentGradingContext(
+  classId: string,
+  studentId: string,
+): Promise<{
+  course: ClassCourse | null;
+  classStudents: Student[];
+  student: Student | null;
+  submissionId: string | null;
+}> {
   const data = await gql<{
     course: Course | null;
     student: StudentRow | null;
@@ -335,7 +347,8 @@ query GradingStudent($courseId: String!, $studentId: String!) {
         sub?.final_score !== null && sub?.final_score !== undefined
           ? "Дүгнэгдсэн"
           : "Хүлээгдэж байна",
-      mcScore: sub?.final_score ?? 0,
+      mcScore: sub?.score_auto ?? 0,
+      finalScore: sub?.final_score ?? null,
       mcTotal: 100,
       essays: [],
     } satisfies Student;
@@ -352,21 +365,44 @@ query GradingStudent($courseId: String!, $studentId: String!) {
   const questions = (data.course.exams ?? [])
     .flatMap((e) => e.questions ?? [])
     .filter((q): q is Question => Boolean(q?.id && q?.text))
-    .filter(
-      (q) => (q.type ?? "").toLowerCase().includes("essay") || q.type == null,
-    )
     .sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0));
 
   const answerMap = new Map(
-    (latest?.answers ?? []).map((a) => [a.question_id, a]),
+    (latest?.answers ?? []).map((a) => [String(a.question_id), a]),
   );
-  const essays: EssayQuestion[] = questions.map((q, idx) => ({
-    id: idx + 1,
-    question: q.text,
-    studentAnswer: answerMap.get(q.id)?.text_answer ?? "",
-    rubric: DEFAULT_RUBRIC.map((r) => ({ ...r })),
-    feedback: "",
-  }));
+
+  const manualQuestions = questions.filter((q) => {
+    const answer = answerMap.get(String(q.id));
+    const hasTextAnswer = Boolean(answer?.text_answer?.trim());
+    return isManualQuestionType(q.type) || hasTextAnswer;
+  });
+
+  const questionById = new Map(questions.map((q) => [String(q.id), q]));
+  const fallbackManualQuestions =
+    manualQuestions.length > 0
+      ? manualQuestions
+      : (latest?.answers ?? [])
+          .filter((a) => Boolean(a.text_answer?.trim()))
+          .map((a, idx) => ({
+            id: String(a.question_id),
+            text: questionById.get(String(a.question_id))?.text ?? `Асуулт ${idx + 1}`,
+            type: "written",
+            order_index: idx,
+          }));
+
+  const essays: EssayQuestion[] = fallbackManualQuestions.map((q, idx) => {
+    const answer = answerMap.get(String(q.id));
+
+    return {
+      id: idx + 1,
+      questionId: q.id,
+      submissionAnswerId: answer?.id ?? null,
+      question: q.text,
+      studentAnswer: answer?.text_answer ?? "",
+      rubric: DEFAULT_RUBRIC.map((r) => ({ ...r })),
+      feedback: answer?.feedback ?? "",
+    };
+  });
 
   const student: Student = {
     id: data.student.id,
@@ -378,7 +414,8 @@ query GradingStudent($courseId: String!, $studentId: String!) {
       latest?.final_score !== null && latest?.final_score !== undefined
         ? "Дүгнэгдсэн"
         : "Хүлээгдэж байна",
-    mcScore: latest?.final_score ?? 0,
+    mcScore: latest?.score_auto ?? 0,
+    finalScore: latest?.final_score ?? null,
     mcTotal: 100,
     essays,
   };
@@ -446,5 +483,70 @@ export async function publishSubmissionGrade(
       score_manual: Math.round(manualScore),
       status: "reviewed",
     },
+  );
+}
+
+type EssayReviewInput = {
+  questionId: string;
+  submissionAnswerId?: string | null;
+  score: number;
+  feedback: string;
+};
+
+export async function saveEssayReviews(
+  submissionId: string,
+  reviews: EssayReviewInput[],
+): Promise<void> {
+  await Promise.all(
+    reviews.map((review) => {
+      const roundedScore = Math.round(review.score);
+
+      if (review.submissionAnswerId) {
+        return gql<{ updateSubmissionAnswer: { id: string } }>(
+          `
+          mutation UpdateSubmissionAnswer(
+            $id: String!
+            $score: Int
+            $feedback: String
+          ) {
+            updateSubmissionAnswer(
+              id: $id
+              score: $score
+              feedback: $feedback
+            ) { id }
+          }
+          `,
+          {
+            id: review.submissionAnswerId,
+            score: roundedScore,
+            feedback: review.feedback,
+          },
+        );
+      }
+
+      return gql<{ createSubmissionAnswer: { id: string } }>(
+        `
+        mutation CreateSubmissionAnswer(
+          $submission_id: String!
+          $question_id: String!
+          $score: Int
+          $feedback: String
+        ) {
+          createSubmissionAnswer(
+            submission_id: $submission_id
+            question_id: $question_id
+            score: $score
+            feedback: $feedback
+          ) { id }
+        }
+        `,
+        {
+          submission_id: submissionId,
+          question_id: review.questionId,
+          score: roundedScore,
+          feedback: review.feedback,
+        },
+      );
+    }),
   );
 }
