@@ -622,111 +622,153 @@ export default function Page() {
   }, [courseFilter]);
 
   return (
-    <div className="p-6 space-y-6">
+  <div className="p-6 lg:p-8 bg-gray-50 min-h-screen space-y-6">
 
-      {/* ANALYTICS */}
-      <div className="grid grid-cols-3 gap-4">
-        <div className="p-4 border rounded-xl">
-          Нийт: {analytics.total}
-        </div>
-        <div className="p-4 border rounded-xl">
-          Дундаж: {analytics.avgScore}%
-        </div>
-        <div className="p-4 border rounded-xl">
-          Шилдэг: {analytics.topStudent?.name}
-        </div>
+    {/* 🔷 HEADER */}
+    <div>
+      <h1 className="text-2xl font-semibold text-gray-900">
+        Оюутны Dashboard
+      </h1>
+      <p className="text-sm text-gray-500">
+        Оюутны мэдээлэл, гүйцэтгэл, аналитик
+      </p>
+    </div>
+
+    {/* 🔷 ANALYTICS */}
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="bg-white rounded-2xl p-5 shadow-sm border">
+        <p className="text-sm text-gray-500">Нийт оюутан</p>
+        <p className="text-2xl font-bold mt-1">
+          {analytics.total}
+        </p>
       </div>
 
-      {/* SEARCH */}
-      <div className="flex gap-3 flex-wrap items-center">
+      <div className="bg-white rounded-2xl p-5 shadow-sm border">
+        <p className="text-sm text-gray-500">Дундаж оноо</p>
+        <p className="text-2xl font-bold text-blue-600 mt-1">
+          {analytics.avgScore}%
+        </p>
+      </div>
+
+      <div className="bg-white rounded-2xl p-5 shadow-sm border">
+        <p className="text-sm text-gray-500">Шилдэг оюутан</p>
+        <p className="text-lg font-semibold mt-1">
+          {analytics.topStudent?.name || "-"}
+        </p>
+      </div>
+    </div>
+
+    {/* 🔍 SEARCH + ACTION */}
+    <div className="bg-white p-4 rounded-2xl border shadow-sm flex flex-wrap items-center gap-3 justify-between">
+
+      <div className="flex items-center gap-3">
         <Input
-          className="w-56"
+          className="w-64"
           placeholder="Оюутан хайх..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
 
-        <button onClick={() => setOpen(true)} className="border px-3 py-1 rounded">
-          Filter
+        <button
+          onClick={() => setOpen(true)}
+          className="px-4 py-2 rounded-lg border bg-white hover:bg-gray-50"
+        >
+          Филтэр
         </button>
+      </div>
 
-        <button onClick={savePreset} className="px-3 py-1 bg-gray-100 rounded">
+      <div className="flex gap-2">
+        <button
+          onClick={savePreset}
+          className="px-3 py-2 text-sm bg-gray-100 rounded-lg hover:bg-gray-200"
+        >
           Save
         </button>
 
-        <button onClick={loadPreset} className="px-3 py-1 bg-gray-100 rounded">
+        <button
+          onClick={loadPreset}
+          className="px-3 py-2 text-sm bg-gray-100 rounded-lg hover:bg-gray-200"
+        >
           Load
         </button>
       </div>
-
-      {/* 🔥 FILTER CHIPS + ANIMATION */}
-      <AnimatePresence>
-        {(courseFilter.length > 0 || majorFilter.length > 0) && (
-          <motion.div
-            layout
-            className="flex flex-wrap gap-2"
-          >
-            {courseFilter.map((c) => (
-              <motion.div
-                key={c}
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.8, opacity: 0 }}
-                className="px-3 py-1 bg-blue-100 rounded-full text-sm"
-              >
-                {c}
-                <button onClick={() =>
-                  setCourseFilter(prev => prev.filter(x => x !== c))
-                }> × </button>
-              </motion.div>
-            ))}
-
-            {majorFilter.map((m) => (
-              <motion.div
-                key={m}
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.8, opacity: 0 }}
-                className="px-3 py-1 bg-green-100 rounded-full text-sm"
-              >
-                {m}
-                <button onClick={() =>
-                  setMajorFilter(prev => prev.filter(x => x !== m))
-                }> × </button>
-              </motion.div>
-            ))}
-
-            <button
-              onClick={() => {
-                setCourseFilter([]);
-                setMajorFilter([]);
-              }}
-              className="px-3 py-1 bg-red-100 rounded-full text-sm"
-            >
-              Clear
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* INSIGHT */}
-      <div className="p-3 bg-blue-50 border rounded text-sm">
-        {getInsight(filteredItems)}
-      </div>
-
-      {/* TABLE */}
-      <StudentTable students={filteredItems} />
-
-      {/* MODAL */}
-      <AdvancedFilter
-        open={open}
-        setOpen={setOpen}
-        courseFilter={courseFilter}
-        setCourseFilter={setCourseFilter}
-        majorFilter={majorFilter}
-        setMajorFilter={setMajorFilter}
-        majors={availableMajors}
-      />
     </div>
-  );
+
+    {/* 🟦 FILTER CHIPS */}
+    {(courseFilter.length > 0 || majorFilter.length > 0) && (
+      <div className="flex flex-wrap gap-2">
+
+        {courseFilter.map((c) => (
+          <div
+            key={c}
+            className="flex items-center gap-2 px-3 py-1.5 bg-blue-100 text-blue-700 rounded-full text-sm"
+          >
+            {c}
+            <button
+              onClick={() =>
+                setCourseFilter((prev) =>
+                  prev.filter((x) => x !== c)
+                )
+              }
+              className="text-blue-500 hover:text-blue-700"
+            >
+              ×
+            </button>
+          </div>
+        ))}
+
+        {majorFilter.map((m) => (
+          <div
+            key={m}
+            className="flex items-center gap-2 px-3 py-1.5 bg-green-100 text-green-700 rounded-full text-sm"
+          >
+            {m}
+            <button
+              onClick={() =>
+                setMajorFilter((prev) =>
+                  prev.filter((x) => x !== m)
+                )
+              }
+              className="text-green-500 hover:text-green-700"
+            >
+              ×
+            </button>
+          </div>
+        ))}
+
+        <button
+          onClick={() => {
+            setCourseFilter([]);
+            setMajorFilter([]);
+          }}
+          className="px-3 py-1.5 bg-red-100 text-red-600 rounded-full text-sm hover:bg-red-200"
+        >
+          Clear
+        </button>
+      </div>
+    )}
+
+    {/* 🧠 INSIGHT */}
+    <div className="bg-blue-50 border border-blue-100 text-blue-700 px-4 py-3 rounded-xl text-sm">
+      {getInsight(filteredItems)}
+    </div>
+
+    {/* 📊 TABLE */}
+    <div className="bg-white rounded-2xl border shadow-sm overflow-hidden">
+      <StudentTable students={filteredItems} />
+    </div>
+
+    {/* 🔥 MODAL */}
+    <AdvancedFilter
+      open={open}
+      setOpen={setOpen}
+      courseFilter={courseFilter}
+      setCourseFilter={setCourseFilter}
+      majorFilter={majorFilter}
+      setMajorFilter={setMajorFilter}
+      majors={availableMajors}
+    />
+
+  </div>
+);
 }
