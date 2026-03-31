@@ -6,7 +6,6 @@ import { ExamHeader, ExamProgressBar, ExamQA } from "./_components";
 import { ProctoringGuard } from "./_components/ProctoringGuard";
 import { ExamProvider } from "./_hooks/use-exam-states";
 import { useExamData } from "./_hooks/use-exam-data";
-import { toast } from "sonner";
 
 const Exam = () => {
   const searchParams = useSearchParams();
@@ -50,34 +49,37 @@ export const ExamContent = () => {
   const [warningCount, setWarningCount] = useState<number>(0);
   const leaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  const recordWarning = (message: string) => {
+    setWarningCount((prev) => {
+      const next = prev + 1;
+      console.log(`[exam-warning:${next}] ${message}`);
+      return next;
+    });
+  };
+
+  useEffect(() => {
+    console.log(`[exam-warning-count] ${warningCount}`);
+  }, [warningCount]);
+
   useEffect(() => {
     const handleWindowLeave = () => {
       if (document.hidden) return;
-      setWarningCount((prev) => prev + 1);
-      toast.warning(`Анхааруулга ${warningCount + 1}: Цонхноос гарлаа!`, {
-        className: "bg-red-600 text-white font-bold border border-red-800",
-      });
+      recordWarning("Цонхноос гарлаа!");
     };
     document.addEventListener("mouseleave", handleWindowLeave);
     return () => document.removeEventListener("mouseleave", handleWindowLeave);
-  }, [warningCount]);
+  }, []);
 
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.hidden) {
-        setWarningCount((prev) => prev + 1);
-        toast.warning(`Анхааруулга ${warningCount + 1}: Tab сольж болохгүй!`, {
-          className: "bg-red-600 text-white font-bold border border-red-800",
-        });
+        recordWarning("Tab сольж болохгүй!");
       }
     };
 
     const handleWindowBlur = () => {
       if (document.hidden) return;
-      setWarningCount((prev) => prev + 1);
-      toast.warning(`Анхааруулга ${warningCount + 1}: Цонхноос гарлаа!`, {
-        className: "bg-red-600 text-white font-bold border border-red-800",
-      });
+      recordWarning("Цонхноос гарлаа!");
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
@@ -87,11 +89,11 @@ export const ExamContent = () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("blur", handleWindowBlur);
     };
-  }, [warningCount]);
+  }, []);
 
   const handleExamLeave = () => {
     leaveTimeoutRef.current = setTimeout(() => {
-      toast.error("Шалгалтын хэсгээс гарах оролдлого илэрлээ");
+      console.log("[exam-warning] Шалгалтын хэсгээс гарах оролдлого илэрлээ");
     }, 100);
   };
 

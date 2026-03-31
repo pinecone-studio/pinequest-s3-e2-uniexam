@@ -2,10 +2,14 @@
 
 import { useState } from "react";
 import {
+  AlertTriangle,
   BadgePercent,
   BookOpen,
+  Camera,
   ChartColumn,
   Clock,
+  Keyboard,
+  Shield,
   Target,
 } from "lucide-react";
 import {
@@ -17,6 +21,14 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import {
   Select,
@@ -88,6 +100,7 @@ export default function PracticeSetup({
   onStartPractice,
 }: PracticeSetupProps) {
   const [referenceNow] = useState(() => new Date());
+  const [isWarningOpen, setIsWarningOpen] = useState(false);
   const allTopics = Array.from(
     new Set(
       exams.flatMap((exam) =>
@@ -129,6 +142,19 @@ export default function PracticeSetup({
         : 0),
     0,
   );
+  const canStartPractice =
+    !isGenerating &&
+    (practiceMode === "exam" ? !!selectedExam : !!selectedTopic);
+
+  const handleOpenWarning = () => {
+    if (!canStartPractice) return;
+    setIsWarningOpen(true);
+  };
+
+  const handleConfirmStartPractice = () => {
+    setIsWarningOpen(false);
+    onStartPractice();
+  };
 
   return (
     <>
@@ -300,11 +326,8 @@ export default function PracticeSetup({
           <Button
             className="w-full bg-[#006d77]"
             size="lg"
-            onClick={onStartPractice}
-            disabled={
-              isGenerating ||
-              (practiceMode === "exam" ? !selectedExam : !selectedTopic)
-            }
+            onClick={handleOpenWarning}
+            disabled={!canStartPractice}
           >
             {isGenerating ? (
               <>
@@ -320,6 +343,122 @@ export default function PracticeSetup({
           </Button>
         </CardContent>
       </Card>
+
+      <Dialog open={isWarningOpen} onOpenChange={setIsWarningOpen}>
+        <DialogContent className="p-0 sm:max-w-xl" showCloseButton={false}>
+          <DialogHeader className="gap-1 border-b border-slate-100 px-7 py-5">
+            <DialogTitle className="flex items-center gap-2 text-lg font-semibold text-slate-900">
+              <AlertTriangle className="h-5 w-5 text-[#d97706]" />
+              Бэлтгэл шалгалтын өмнөх сануулга
+            </DialogTitle>
+            {/* <DialogDescription className="pl-7 text-xs text-slate-500">
+              Шалгалтаа эхлүүлэхээс өмнө дараах мэдээлэлтэй танилцана уу.
+            </DialogDescription> */}
+            <DialogDescription className="pl-7 text-xs text-slate-500">
+              Энэхүү анхааруулга нь бодит шалгалттай ойролцоо орчинд бэлтгэл
+              хийхэд тань туслах зорилготой бөгөөд шалгалтын явцад ямар нөхцөл
+              байдал үүсч болохыг урьдчилан мэдэж байх нь чухал юм.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3 px-6 py-4">
+            {practiceMode === "exam" && selectedExamDetails ? (
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                <p className="text-[11px] font-medium text-[#006d77]">
+                  {selectedExamDetails.courseCode ||
+                    selectedExamDetails.courseName}
+                </p>
+                <h3 className="mt-1 text-base font-semibold text-slate-900">
+                  {selectedExamDetails.title}
+                </h3>
+              </div>
+            ) : null}
+
+            {practiceMode === "topic" && selectedTopic ? (
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                <p className="text-[11px] font-medium text-[#006d77]">
+                  Сэдвээр бэлдэх
+                </p>
+                <h3 className="mt-1 text-base font-semibold text-slate-900">
+                  {selectedTopic}
+                </h3>
+              </div>
+            ) : null}
+
+            <div className="space-y-3">
+              <div className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3">
+                <Shield className="mt-0.5 h-4 w-4 shrink-0 text-[#006d77]" />
+                <div>
+                  <p className="text-sm font-medium text-slate-800">
+                    Tab, focus, гарах оролдлогууд хянагдана
+                  </p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    Давтлагын тестийн үеэр tab солих, цонхны focus алдах, window
+                    blur, цонхноос гарах, мөн асуултын хэсгээс гарах оролдлогууд
+                    бүртгэгдэнэ.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3">
+                <Camera className="mt-0.5 h-4 w-4 shrink-0 text-[#006d77]" />
+                <div>
+                  <p className="text-sm font-medium text-slate-800">
+                    Камерын хяналт ажиллах боломжтой
+                  </p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    Хэрэв тухайн урсгалд камерын хяналт идэвхтэй байвал олон хүн
+                    илрэх, царай харагдахгүй болох, доош удаан харах, эсвэл утас
+                    харагдах үед систем анхааруулга өгнө.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3">
+                <Keyboard className="mt-0.5 h-4 w-4 shrink-0 text-[#006d77]" />
+                <div>
+                  <p className="text-sm font-medium text-slate-800">
+                    Shortcut болон хуулах үйлдэл хориотой
+                  </p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    Ctrl, Alt, Meta товчлол, F12, PrintScreen, баруун товч,
+                    copy, paste, cut зэрэг үйлдлүүдийг систем хориглож болно.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3">
+                <Clock className="mt-0.5 h-4 w-4 shrink-0 text-[#006d77]" />
+                <div>
+                  <p className="text-sm font-medium text-slate-800">
+                    Анхааруулга !!!
+                  </p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    Бэлэн болсон үедээ давтлагын тестээ эхлүүлнэ үү.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className="-mx-0 -mb-0 rounded-b-none border-t-0 bg-transparent px-6 pb-5 pt-0">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsWarningOpen(false)}
+            >
+              Буцах
+            </Button>
+            <Button
+              type="button"
+              onClick={handleConfirmStartPractice}
+              className="bg-[#006d77]"
+            >
+              Асуулт үүсгэх
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
