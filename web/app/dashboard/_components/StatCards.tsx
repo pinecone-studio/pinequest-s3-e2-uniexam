@@ -336,14 +336,16 @@ export function StatCards() {
               key={`stat-skeleton-${index + 1}`}
               className="overflow-hidden rounded-xl border-white/40 bg-white/60 shadow-sm ring-1 ring-black/5"
             >
-              <CardContent className="space-y-3 py-5">
-                <div className="flex items-center justify-between">
+              <CardContent className="flex h-full flex-col justify-between">
+                <div className="mb-0.5 flex items-center justify-between">
                   <Skeleton className="h-3 w-20 bg-slate-200" />
                   <Skeleton className="h-4 w-4 rounded-full bg-slate-200" />
                 </div>
-                <div className="space-y-2">
-                  <Skeleton className="h-6 w-14 bg-slate-200" />
-                  <Skeleton className="h-3 w-24 bg-slate-200" />
+
+                <div>
+                  <Skeleton className="h-6 w-16 bg-slate-200" />
+                  <Skeleton className="mt-2 h-1 w-full rounded-full bg-slate-200" />
+                  <Skeleton className="mt-2 h-3 w-24 bg-slate-200" />
                 </div>
               </CardContent>
             </Card>

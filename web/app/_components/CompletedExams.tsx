@@ -196,6 +196,20 @@ const formatSubmittedAt = (value: string) => {
   return `${date} · ${time}`;
 };
 
+const formatSubmittedDateOnly = (value: string) => {
+  const submittedAt = new Date(value);
+
+  if (Number.isNaN(submittedAt.getTime())) {
+    return "Огноо тодорхойгүй";
+  }
+
+  return new Intl.DateTimeFormat("en-CA", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(submittedAt);
+};
+
 const getStatusLabel = (status: CompletedExamCard["status"]) => {
   if (status === "reviewed") {
     return "Шалгасан";
@@ -523,9 +537,29 @@ const CompletedExams = () => {
         <div className="overflow-hidden">
           <div className="space-y-3 pt-1">
             {loading ? (
-              <div className="rounded-3xl border border-gray-200 bg-gray-50 px-5 py-4 text-sm text-gray-500">
-                Өгсөн шалгалтуудыг ачаалж байна...
-              </div>
+              <>
+                {Array.from({ length: 3 }, (_, index) => (
+                  <div
+                    key={`completed-exam-skeleton-${index + 1}`}
+                    className="flex w-full flex-col gap-4 rounded-2xl border border-gray-200 bg-gray-50 px-5 py-3 md:flex-row md:items-center md:justify-between"
+                  >
+                    <div className="flex items-start gap-4">
+                      <Skeleton className="h-10 w-10 shrink-0 rounded-xl bg-slate-200" />
+
+                      <div className="min-w-0 space-y-2">
+                        <Skeleton className="h-3 w-20 bg-slate-200" />
+                        <Skeleton className="h-4 w-44 bg-slate-200" />
+                        <div className="flex items-center gap-3 pt-1">
+                          <Skeleton className="h-3 w-3 rounded-full bg-slate-200" />
+                          <Skeleton className="h-3 w-28 bg-slate-200" />
+                        </div>
+                      </div>
+                    </div>
+
+                    <Skeleton className="h-9 w-28 rounded-full bg-slate-200 md:self-center" />
+                  </div>
+                ))}
+              </>
             ) : null}
 
             {error ? (
@@ -626,7 +660,7 @@ const CompletedExams = () => {
                       Илгээсэн
                     </p>
                     <p className="mt-1 text-sm font-semibold text-slate-800">
-                      {formatSubmittedAt(selectedExam.submittedAt)}
+                      {formatSubmittedDateOnly(selectedExam.submittedAt)}
                     </p>
                   </div>
                   <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
