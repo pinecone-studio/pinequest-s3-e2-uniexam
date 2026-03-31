@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CalendarDays, ChevronLeft, ChevronRight, Clock3 } from "lucide-react";
+import { isHiddenStudentExam } from "@/lib/exam-visibility";
 import { cn } from "@/lib/utils";
 import { graphqlRequest } from "@/lib/graphql";
 
@@ -163,16 +164,18 @@ const buildCalendarExams = (
   return data.courses
     .filter((course) => enrolledCourseIds.has(course.id))
     .flatMap((course) =>
-      (course.exams ?? []).map((exam) => ({
-        id: exam.id,
-        title: exam.title,
-        courseName: course.name,
-        courseCode: course.code,
-        startTime: exam.start_time,
-        endTime: exam.end_time,
-        type: exam.type,
-        dateKey: getDateKey(new Date(exam.start_time)),
-      })),
+      (course.exams ?? [])
+        .filter((exam) => !isHiddenStudentExam(exam.title))
+        .map((exam) => ({
+          id: exam.id,
+          title: exam.title,
+          courseName: course.name,
+          courseCode: course.code,
+          startTime: exam.start_time,
+          endTime: exam.end_time,
+          type: exam.type,
+          dateKey: getDateKey(new Date(exam.start_time)),
+        })),
     )
     .filter((exam) => {
       const startsAt = new Date(exam.startTime).getTime();

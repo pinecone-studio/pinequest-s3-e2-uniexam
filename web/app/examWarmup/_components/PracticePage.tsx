@@ -1,8 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { isHiddenStudentExam } from "@/lib/exam-visibility";
 import { graphqlRequest } from "@/lib/graphql";
+import {
+  createPracticeHistoryItem,
+  loadPracticeHistory,
+  savePracticeHistory,
+} from "@/lib/practice-history";
 import PracticeHeader from "./PracticeHeader";
+import PracticeHistory from "./PracticeHistory";
 import PracticeQuestion from "./PracticeQuestion";
 import PracticeResults from "./PracticeResults";
 import PracticeSetup from "./PracticeSetup";
@@ -10,6 +17,7 @@ import PracticePageSkeleton from "./PracticePageSkeleton";
 import type {
   PracticeDifficulty,
   PracticeExamSummary,
+  PracticeHistoryEntry,
   PracticeMode,
   PracticeQuestion as GeneratedPracticeQuestion,
   PracticeSession,
@@ -73,6 +81,9 @@ export default function PracticePage() {
   const [practiceQuestions, setPracticeQuestions] = useState<
     GeneratedPracticeQuestion[]
   >([]);
+  const [historyItems, setHistoryItems] = useState<PracticeHistoryEntry[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(true);
+  const [historyRecorded, setHistoryRecorded] = useState(false);
   const [generationError, setGenerationError] = useState<string | null>(null);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [showExplanation, setShowExplanation] = useState<boolean>(false);
@@ -96,6 +107,7 @@ export default function PracticePage() {
         }
 
         const nextExams = [...(response.exams ?? [])]
+          .filter((exam) => !isHiddenStudentExam(exam.title))
           .sort((left, right) => {
             const leftTime = left.start_time
               ? new Date(left.start_time).getTime()
@@ -139,6 +151,50 @@ export default function PracticePage() {
     };
   }, []);
 
+  useEffect(() => {
+    setHistoryItems(loadPracticeHistory());
+    setHistoryLoading(false);
+  }, []);
+
+  useEffect(() => {
+    if (!session?.showResults || historyRecorded || practiceQuestions.length === 0) {
+      return;
+    }
+
+    const selectedExamDetails = exams.find((exam) => exam.id === selectedExam);
+    const title =
+      practiceMode === "exam"
+        ? selectedExamDetails?.title ?? "Warmup mock"
+        : `${selectedTopic ?? "Сэдэв"} warmup`;
+    const subject =
+      practiceMode === "exam"
+        ? selectedExamDetails?.courseName || selectedExamDetails?.courseCode || undefined
+        : selectedTopic ?? undefined;
+
+    const historyItem = createPracticeHistoryItem({
+      title,
+      subject,
+      questions: practiceQuestions,
+      answers: session.answers,
+      startedAt: session.startedAt,
+    });
+
+    setHistoryItems((prev) => {
+      const next = [historyItem, ...prev].slice(0, 20);
+      savePracticeHistory(next);
+      return next;
+    });
+    setHistoryRecorded(true);
+  }, [
+    exams,
+    historyRecorded,
+    practiceMode,
+    practiceQuestions,
+    selectedExam,
+    selectedTopic,
+    session,
+  ]);
+
   const startPractice = async () => {
     if (practiceMode === "exam" && !selectedExam) return;
     if (practiceMode === "topic" && !selectedTopic) return;
@@ -176,8 +232,11 @@ export default function PracticePage() {
       }
 
       setPracticeQuestions(data.questions);
+      setHistoryRecorded(false);
+      setGenerationError(null);
       setSession({
-        examId: selectedExam || "",
+        examId: selectedExam || null,
+        startedAt: new Date().toISOString(),
         currentQuestion: 0,
         answers: new Array(data.questions.length).fill(null),
         showResults: false,
@@ -222,6 +281,7 @@ export default function PracticePage() {
   const resetPractice = () => {
     setSession(null);
     setPracticeQuestions([]);
+    setHistoryRecorded(false);
     setSelectedAnswer(null);
     setShowExplanation(false);
     setGenerationError(null);
@@ -231,10 +291,12 @@ export default function PracticePage() {
     if (!session) return;
     setSession({
       ...session,
+      startedAt: new Date().toISOString(),
       currentQuestion: 0,
       answers: new Array(practiceQuestions.length).fill(null),
       showResults: false,
     });
+    setHistoryRecorded(false);
     setSelectedAnswer(null);
     setShowExplanation(false);
   };
@@ -269,6 +331,8 @@ export default function PracticePage() {
             difficulty={difficulty}
             setDifficulty={setDifficulty}
             isGenerating={isGenerating}
+            historyItems={historyItems}
+            historyLoading={historyLoading}
             onStartPractice={startPractice}
           />
           {generationError ? (
@@ -298,6 +362,10 @@ export default function PracticePage() {
           onRetry={retryPractice}
         />
       )}
+
+      {!session ? (
+        <PracticeHistory items={historyItems} loading={historyLoading} />
+      ) : null}
     </div>
   );
 }

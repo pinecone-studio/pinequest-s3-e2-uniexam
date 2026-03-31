@@ -5,6 +5,7 @@ import { useUser } from "@clerk/nextjs";
 import { BookOpen, CalendarDays, ClipboardList } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { isHiddenStudentExam } from "@/lib/exam-visibility";
 import { graphqlRequest } from "@/lib/graphql";
 
 type Course = {
@@ -85,6 +86,7 @@ const getNextExam = (exams: Course["exams"]) => {
   const now = Date.now();
 
   return [...(exams ?? [])]
+    .filter((exam) => !isHiddenStudentExam(exam.title))
     .filter((exam) => {
       const startsAt = new Date(exam.start_time).getTime();
       return Number.isFinite(startsAt) && startsAt >= now;
@@ -109,11 +111,14 @@ const buildCourseCards = (
   return courses
     .filter((course) => enrolledCourseIds.has(course.id))
     .map((course) => {
+      const visibleExams = (course.exams ?? []).filter(
+        (exam) => !isHiddenStudentExam(exam.title),
+      );
       const nextExam = getNextExam(course.exams);
       const nextExamTimestamp = nextExam
         ? new Date(nextExam.start_time).getTime()
         : null;
-      const upcomingExamCount = (course.exams ?? []).filter((exam) => {
+      const upcomingExamCount = visibleExams.filter((exam) => {
         const startsAt = new Date(exam.start_time).getTime();
         return Number.isFinite(startsAt) && startsAt >= Date.now();
       }).length;
@@ -122,7 +127,7 @@ const buildCourseCards = (
         id: course.id,
         name: course.name,
         code: course.code,
-        totalExams: course.exams?.length ?? 0,
+        totalExams: visibleExams.length,
         upcomingExamCount,
         nextExamTitle: nextExam?.title ?? null,
         nextExamDateLabel: nextExam
@@ -137,7 +142,7 @@ const buildCourseCards = (
         statusDescription:
           upcomingExamCount > 0
             ? "Ойрын шалгалтын товоо хянаарай."
-            : course.exams?.length
+            : visibleExams.length
               ? "Энэ хичээлд одоогоор шинэ тов хараахан нэмэгдээгүй байна."
               : "Энэ хичээлд шалгалтын мэдээлэл хараахан ороогүй байна.",
         nextExamTimestamp,

@@ -5,6 +5,7 @@ import { ExamCard, type ExamCardExam } from "./_components/ExamCard";
 import { SearchExam } from "./_components/SearchExam";
 import { SearchTabs } from "./_components/SearchTabs";
 import { CreateNewExam } from "./_components/CreateNewExam";
+import { isHiddenDashboardExam } from "@/lib/exam-visibility";
 import { graphqlRequest } from "@/lib/graphql";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -93,7 +94,9 @@ const ExamDashboard = () => {
       const data = await graphqlRequest<{ exams: GqlExam[] | null }>(
         EXAMS_QUERY,
       );
-      const rows = (data.exams ?? []).map(mapExam);
+      const rows = (data.exams ?? [])
+        .filter((exam) => !isHiddenDashboardExam(exam.title))
+        .map(mapExam);
       setExams(rows);
     } catch (err) {
       toast.error(

@@ -5,6 +5,7 @@ import { useUser } from "@clerk/nextjs";
 import { BookOpen, Clock, FileCheck2, Target } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { isHiddenStudentExam } from "@/lib/exam-visibility";
 import { graphqlRequest } from "@/lib/graphql";
 
 type DashboardStatsResponse = {
@@ -31,6 +32,7 @@ type DashboardStatsResponse = {
     id: string;
     exams: {
       id: string;
+      title?: string;
       start_time: string;
     }[];
   }[];
@@ -79,6 +81,7 @@ const DASHBOARD_STATS_QUERY = `
       id
       exams {
         id
+        title
         start_time
       }
     }
@@ -170,7 +173,11 @@ const buildStats = (
     .flatMap((course) => course.exams ?? [])
     .filter((exam) => {
       const startsAt = getTimestamp(exam.start_time);
-      return startsAt >= Date.now() && !completedExamIds.has(exam.id);
+      return (
+        startsAt >= Date.now() &&
+        !completedExamIds.has(exam.id) &&
+        !isHiddenStudentExam(exam.title)
+      );
     })
     .sort(
       (left, right) =>

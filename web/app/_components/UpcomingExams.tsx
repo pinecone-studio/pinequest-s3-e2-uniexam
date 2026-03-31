@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Calendar, Clock, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { isHiddenStudentExam } from "@/lib/exam-visibility";
 import { graphqlRequest } from "@/lib/graphql";
 
 type CourseExamResponse = {
@@ -107,14 +108,16 @@ const formatExamTime = (value: string) =>
 const buildUpcomingExamCards = (courses: CourseExamResponse["courses"]) =>
   courses
     .flatMap((course) =>
-      (course.exams ?? []).map((exam) => ({
-        id: exam.id,
-        subject: course.name || course.code,
-        title: exam.title,
-        date: formatExamDate(exam.start_time),
-        time: formatExamTime(exam.start_time),
-        startsAt: exam.start_time,
-      })),
+      (course.exams ?? [])
+        .filter((exam) => !isHiddenStudentExam(exam.title))
+        .map((exam) => ({
+          id: exam.id,
+          subject: course.name || course.code,
+          title: exam.title,
+          date: formatExamDate(exam.start_time),
+          time: formatExamTime(exam.start_time),
+          startsAt: exam.start_time,
+        })),
     )
     .sort(
       (left, right) =>

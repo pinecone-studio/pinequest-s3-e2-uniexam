@@ -1,6 +1,13 @@
 ﻿"use client";
 
-import { BookOpen, Clock, Target, Zap } from "lucide-react";
+import { useState } from "react";
+import {
+  BadgePercent,
+  BookOpen,
+  ChartColumn,
+  Clock,
+  Target,
+} from "lucide-react";
 import {
   Card,
   CardContent,
@@ -19,6 +26,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import type { PracticeHistoryEntry } from "./practiceTypes";
 import type {
   PracticeDifficulty,
   PracticeExamSummary,
@@ -38,7 +46,28 @@ type PracticeSetupProps = {
   difficulty: PracticeDifficulty;
   setDifficulty: (value: PracticeDifficulty) => void;
   isGenerating: boolean;
+  historyItems: PracticeHistoryEntry[];
+  historyLoading: boolean;
   onStartPractice: () => void;
+};
+
+const isSameDay = (left: Date, right: Date) =>
+  left.getFullYear() === right.getFullYear() &&
+  left.getMonth() === right.getMonth() &&
+  left.getDate() === right.getDate();
+
+const formatDurationLabel = (seconds: number) => {
+  if (seconds <= 0) {
+    return "0 мин";
+  }
+
+  const hours = seconds / 3600;
+
+  if (hours >= 1) {
+    return `${hours.toFixed(1)}ц`;
+  }
+
+  return `${Math.max(1, Math.round(seconds / 60))} мин`;
 };
 
 export default function PracticeSetup({
@@ -54,8 +83,11 @@ export default function PracticeSetup({
   difficulty,
   setDifficulty,
   isGenerating,
+  historyItems,
+  historyLoading,
   onStartPractice,
 }: PracticeSetupProps) {
+  const [referenceNow] = useState(() => new Date());
   const allTopics = Array.from(
     new Set(
       exams.flatMap((exam) =>
@@ -64,6 +96,39 @@ export default function PracticeSetup({
     ),
   );
   const selectedExamDetails = exams.find((exam) => exam.id === selectedExam);
+  const todayHistory = historyItems.filter((item) =>
+    isSameDay(new Date(item.submittedAt), referenceNow),
+  );
+  const weeklyThreshold = referenceNow.getTime() - 7 * 24 * 60 * 60 * 1000;
+  const weeklyHistory = historyItems.filter((item) => {
+    const submittedAt = new Date(item.submittedAt).getTime();
+    return Number.isFinite(submittedAt)
+      ? submittedAt >= weeklyThreshold
+      : false;
+  });
+  const answeredToday = todayHistory.reduce(
+    (sum, item) => sum + item.totalQuestions,
+    0,
+  );
+  const averageAccuracy = historyItems.length
+    ? Math.round(
+        (historyItems.reduce((sum, item) => sum + item.score, 0) /
+          Math.max(
+            1,
+            historyItems.reduce((sum, item) => sum + item.totalQuestions, 0),
+          )) *
+          100,
+      )
+    : 0;
+  const spentSecondsThisWeek = weeklyHistory.reduce(
+    (sum, item) =>
+      sum +
+      (typeof item.durationSeconds === "number" &&
+      Number.isFinite(item.durationSeconds)
+        ? item.durationSeconds
+        : 0),
+    0,
+  );
 
   return (
     <>
@@ -260,13 +325,22 @@ export default function PracticeSetup({
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Өнөөдрийн явц</CardTitle>
-            <Zap className="h-4 w-4 text-muted-foreground" />
+            <ChartColumn className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">3</div>
-            <p className="text-xs text-muted-foreground">
-              45 асуултанд хариулсан
-            </p>
+            {historyLoading ? (
+              <div className="space-y-2">
+                <div className="h-8 w-12 animate-pulse rounded bg-slate-200" />
+                <div className="h-3 w-28 animate-pulse rounded bg-slate-200" />
+              </div>
+            ) : (
+              <>
+                <div className="text-2xl font-bold">{todayHistory.length}</div>
+                <p className="text-xs text-muted-foreground">
+                  {answeredToday} асуултанд хариулсан
+                </p>
+              </>
+            )}
           </CardContent>
         </Card>
         <Card>
@@ -274,11 +348,20 @@ export default function PracticeSetup({
             <CardTitle className="text-sm font-medium">
               Зөв хариултын дундаж
             </CardTitle>
-            <Target className="h-4 w-4 text-muted-foreground" />
+            <BadgePercent className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">78%</div>
-            <Progress value={78} className="mt-2 h-1.5" />
+            {historyLoading ? (
+              <div className="space-y-2">
+                <div className="h-8 w-16 animate-pulse rounded bg-slate-200" />
+                <div className="h-1.5 w-full animate-pulse rounded bg-slate-200" />
+              </div>
+            ) : (
+              <>
+                <div className="text-2xl font-bold">{averageAccuracy}%</div>
+                <Progress value={averageAccuracy} className="mt-2 h-1.5" />
+              </>
+            )}
           </CardContent>
         </Card>
         <Card>
@@ -289,8 +372,21 @@ export default function PracticeSetup({
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">2.5ц</div>
-            <p className="text-xs text-muted-foreground">Энэ долоо хоногт</p>
+            {historyLoading ? (
+              <div className="space-y-2">
+                <div className="h-8 w-16 animate-pulse rounded bg-slate-200" />
+                <div className="h-3 w-24 animate-pulse rounded bg-slate-200" />
+              </div>
+            ) : (
+              <>
+                <div className="text-2xl font-bold">
+                  {formatDurationLabel(spentSecondsThisWeek)}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Энэ долоо хоногт
+                </p>
+              </>
+            )}
           </CardContent>
         </Card>
       </div>

@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { ArrowRight, BrainCircuit, CheckCircle2, XCircle } from "lucide-react";
+import { ArrowRight, CheckCircle2, XCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -91,8 +91,13 @@ export default function PracticeQuestion({
               return (
                 <div
                   key={index}
-                  className={`flex cursor-pointer items-center space-x-3 rounded-lg border p-4 transition-colors ${optionClass}`}
-                  onClick={() => setSelectedAnswer(index.toString())}
+                  className={`flex items-center space-x-3 rounded-lg border p-4 transition-colors ${
+                    showExplanation ? "cursor-default" : "cursor-pointer"
+                  } ${optionClass}`}
+                  onClick={() => {
+                    if (showExplanation) return;
+                    setSelectedAnswer(index.toString());
+                  }}
                 >
                   <RadioGroupItem
                     value={index.toString()}
@@ -100,7 +105,7 @@ export default function PracticeQuestion({
                   />
                   <Label
                     htmlFor={`option-${index}`}
-                    className="flex-1 cursor-pointer"
+                    className={`flex-1 ${showExplanation ? "cursor-default" : "cursor-pointer"}`}
                   >
                     {option}
                   </Label>

@@ -11,10 +11,30 @@ export type PracticeExamSummary = {
 };
 
 export type PracticeSession = {
-  examId: string;
+  examId: string | null;
+  startedAt: string;
   currentQuestion: number;
   answers: (number | null)[];
   showResults: boolean;
+};
+
+export type PracticeHistoryEntry = {
+  id: string;
+  title: string;
+  subject?: string;
+  submittedAt: string;
+  durationSeconds: number;
+  score: number;
+  totalQuestions: number;
+  details: {
+    id: string;
+    orderIndex: number;
+    question: string;
+    studentAnswer: string;
+    correctAnswer: string;
+    isCorrect: boolean;
+    explanation: string;
+  }[];
 };
 
 export type PracticeQuestion = {

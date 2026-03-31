@@ -35,6 +35,16 @@ type SubmitExamInput = {
   answers: Record<number, string | null>;
 };
 
+type SubmissionAnswer =
+  | {
+      questionId: string;
+      textAnswer: string;
+    }
+  | {
+      questionId: string;
+      answerId: string;
+    };
+
 const STUDENT_BY_EMAIL_QUERY = `
   query StudentByEmail($email: String!) {
     studentByEmail(email: $email) {
@@ -117,8 +127,8 @@ const resolveStudentId = async (studentEmail: string, studentName: string) => {
 const buildSubmissionAnswers = (
   questions: ExamQuestion[],
   answers: Record<number, string | null>,
-) => {
-  return questions.flatMap((question) => {
+): SubmissionAnswer[] => {
+  return questions.flatMap<SubmissionAnswer>((question) => {
     const rawAnswer = answers[question.id];
 
     if (!rawAnswer) {
