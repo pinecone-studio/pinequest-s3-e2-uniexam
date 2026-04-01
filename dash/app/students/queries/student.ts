@@ -48,3 +48,14 @@ export const GET_STUDENTS_LEGACY = `
     }
   }
 `;
+
+export const GET_STUDENTS_MINIMAL = `
+  query GetStudentsMinimal {
+    students {
+      id
+      name
+      email
+      created_at
+    }
+  }
+`;
