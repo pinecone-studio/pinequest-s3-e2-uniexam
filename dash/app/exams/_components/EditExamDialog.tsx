@@ -249,55 +249,6 @@ export const EditExamDialog = ({
               </Select>
             </Field>
             <Field>
-                <Label className="text-sm font-medium text-slate-700">
-                  Ковер зураг{" "}
-                  <span className="text-slate-400 font-normal">(заавал биш)</span>
-                </Label>
-                <div className="mt-2 flex items-center gap-3">
-                  {imageUrl ? (
-                    <div className="relative size-20 rounded-xl border border-slate-200 overflow-hidden shadow-sm group">
-                      <img src={imageUrl} alt="Exam cover" className="size-full object-cover" />
-                      <button
-                        type="button"
-                        onClick={() => setImageUrl(null)}
-                        className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity rounded-xl"
-                      >
-                        <X size={16} className="text-white" />
-                      </button>
-                    </div>
-                  ) : (
-                    <label className="flex flex-col items-center justify-center size-20 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 cursor-pointer hover:border-blue-300 hover:bg-blue-50/60 transition-all">
-                      <ImageIcon className="size-5 text-slate-400" />
-                      <span className="text-[10px] text-slate-500 mt-1 font-medium">Зураг нэмэх</span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        disabled={uploading}
-                        onChange={async (e) => {
-                          const file = e.target.files?.[0];
-                          if (!file) return;
-                          setUploading(true);
-                          try {
-                            const url = await uploadImageToCloudinary(file);
-                            setImageUrl(url);
-                          } catch {
-                            toast.error("Зураг хуулахад алдаа гарлаа.");
-                          } finally {
-                            setUploading(false);
-                          }
-                        }}
-                      />
-                    </label>
-                  )}
-                  {uploading && (
-                    <div className="flex items-center gap-2 text-sm text-slate-500">
-                      <Loader2 className="size-4 animate-spin text-blue-500" />
-                      <span>Хуулж байна...</span>
-                    </div>
-                  )}
-                </div>
-              </Field>
               <Label className="text-sm font-medium text-slate-700">
                 Ковер зураг{" "}
                 <span className="text-slate-400 font-normal">(заавал биш)</span>
@@ -336,7 +287,7 @@ export const EditExamDialog = ({
                         try {
                           const url = await uploadImageToCloudinary(file);
                           setImageUrl(url);
-                        } catch (err) {
+                        } catch {
                           toast.error("Зураг хуулахад алдаа гарлаа.");
                         } finally {
                           setUploading(false);

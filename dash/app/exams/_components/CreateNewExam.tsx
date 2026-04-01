@@ -22,7 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { graphqlRequest } from "@/lib/graphql";
-import { Loader2, Plus, Sparkles, ImageIcon, X } from "lucide-react";
+import { Loader2, Plus, ImageIcon, X } from "lucide-react";
 import { toast } from "sonner";
 import { AIQuestionWizard } from "../[examId]/_components/AIQuestionWizard";
 import { uploadImageToCloudinary } from "@/lib/utils/imageUpload";
