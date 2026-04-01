@@ -358,7 +358,7 @@ export const CreateNewExam = () => {
                           try {
                             const url = await uploadImageToCloudinary(file);
                             setImageUrl(url);
-                          } catch (err) {
+                          } catch {
                             toast.error("Зураг хуулахад алдаа гарлаа.");
                           } finally {
                             setUploading(false);

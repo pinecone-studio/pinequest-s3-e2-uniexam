@@ -1,7 +1,6 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { ChevronLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -27,8 +26,7 @@ export const SubmissionsHeader = ({
         <h1 className="text-lg font-bold text-gray-900">
           {classCode} - Шалгалт Дүгнэх
         </h1>
-        {/* <p className="text-xs text-gray-500">{className}</p>
-        <Separator /> */}
+        <p className="text-xs text-gray-500">{className}</p>
         <p className="text-xs text-gray-500">
           {pendingCount} хүлээгдэж буй хариулт
         </p>

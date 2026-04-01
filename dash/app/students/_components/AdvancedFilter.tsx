@@ -51,20 +51,20 @@ export default function AdvancedFilter({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="max-w-3xl p-0 overflow-hidden">
-        <div className="border-b bg-gradient-to-r from-slate-900 to-slate-700 text-white px-6 py-5">
+      <DialogContent className="max-w-3xl p-0 overflow-hidden shadow-none">
+        <div className="border-b border-white/10 bg-[linear-gradient(to_bottom,rgba(36,72,95,0.9)_0%,rgba(41,97,129,0.86)_48%,rgba(49,168,224,0.82)_100%)] text-white px-6 py-5">
           <DialogTitle className="flex items-center gap-2 text-lg font-semibold">
             <SlidersHorizontal className="h-5 w-5" />
-            Advanced Filters
+            Нарийвчилсан шүүлтүүр
           </DialogTitle>
-          <p className="text-sm text-slate-200 mt-1">
-            Course, class, major-аар шүүнэ. {selectedCount} сонголт идэвхтэй.
+          <p className="mt-1 text-sm text-slate-100">
+            Курс, анги, мэргэжлээр шүүнэ. {selectedCount} сонголт идэвхтэй.
           </p>
         </div>
 
         <div className="p-6 space-y-6 bg-slate-50">
           <div className="space-y-2">
-            <p className="text-sm font-semibold text-slate-800">Course</p>
+            <p className="text-sm font-semibold text-slate-800">Курс</p>
             <div className="flex flex-wrap gap-2">
               {strictCourses.map((c) => {
                 const active = courseFilter.includes(c);
@@ -74,7 +74,7 @@ export default function AdvancedFilter({
                     onClick={() => toggleItem(c, setCourseFilter)}
                     className={`px-3 py-1.5 rounded-lg border text-sm transition ${
                       active
-                        ? "bg-blue-600 text-white border-blue-600 shadow-sm"
+                        ? "border-blue-600 bg-blue-600 text-white"
                         : "bg-white text-slate-700 border-slate-300 hover:border-blue-300 hover:bg-blue-50"
                     }`}
                   >
@@ -86,7 +86,7 @@ export default function AdvancedFilter({
           </div>
 
           <div className="space-y-2">
-            <p className="text-sm font-semibold text-slate-800">Class</p>
+            <p className="text-sm font-semibold text-slate-800">Анги</p>
             <div className="flex flex-wrap gap-2">
               {strictClasses.map((c) => {
                 const active = classFilter.includes(c);
@@ -96,7 +96,7 @@ export default function AdvancedFilter({
                     onClick={() => toggleItem(c, setClassFilter)}
                     className={`px-3 py-1.5 rounded-lg border text-sm transition ${
                       active
-                        ? "bg-blue-600 text-white border-violet-600 shadow-sm"
+                        ? "border-violet-600 bg-blue-600 text-white"
                         : "bg-white text-slate-700 border-slate-300 hover:border-violet-300 hover:bg-violet-50"
                     }`}
                   >
@@ -108,7 +108,7 @@ export default function AdvancedFilter({
           </div>
 
           <div className="space-y-2">
-            <p className="text-sm font-semibold text-slate-800">Major</p>
+            <p className="text-sm font-semibold text-slate-800">Мэргэжил</p>
             <div className="flex flex-wrap gap-2">
               {strictMajors.map((m) => {
                 const active = majorFilter.includes(m);
@@ -118,7 +118,7 @@ export default function AdvancedFilter({
                     onClick={() => toggleItem(m, setMajorFilter)}
                     className={`px-3 py-1.5 rounded-lg border text-sm transition ${
                       active
-                        ? "bg-blue-600 text-white border-emerald-600 shadow-sm"
+                        ? "border-emerald-600 bg-blue-600 text-white"
                         : "bg-white text-slate-700 border-slate-300 hover:border-emerald-300 hover:bg-emerald-50"
                     }`}
                   >
@@ -141,16 +141,19 @@ export default function AdvancedFilter({
             className="gap-2"
           >
             <RotateCcw className="h-4 w-4" />
-            Reset
+            Дахин тохируулах
           </Button>
 
           <div className="flex items-center gap-2">
             <Button variant="ghost" onClick={() => setOpen(false)}>
-              Cancel
+              Болих
             </Button>
-            <Button onClick={() => setOpen(false)} className="gap-2">
+            <Button
+              onClick={() => setOpen(false)}
+              className="gap-2 bg-blue-600 text-white hover:bg-blue-700"
+            >
               <BadgeCheck className="h-4 w-4" />
-              Apply Filters
+              Шүүлт 
             </Button>
           </div>
         </div>

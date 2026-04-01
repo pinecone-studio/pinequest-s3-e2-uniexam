@@ -31,24 +31,6 @@ const normalizeStudents = (students: Student[]): Student[] => {
   }));
 };
 
-const getAnalytics = (students: Student[]) => {
-  const total = students.length;
-
-  const avgScore =
-    total === 0
-      ? 0
-      : Math.round(students.reduce((a, s) => a + s.averageScore, 0) / total);
-
-  const topStudent =
-    students.length > 0
-      ? students.reduce((p, c) => (p.averageScore > c.averageScore ? p : c))
-      : null;
-
-  return { total, avgScore, topStudent };
-};
-
-
-
 export default function Page() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -69,7 +51,6 @@ export default function Page() {
   } = useStudentSearch(normalizedStudents);
 
   const [open, setOpen] = useState<boolean>(false);
-  const analytics = getAnalytics(filteredItems);
   const activeFilterCount =
     courseFilter.length + classFilter.length + majorFilter.length;
 
@@ -103,25 +84,7 @@ export default function Page() {
 
   return (
     <div className="p-6 lg:p-8 bg-gray-50 min-h-screen space-y-6">
-     
-       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white rounded-2xl p-5 shadow-sm border">
-          <p className="text-sm text-gray-500">Нийт оюутан</p>
-          <p className="text-2xl font-bold mt-1">{analytics.total}</p>
-        </div>
-
-        <div className="bg-white rounded-2xl p-5 shadow-sm border">
-          <p className="text-sm text-gray-500">Дундаж оноо</p>
-          <p className="text-2xl font-bold text-blue-600 mt-1">{analytics.avgScore}%</p>
-        </div>
-
-        <div className="bg-white rounded-2xl p-5 shadow-sm border">
-          <p className="text-sm text-gray-500">Шилдэг оюутан</p>
-          <p className="text-lg font-semibold mt-1">{analytics.topStudent?.name ?? "-"}</p>
-        </div>
-      </div>
-
-      <div className="bg-white p-4 rounded-2xl border shadow-sm flex flex-wrap items-center gap-3 justify-between">
+      <div className="bg-white p-4 rounded-2xl border flex flex-wrap items-center gap-3 justify-between">
         <div className="flex items-center gap-3">
           <Input
             className="w-64"
@@ -132,10 +95,10 @@ export default function Page() {
 
           <button
             onClick={() => setOpen(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-300 bg-slate-900 text-white hover:bg-slate-800 transition"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-white/20 bg-[linear-gradient(to_bottom,rgba(36,72,95,0.9)_0%,rgba(41,97,129,0.86)_48%,rgba(49,168,224,0.82)_100%)] text-white transition hover:opacity-95"
           >
             <SlidersHorizontal className="h-4 w-4" />
-            Filters
+            Филтэр
             {activeFilterCount > 0 && (
               <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-white/20 px-1.5 text-xs font-semibold">
                 {activeFilterCount}
@@ -192,12 +155,12 @@ export default function Page() {
             className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-white px-3 py-1 text-sm text-slate-700 hover:border-slate-500"
           >
             <X className="h-3 w-3" />
-            Clear All
+            Бүгдийг цэвэрлэх
           </button>
         </div>
       )}
 
-      <div className="bg-white rounded-2xl border shadow-sm overflow-hidden">
+      <div className="bg-white rounded-2xl border overflow-hidden">
         <StudentTable students={filteredItems} />
       </div>
 

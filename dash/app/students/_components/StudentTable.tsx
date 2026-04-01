@@ -1,12 +1,8 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import { useState, type KeyboardEvent } from "react";
 import {
   MoreHorizontal,
-  TrendingUp,
-  TrendingDown,
-  Minus,
   Mail,
   Download,
 } from "lucide-react";
@@ -31,12 +27,6 @@ import { Student } from "../type";
 interface StudentTableProps {
   students: Student[];
 }
-
-const trendMeta = {
-  up: { icon: TrendingUp, className: "text-green-600" },
-  down: { icon: TrendingDown, className: "text-red-500" },
-  stable: { icon: Minus, className: "text-gray-500" },
-};
 
 const getInitials = (name: string) =>
   name
@@ -69,25 +59,18 @@ const StudentTable = ({ students }: StudentTableProps) => {
           <thead>
             <tr className="border-b bg-white">
               <th className="px-6 py-4 text-sm font-semibold">Оюутан</th>
+              <th className="px-6 py-4 text-sm font-semibold">Анги</th>
+              <th className="px-6 py-4 text-sm font-semibold">Шалгалтын нэр</th>
               <th className="px-6 py-4 text-sm font-semibold">Курс</th>
-              <th className="px-6 py-4 text-sm font-semibold">Дундаж</th>
-              <th className="px-6 py-4 text-sm font-semibold">Шалгалт</th>
-              <th className="px-6 py-4 text-sm font-semibold">Ахиц</th>
-              <th className="px-6 py-4 text-sm font-semibold">Сүүлд</th>
+              <th className="px-6 py-4 text-sm font-semibold">Шалгалтын тоо</th>
+              <th className="px-6 py-4 text-sm font-semibold">Зөрчилийн тоо</th>
+              <th className="px-6 py-4 text-sm font-semibold">Дүн</th>
               <th></th>
             </tr>
           </thead>
 
           <tbody>
             {students.map((s) => {
-              const isMissing = s.examsTaken === 0;
-              const isLow = s.averageScore < 70 && !isMissing;
-
-              const safeScore = Math.min(
-                Math.max(s.averageScore, 0),
-                100
-              );
-
               return (
                 <tr
                   key={s.id}
@@ -95,16 +78,8 @@ const StudentTable = ({ students }: StudentTableProps) => {
                   tabIndex={0}
                   onClick={() => handleView(s)}
                   onKeyDown={(e) => handleKey(e, s)}
-                  className={`cursor-pointer transition
-                    ${
-                      isMissing
-                        // ? "bg-red-50 hover:bg-red-100"
-                        // : isLow
-                        // ? "bg-yellow-50 hover:bg-yellow-100"
-                        // : "hover:bg-gray-50"
-                    }`}
+                  className="cursor-pointer transition hover:bg-gray-50"
                 >
-                  {/* NAME */}
                   <td className="px-6 py-4">
                     <div className="flex gap-3 items-center">
                       <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center text-sm font-bold">
@@ -112,70 +87,34 @@ const StudentTable = ({ students }: StudentTableProps) => {
                       </div>
                       <div>
                         <div className="font-semibold">{s.name}</div>
-                        <div className="text-xs text-gray-500">
-                          {s.email}
-                        </div>
+                        <div className="text-xs text-gray-500">{s.email}</div>
                       </div>
                     </div>
                   </td>
 
-                  {/* COURSE */}
+                  <td className="px-6 py-4">{s.className}</td>
+                  <td className="px-6 py-4">{s.examTitle}</td>
                   <td className="px-6 py-4">{s.course}</td>
-
-                  {/* SCORE */}
+                  <td className="px-6 py-4">{s.examsTaken}</td>
                   <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <span
-                        className={`font-bold
-                          ${
-                            isMissing
-                              ? "text-red-500"
-                              : isLow
-                              ? "text-yellow-600"
-                              : safeScore > 80
-                              ? "text-green-600"
-                              : "text-blue-600"
-                          }`}
-                      >
-                        {isMissing ? "—" : `${safeScore}%`}
-                      </span>
-
-                      {!isMissing && (
-                        <div className="w-24 h-2 bg-gray-100 rounded-full">
-                          <div
-                            className={`h-full rounded-full
-                              ${
-                                isLow
-                                  ? "bg-yellow-500"
-                                  : "bg-blue-500"
-                              }`}
-                            style={{ width: `${safeScore}%` }}
-                          />
-                        </div>
-                      )}
-                    </div>
-                  </td>
-
-                  {/* EXAMS */}
-                  <td className="px-6 py-4 text-sm">
-                    {isMissing ? (
-                      <span className="font-medium">
-                        -
-                      </span>
-                    ) : isLow ? (
-                      <span className="text-yellow-600 font-medium">
-                        ⚠ Тэнцээгүй
+                    {s.violationCount > 0 ? (
+                      <span className="text-sm font-medium text-red-500">
+                        {s.violationCount}
                       </span>
                     ) : (
-                      `${s.examsTaken} шалгалт`
+                      <span className="text-sm text-black-400">0</span>
                     )}
                   </td>
-                  {/* LAST */}
-                  <td className="px-6 py-4 text-gray-500">
-                    {s.lastActive}
+                  <td className="px-6 py-4">
+                    {s.finalScore === null ? (
+                      <span className="text-black-500">-</span>
+                    ) : (
+                      <span className="text-sm font-medium  text-blue-700">
+                        {s.finalScore}
+                      </span>
+                    )}
                   </td>
 
-                  {/* ACTION */}
                   <td className="px-6 py-4 text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -205,27 +144,25 @@ const StudentTable = ({ students }: StudentTableProps) => {
         </table>
 
         {students.length === 0 && (
-          <div className="p-6 text-center text-gray-500">
-            Илэрц олдсонгүй
-          </div>
+          <div className="p-6 text-center text-gray-500">Илэрц олдсонгүй</div>
         )}
       </div>
 
-      {/* DETAIL MODAL */}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-xl space-y-4">
           <DialogHeader>
             <DialogTitle>{selectedStudent?.name}</DialogTitle>
-            <DialogDescription>
-              {selectedStudent?.email}
-            </DialogDescription>
+            <DialogDescription>{selectedStudent?.email}</DialogDescription>
           </DialogHeader>
 
           {selectedStudent && (
             <div className="space-y-4">
-
-              {/* INFO */}
               <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p className="text-gray-500">Код</p>
+                  <p className="font-medium">{selectedStudent.className}</p>
+                </div>
+
                 <div>
                   <p className="text-gray-500">Курс</p>
                   <p className="font-medium">{selectedStudent.course}</p>
@@ -237,42 +174,33 @@ const StudentTable = ({ students }: StudentTableProps) => {
                 </div>
 
                 <div>
-                  <p className="text-gray-500">Дундаж</p>
-                  <p className="font-medium">
-                    {selectedStudent.examsTaken === 0
-                      ? "—"
-                      : `${selectedStudent.averageScore}%`}
-                  </p>
+                  <p className="text-gray-500">Сүүлийн шалгалт</p>
+                  <p className="font-medium">{selectedStudent.examTitle}</p>
                 </div>
 
                 <div>
-                  <p className="text-gray-500">Шалгалт</p>
+                  <p className="text-gray-500">Шалгалтын тоо</p>
+                  <p className="font-medium">{selectedStudent.examsTaken}</p>
+                </div>
+
+                <div>
+                  <p className="text-gray-500">Зөрчлийн тоо</p>
+                  <p className="font-medium">{selectedStudent.violationCount}</p>
+                </div>
+
+                <div>
+                  <p className="text-gray-500">Дүн</p>
                   <p className="font-medium">
-                    {selectedStudent.examsTaken}
+                    {selectedStudent.finalScore === null
+                      ? "-"
+                      : selectedStudent.finalScore}
                   </p>
                 </div>
               </div>
 
-              {/* STATUS */}
-              {selectedStudent.examsTaken === 0 && (
-                <div className="p-3 bg-red-50 text-red-600 rounded">
-                  ⚠ Шалгалт өгөөгүй
-                </div>
-              )}
-
-              {selectedStudent.averageScore < 60 &&
-                selectedStudent.examsTaken > 0 && (
-                  <div className="p-3 bg-yellow-50 text-yellow-700 rounded">
-                    ⚠ Тэнцээгүй
-                  </div>
-                )}
-
-              {/* EXAM HISTORY */}
-              {selectedStudent.examHistory?.length > 0 && (
+              {selectedStudent.examHistory.length > 0 && (
                 <div>
-                  <p className="font-medium mb-2">
-                    Шалгалтын түүх
-                  </p>
+                  <p className="font-medium mb-2">Шалгалтын түүх</p>
 
                   <div className="space-y-2">
                     {selectedStudent.examHistory.map((exam) => (
@@ -282,25 +210,20 @@ const StudentTable = ({ students }: StudentTableProps) => {
                       >
                         <div>
                           <p className="font-medium">{exam.name}</p>
-                          <p className="text-xs text-gray-500">
-                            {exam.date}
-                          </p>
+                          <p className="text-xs text-gray-500">{exam.date ?? "-"}</p>
                         </div>
 
                         <div className="text-right">
                           <p className="font-semibold">
-                            {exam.score}/{exam.maxScore}
+                            {exam.score ?? "-"}/{exam.maxScore ?? "-"}
                           </p>
-                          <p className="text-xs text-gray-500">
-                            {exam.grade}
-                          </p>
+                          <p className="text-xs text-gray-500">{exam.grade ?? "-"}</p>
                         </div>
                       </div>
                     ))}
                   </div>
                 </div>
               )}
-
             </div>
           )}
         </DialogContent>

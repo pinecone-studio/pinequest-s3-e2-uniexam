@@ -1,6 +1,5 @@
 "use client";
 
-import { Slider } from "@/components/ui/slider";
 import { RubricCriterion } from "@/lib/grading/types";
 
 type ManualRubricProps = {

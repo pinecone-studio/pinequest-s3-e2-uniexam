@@ -1,61 +1,74 @@
-export const GET_STUDENTS = `
-  query GetStudents {
+export const GET_STUDENTS_REAL = `
+  query StudentsPageRealData {
     students {
       id
       name
       email
-      course
-      className
       major
-      averageScore
-      examsTaken
-      trend
-      lastActive
-      examHistory {
-        id
-        student_id
-        name
-        date
-        score
-        maxScore
-        grade
-      }
+      created_at
     }
-  }
-`;
-
-export const GET_STUDENTS_LEGACY = `
-  query GetStudentsLegacy {
-    students {
+    enrollments {
       id
-      name
-      email
-      course
-      major
-      averageScore
-      examsTaken
-      trend
-      lastActive
-      examHistory {
-        id
-        student_id
-        name
-        date
-        score
-        maxScore
-        grade
-      }
+      student_id
+      course_id
+    }
+    courses {
+      id
+      code
+    }
+    exams {
+      id
+      title
+      course_id
+    }
+    submissions {
+      id
+      student_id
+      final_score
+      submitted_at
+      started_at
+    }
+    cheatLogs {
+      id
+      student_id
+      severity
     }
   }
 `;
 
-export const GET_STUDENTS_MINIMAL = `
-  query GetStudentsMinimal {
+export const GET_STUDENTS_REAL_LEGACY = `
+  query StudentsPageRealDataLegacy {
     students {
       id
       name
       email
       created_at
+    }
+    enrollments {
+      id
+      student_id
+      course_id
+    }
+    courses {
+      id
+      code
+    }
+    exams {
+      id
+      title
+      course_id
+    }
+    submissions {
+      id
+      student_id
+      final_score
+      submitted_at
+      started_at
+    }
+    cheatLogs {
+      id
+      student_id
+      severity
     }
   }
 `;

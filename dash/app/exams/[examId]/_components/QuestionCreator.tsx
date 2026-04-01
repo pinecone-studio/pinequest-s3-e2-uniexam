@@ -85,7 +85,7 @@ const ADD_OPEN_ENDED_MUTATION = `#graphql
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
-function parsedToDraft(p: any): ExamQuestionDraft {
+function parsedToDraft(p: ParsedQuestion): ExamQuestionDraft {
   const options = ["", "", "", "", ""] as [
     string,
     string,

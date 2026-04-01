@@ -48,7 +48,6 @@ export function ExamQuestionCard({
   canRemove,
   onUploadStateChange,
 }: ExamQuestionCardProps) {
-  const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
   const [uploadingQuestionImage, setUploadingQuestionImage] = useState(false);
 
   const setOption = (optionIndex: number, value: string) => {
@@ -72,9 +71,7 @@ export function ExamQuestionCard({
       );
     } finally {
       setUploadingQuestionImage(false);
-      if (uploadingIndex === null) {
-        onUploadStateChange?.(false);
-      }
+      onUploadStateChange?.(false);
     }
   };
 

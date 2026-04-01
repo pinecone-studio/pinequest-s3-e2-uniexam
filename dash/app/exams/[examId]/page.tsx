@@ -283,7 +283,7 @@ export default function ExamDetailPage() {
           emptyText="Тест асуулт байхгүй байна"
           emptyDesc="Доорх хэсгээс «Гараар» таб дээр нэмнэ үү"
         >
-          {mcQuestions.map((q, idx) => {
+          {mcQuestions.map((q) => {
             const sorted = [...(q.answers ?? [])].sort((a, b) =>
               a.id && b.id ? a.id.localeCompare(b.id) : 0
             );

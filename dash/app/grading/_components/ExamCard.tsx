@@ -1,6 +1,6 @@
 import { Separator } from "@/components/ui/separator";
 import { ClassCourse } from "@/lib/grading/types";
-import { Check, CircleCheckBig, FileText, Users } from "lucide-react";
+import { CircleCheckBig, FileText, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 type ExamCardProps = {
