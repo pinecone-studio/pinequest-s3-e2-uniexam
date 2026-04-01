@@ -25,10 +25,56 @@ function isValidTransition(
   return false;
 }
 
+function parseDate(value: string, field: string): Date {
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) {
+    throw new Error(`Invalid ${field}`);
+  }
+  return d;
+}
+
+function computeEffectiveEnd(
+  startedAt: Date,
+  examEnd: Date,
+  durationMinutes: number,
+): Date {
+  const byDuration = new Date(
+    startedAt.getTime() + durationMinutes * 60 * 1000,
+  );
+  return byDuration < examEnd ? byDuration : examEnd;
+}
+
+async function getExamTiming(examId: string) {
+  const { data, error } = await supabase
+    .from("exams")
+    .select("id, start_time, end_time, duration")
+    .eq("id", examId)
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error("Exam not found");
+
+  const start = parseDate(data.start_time, "exam start_time");
+  const end = parseDate(data.end_time, "exam end_time");
+  const duration = Number(data.duration ?? 0);
+
+  if (duration <= 0) throw new Error("Exam duration must be greater than 0");
+  if (end <= start) throw new Error("Exam end_time must be after start_time");
+
+  return { start, end, duration };
+}
+
 export const submissionMutations = {
   createSubmission: async (_: unknown, args: CreateSubmissionArgs) => {
+    const { start, end } = await getExamTiming(args.exam_id);
+    const now = new Date();
+
+    if (now < start) throw new Error("Exam has not started yet");
+    if (now >= end) throw new Error("Exam has already ended");
+
     const payload = {
       ...args,
+      started_at: now.toISOString(), // server цагийг хатуу барина
       status: args.status ?? "in_progress",
       attempt_number: args.attempt_number ?? 1,
     };
