@@ -13,6 +13,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { isHiddenStudentExam } from "@/lib/exam-visibility";
 import { graphqlRequest } from "@/lib/graphql";
+import { DASHBOARD_DATA_SYNC_EVENT } from "./dashboard-data-sync";
 
 type DashboardStatsResponse = {
   studentByEmail: {
@@ -224,6 +225,7 @@ export function StatCards() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
   const { user, isLoaded } = useUser();
 
   const { gradedCoursesCount, overallGPA } = useMemo(() => {
@@ -245,6 +247,21 @@ export function StatCards() {
       overallGPA: gradedCourses.length > 0 ? (averageGrade / 100) * 4 : 0,
     };
   }, [courses]);
+
+  useEffect(() => {
+    const handleDashboardDataSync = () => {
+      setRefreshKey((current) => current + 1);
+    };
+
+    window.addEventListener(DASHBOARD_DATA_SYNC_EVENT, handleDashboardDataSync);
+
+    return () => {
+      window.removeEventListener(
+        DASHBOARD_DATA_SYNC_EVENT,
+        handleDashboardDataSync,
+      );
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -308,7 +325,7 @@ export function StatCards() {
     return () => {
       cancelled = true;
     };
-  }, [isLoaded, user?.primaryEmailAddress?.emailAddress]);
+  }, [isLoaded, refreshKey, user?.primaryEmailAddress?.emailAddress]);
 
   const statItems: StatItem[] = [
     {

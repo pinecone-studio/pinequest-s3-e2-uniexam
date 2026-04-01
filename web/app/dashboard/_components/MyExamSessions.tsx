@@ -22,6 +22,7 @@ import {
 import { isHiddenStudentExam } from "@/lib/exam-visibility";
 import { graphqlRequest } from "@/lib/graphql";
 import { cn } from "@/lib/utils";
+import { DASHBOARD_DATA_SYNC_EVENT } from "./dashboard-data-sync";
 
 type DashboardExamSessionsResponse = {
   studentByEmail: {
@@ -222,7 +223,6 @@ const buildDashboardUpcomingExams = (
       .filter((enrollment) => enrollment.student_id === studentId)
       .map((enrollment) => enrollment.course_id),
   );
-  const hasStudentEnrollments = enrolledCourseIds.size > 0;
 
   const completedExamIds = new Set(
     data.submissions
@@ -236,9 +236,7 @@ const buildDashboardUpcomingExams = (
   );
 
   return data.courses
-    .filter((course) =>
-      hasStudentEnrollments ? enrolledCourseIds.has(course.id) : true,
-    )
+    .filter((course) => enrolledCourseIds.has(course.id))
     .flatMap((course) =>
       (course.exams ?? [])
         .filter((exam) => !isHiddenStudentExam(exam.title))
@@ -271,6 +269,7 @@ export function MyExamSessions({ className }: MyExamSessionsProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const visibleExams = useMemo(
     () => exams.filter((exam) => !isExamExpired(exam, currentTime)).slice(0, 3),
@@ -287,6 +286,21 @@ export function MyExamSessions({ className }: MyExamSessionsProps) {
 
     return () => {
       window.clearInterval(intervalId);
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleDashboardDataSync = () => {
+      setRefreshKey((current) => current + 1);
+    };
+
+    window.addEventListener(DASHBOARD_DATA_SYNC_EVENT, handleDashboardDataSync);
+
+    return () => {
+      window.removeEventListener(
+        DASHBOARD_DATA_SYNC_EVENT,
+        handleDashboardDataSync,
+      );
     };
   }, []);
 
@@ -320,12 +334,21 @@ export function MyExamSessions({ className }: MyExamSessionsProps) {
 
         if (cancelled) return;
 
-        const studentId = response.studentByEmail?.id ?? "";
+        const studentId = response.studentByEmail?.id;
+
+        if (!studentId) {
+          setExams([]);
+          setMessage("Хичээлээ сонгоод удахгүй болох шалгалтуудаа эндээс хараарай.");
+          return;
+        }
+
         const nextExams = buildDashboardUpcomingExams(response, studentId);
 
         setExams(nextExams);
         setMessage(
-          nextExams.length === 0 ? "Одоогоор шалгалттай хичээл алга." : null,
+          nextExams.length === 0
+            ? "Сонгосон хичээл дээр тань идэвхтэй шалгалт алга."
+            : null,
         );
       } catch (fetchError) {
         if (cancelled) return;
@@ -347,7 +370,7 @@ export function MyExamSessions({ className }: MyExamSessionsProps) {
     return () => {
       cancelled = true;
     };
-  }, [isLoaded, user?.primaryEmailAddress?.emailAddress]);
+  }, [isLoaded, refreshKey, user?.primaryEmailAddress?.emailAddress]);
 
   return (
     <TooltipProvider>
@@ -415,7 +438,7 @@ export function MyExamSessions({ className }: MyExamSessionsProps) {
             </div>
           ) : visibleExams.length === 0 ? (
             <div className="rounded-2xl border border-gray-200 bg-gray-50 px-5 py-4 text-sm text-gray-500">
-              Одоогоор шалгалттай хичээл алга.
+              Сонгосон хичээл дээр тань идэвхтэй шалгалт алга.
             </div>
           ) : (
             <div className="space-y-3">

@@ -15,6 +15,7 @@ import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
 import { isHiddenStudentExam } from "@/lib/exam-visibility";
 import { cn } from "@/lib/utils";
 import { graphqlRequest } from "@/lib/graphql";
+import { DASHBOARD_DATA_SYNC_EVENT } from "./dashboard-data-sync";
 
 interface ExamCalendarProps {
   today?: Date;
@@ -129,20 +130,6 @@ const getDateKey = (date: Date) => {
   return `${year}-${month}-${day}`;
 };
 
-const formatListDate = (value: string) =>
-  new Intl.DateTimeFormat("en-CA", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(new Date(value));
-
-const formatTime = (value: string) =>
-  new Intl.DateTimeFormat("en-GB", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  }).format(new Date(value));
-
 const buildCalendarExams = (
   data: ExamCalendarResponse,
   studentId: string,
@@ -153,7 +140,6 @@ const buildCalendarExams = (
       .filter((enrollment) => enrollment.student_id === studentId)
       .map((enrollment) => enrollment.course_id),
   );
-  const hasStudentEnrollments = enrolledCourseIds.size > 0;
 
   const completedExamIds = new Set(
     data.submissions
@@ -169,9 +155,7 @@ const buildCalendarExams = (
   const todayStart = startOfDay(today).getTime();
 
   return data.courses
-    .filter((course) =>
-      hasStudentEnrollments ? enrolledCourseIds.has(course.id) : true,
-    )
+    .filter((course) => enrolledCourseIds.has(course.id))
     .flatMap((course) =>
       (course.exams ?? [])
         .filter((exam) => !isHiddenStudentExam(exam.title))
@@ -213,8 +197,24 @@ export function ExamCalendar({
   const [exams, setExams] = useState<CalendarExam[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [, setMessage] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
   const { user, isLoaded } = useUser();
+
+  useEffect(() => {
+    const handleDashboardDataSync = () => {
+      setRefreshKey((current) => current + 1);
+    };
+
+    window.addEventListener(DASHBOARD_DATA_SYNC_EVENT, handleDashboardDataSync);
+
+    return () => {
+      window.removeEventListener(
+        DASHBOARD_DATA_SYNC_EVENT,
+        handleDashboardDataSync,
+      );
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -252,7 +252,7 @@ export function ExamCalendar({
 
         if (!studentId) {
           setExams([]);
-          setMessage("Одоогоор таны оюутны мэдээлэл олдсонгүй.");
+          setMessage("Хичээлээ сонгоод шалгалтын өдрүүдээ эндээс хянаарай.");
           return;
         }
 
@@ -281,7 +281,7 @@ export function ExamCalendar({
     return () => {
       cancelled = true;
     };
-  }, [calendarToday, isLoaded, user?.primaryEmailAddress?.emailAddress]);
+  }, [calendarToday, isLoaded, refreshKey, user?.primaryEmailAddress?.emailAddress]);
 
   const firstDayOfWeek = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -549,6 +549,12 @@ export function ExamCalendar({
                     </span>
                   </div>
                 </div>
+
+                {message ? (
+                  <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500">
+                    {message}
+                  </div>
+                ) : null}
               </div>
             </>
           )}
