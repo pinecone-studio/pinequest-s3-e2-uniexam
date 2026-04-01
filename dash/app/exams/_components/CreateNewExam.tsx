@@ -209,8 +209,8 @@ export const CreateNewExam = () => {
       }}
     >
       <DialogTrigger asChild>
-        <Button className="bg-blue-600 hover:bg-blue-700 text-white gap-2 shadow-sm">
-          <Plus size={16} /> Шалгалт үүсгэх
+        <Button className="bg-[#31A8E0] hover:bg-[#1fa8bb] text-white gap-2 shadow-sm">
+          <Plus size={16} /> Шалгалт нэмэх
         </Button>
       </DialogTrigger>
       <DialogContent
@@ -240,7 +240,7 @@ export const CreateNewExam = () => {
                 />
               </Field>
               <Field>
-                <Label htmlFor="course">Курс</Label>
+                <Label htmlFor="course">Хичээл</Label>
                 <Select
                   value={courseId || undefined}
                   onValueChange={setCourseId}
@@ -249,7 +249,7 @@ export const CreateNewExam = () => {
                   <SelectTrigger id="course">
                     <SelectValue
                       placeholder={
-                        coursesLoading ? "Ачаалж байна…" : "Курс сонгох"
+                        coursesLoading ? "Ачаалж байна…" : "Хичээл сонгох"
                       }
                     />
                   </SelectTrigger>
@@ -303,7 +303,11 @@ export const CreateNewExam = () => {
                     sideOffset={5}
                     className="w-[var(--radix-select-trigger-width)] z-[50]"
                   >
+                    <SelectItem value="20">20 минут</SelectItem>
+                    <SelectItem value="30">30 минут</SelectItem>
+                    <SelectItem value="40">40 минут</SelectItem>
                     <SelectItem value="60">1 цаг</SelectItem>
+                    <SelectItem value="90">1 цаг 30 минут</SelectItem>
                     <SelectItem value="120">2 цаг</SelectItem>
                     <SelectItem value="180">3 цаг</SelectItem>
                   </SelectContent>

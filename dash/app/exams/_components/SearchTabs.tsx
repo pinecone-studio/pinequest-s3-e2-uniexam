@@ -20,10 +20,9 @@ export const SearchTabs = ({ value, onValueChange }: SearchTabsProps) => {
         >
           Бүх шалгалт
         </TabsTrigger>
-        <TabsTrigger value="in-progress">Явагдаж байгаа</TabsTrigger>
+
         <TabsTrigger value="scheduled">Төлөвлөгдсөн</TabsTrigger>
         <TabsTrigger value="completed">Дууссан</TabsTrigger>
-        <TabsTrigger value="drafts">Драфт</TabsTrigger>
       </TabsList>
     </Tabs>
   );

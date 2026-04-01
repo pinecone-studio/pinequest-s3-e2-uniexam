@@ -16,7 +16,7 @@ export const SearchExam = ({ value, onChange }: SearchExamProps) => {
           size={16}
         />
         <Input
-          placeholder="Search exams..."
+          placeholder="Шалгалт хайх..."
           className="pl-10 bg-white h-9 rounded-sm"
           value={value}
           onChange={(e: ChangeEvent<HTMLInputElement>) =>

@@ -38,10 +38,7 @@ type GqlExam = {
   course: { id: string; name: string; code: string } | null;
 };
 
-function examStatus(
-  start: string,
-  end: string,
-): ExamCardExam["status"] {
+function examStatus(start: string, end: string): ExamCardExam["status"] {
   const now = Date.now();
   const s = new Date(start).getTime();
   const e = new Date(end).getTime();
@@ -53,15 +50,11 @@ function examStatus(
 
 function mapExam(e: GqlExam): ExamCardExam {
   const start = new Date(e.start_time);
-  const courseLabel = e.course
-    ? `${e.course.code} — ${e.course.name}`
-    : "Курс";
+  const courseLabel = e.course ? `${e.course.code} — ${e.course.name}` : "Курс";
 
   const durMin = e.duration;
   const durationLabel =
-    durMin >= 60 && durMin % 60 === 0
-      ? `${durMin / 60} цаг`
-      : `${durMin} мин`;
+    durMin >= 60 && durMin % 60 === 0 ? `${durMin / 60} цаг` : `${durMin} мин`;
 
   return {
     id: e.id,
@@ -99,7 +92,12 @@ const ExamDashboard = () => {
       );
       const rows = (data.exams ?? [])
         .filter((exam) => !isHiddenDashboardExam(exam.title))
-        .map(mapExam);
+        .map(mapExam)
+        .sort(
+          (a, b) =>
+            new Date(b.rawStartTime).getTime() -
+            new Date(a.rawStartTime).getTime(),
+        );
       setExams(rows);
     } catch (err) {
       toast.error(
@@ -141,10 +139,7 @@ const ExamDashboard = () => {
     <div className="p-8 bg-[#f9fafb] min-h-screen">
       <div className="flex justify-between items-start mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Шалгалтууд</h1>
-          <p className="text-slate-500 text-sm">
-            Шалгалтуудаа үүсгэж удирдана уу
-          </p>
+          <h1 className="text-2xl font-bold text-slate-900">Шалгалт</h1>
         </div>
 
         <CreateNewExam />
