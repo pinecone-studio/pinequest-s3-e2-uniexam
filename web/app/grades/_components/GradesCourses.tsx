@@ -97,7 +97,7 @@ export default function GradesCourses({
           Хичээлээ задлаад шалгалтын бодит оноо, төлөвийг харна.
         </CardDescription>
       </CardHeader>
-      <CardContent className="mt-5 space-y-4">
+      <CardContent className="mt-6 space-y-4">
         {loading
           ? Array.from({ length: 3 }).map((_, index) => (
               <GradesCourseItemSkeleton key={index} />
@@ -111,7 +111,7 @@ export default function GradesCourses({
         ) : null}
 
         {!loading && !error && courses.length === 0 ? (
-          <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
+          <div className="rounded-lg border p-4 text-sm text-gray-500 border-gray-200 bg-gray-50">
             {message}
           </div>
         ) : null}

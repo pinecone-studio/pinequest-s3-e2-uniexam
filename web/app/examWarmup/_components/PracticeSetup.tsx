@@ -268,12 +268,18 @@ export default function PracticeSetup({
                 <div className="mt-4 rounded-lg bg-secondary/50 p-4">
                   <h4 className="mb-2 font-medium">Сонгосон шалгалт:</h4>
                   <div className="flex flex-wrap gap-2">
-                    <Badge variant="secondary">
+                    <Badge
+                      variant="secondary"
+                      className="bg-[#e6f4f1] text-[#006d77]"
+                    >
                       {selectedExamDetails?.courseCode ||
                         selectedExamDetails?.courseName}
                     </Badge>
                     {selectedExamDetails?.startTime ? (
-                      <Badge variant="secondary">
+                      <Badge
+                        variant="secondary"
+                        className="bg-[#e6f4f1] text-[#006d77]"
+                      >
                         {new Date(
                           selectedExamDetails.startTime,
                         ).toLocaleDateString("en-US", {
@@ -324,7 +330,7 @@ export default function PracticeSetup({
           )}
 
           <Button
-            className="w-full bg-[#006d77]"
+            className="w-full bg-[#006d77] hover:bg-[#086068] transition-colors duration-200 hover:cursor-pointer"
             size="lg"
             onClick={handleOpenWarning}
             disabled={!canStartPractice}

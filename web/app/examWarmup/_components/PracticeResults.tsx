@@ -27,7 +27,7 @@ export default function PracticeResults({
     <div className="mx-auto max-w-2xl space-y-6">
       <Card>
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Давтлага дууслаа!</CardTitle>
+          <CardTitle className="text-xl">Давтлага дууслаа!</CardTitle>
           <CardDescription>{"Таны гүйцэтгэл"}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -51,7 +51,7 @@ export default function PracticeResults({
                   stroke="currentColor"
                   strokeWidth="8"
                   strokeDasharray={`${(correctAnswers / totalQuestions) * 440} 440`}
-                  className="text-primary"
+                  className="text-[#006d77]"
                   strokeLinecap="round"
                 />
               </svg>
@@ -88,11 +88,19 @@ export default function PracticeResults({
           </div>
 
           <div className="flex gap-3">
-            <Button variant="outline" className="flex-1" onClick={onReset}>
+            <Button
+              variant="outline"
+              className="flex-1 hover:cursor-pointer "
+              onClick={onReset}
+            >
               <RotateCcw className="mr-2 h-4 w-4" />
               Шинээр эхлэх
             </Button>
-            <Button className="flex-1" onClick={onRetry}>
+            <Button
+              className="flex-1 bg-[#006d77] hover:cursor-pointer hover:bg-[#005861]"
+              onClick={onRetry}
+            >
+              {/* **:data-[slot=progress-indicator]:bg-[#006d77] **:data-[slot=progress-indicator]:rounded-full */}
               Дахин давтах
             </Button>
           </div>
