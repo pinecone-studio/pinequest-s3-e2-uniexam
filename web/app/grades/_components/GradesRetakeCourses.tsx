@@ -63,7 +63,7 @@ export default function GradesRetakeCourses({
                   </Skeleton>
                 </div>
               </div>
-              <Skeleton className="mt-4 inline-flex h-9 w-full items-center justify-center rounded-md text-sm text-transparent">
+              <Skeleton className="mt-2.5 inline-flex h-9 w-full items-center justify-center rounded-md text-sm text-transparent">
                 Дахин шалгалт
               </Skeleton>
             </div>
@@ -73,7 +73,7 @@ export default function GradesRetakeCourses({
     );
   }
 
-  if (error || failedCourses.length === 0) {
+  if (error) {
     return null;
   }
 
@@ -86,56 +86,62 @@ export default function GradesRetakeCourses({
         </CardDescription>
       </CardHeader>
       <CardContent className="mt-5 space-y-3">
-        {failedCourses.map((course) => {
-          return (
-            <div
-              key={course.courseId}
-              className="flex h-full flex-col justify-between rounded-lg border p-4"
-            >
-              <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <Badge variant="outline" className="text-sm">
-                    {course.courseCode}
-                  </Badge>
-                  <span className="font-medium">{course.courseName}</span>
-                  <span className="font-semibold text-red-500">
-                    {course.currentGrade}%
-                  </span>
+        {failedCourses.length === 0 ? (
+          <div className="rounded-lg border border-gray-200 bg-gray-50  p-4 text-center text-sm text-gray-500">
+            Дахин шалгалт өгөх хичээл алга.
+          </div>
+        ) : (
+          failedCourses.map((course) => {
+            return (
+              <div
+                key={course.courseId}
+                className="flex h-full flex-col justify-between rounded-lg border p-4"
+              >
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <Badge variant="outline" className="text-sm">
+                      {course.courseCode}
+                    </Badge>
+                    <span className="font-medium">{course.courseName}</span>
+                    <span className="font-semibold text-red-500">
+                      {course.currentGrade}%
+                    </span>
+                  </div>
                 </div>
-              </div>
 
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button className="mt-4 w-full bg-[#006d77] hover:bg-[#005861]">
-                    Дахин шалгалт
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Дахин шалгалт</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Дахин шалгалт өгөх хүсэлт илгээх
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Буцах</AlertDialogCancel>
-                    <AlertDialogAction
-                      className="bg-[#006d77] hover:bg-[#005861]"
-                      onClick={() =>
-                        toast.success(
-                          `${course.courseName} хичээлийн хүсэлт амжилттай илгээгдлээ.`,
-                          { position: "top-right" },
-                        )
-                      }
-                    >
-                      Илгээх
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </div>
-          );
-        })}
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button className="mt-2 w-full bg-[#006d77] hover:bg-[#005861]">
+                      Дахин шалгалт
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Дахин шалгалт</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Дахин шалгалт өгөх хүсэлт илгээх
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Буцах</AlertDialogCancel>
+                      <AlertDialogAction
+                        className="bg-[#006d77] hover:bg-[#005861]"
+                        onClick={() =>
+                          toast.success(
+                            `${course.courseName} хичээлийн хүсэлт амжилттай илгээгдлээ.`,
+                            { position: "top-right" },
+                          )
+                        }
+                      >
+                        Илгээх
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+            );
+          })
+        )}
       </CardContent>
     </Card>
   );

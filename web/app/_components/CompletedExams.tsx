@@ -590,7 +590,7 @@ const CompletedExams = () => {
             ) : null}
 
             {!loading && !error && completedExams.length === 0 ? (
-              <div className="rounded-3xl border border-gray-200 bg-gray-50 px-5 py-4 text-sm text-gray-500">
+              <div className="rounded-lg border border-gray-200 bg-gray-50 px-5 py-4 text-sm text-gray-500">
                 Одоогоор өгсөн шалгалт алга.
               </div>
             ) : null}

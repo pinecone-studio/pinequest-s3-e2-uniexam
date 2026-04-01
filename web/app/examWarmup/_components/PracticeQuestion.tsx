@@ -113,7 +113,7 @@ export default function PracticeQuestion({
         </div>
         <Progress
           value={((session.currentQuestion + 1) / totalQuestions) * 100}
-          className="h-2 "
+          className="h-2 **:data-[slot=progress-indicator]:bg-[#006d77] **:data-[slot=progress-indicator]:rounded-full"
         />
       </div>
 
@@ -200,14 +200,17 @@ export default function PracticeQuestion({
           <div className="flex gap-3">
             {!showExplanation ? (
               <Button
-                className="flex-1 bg-[#006d77]"
+                className="flex-1 bg-[#006d77] hover:cursor-pointer hover:bg-[#005861]"
                 onClick={onSubmitAnswer}
                 disabled={selectedAnswer === null}
               >
                 Хариултаа илгээх
               </Button>
             ) : (
-              <Button className="flex-1" onClick={onNextQuestion}>
+              <Button
+                className="flex-1 bg-[#006d77] hover:cursor-pointer hover:bg-[#005861]"
+                onClick={onNextQuestion}
+              >
                 {!isLastQuestion ? (
                   <>
                     Дараагийн асуулт

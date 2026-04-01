@@ -18,10 +18,19 @@ export default function GradesPage() {
         <div className="flex-1">
           <GradesCourses {...gradesCourses} />
         </div>
-        <div className="">
+        <div className="w-80">
           <GradesRetakeCourses {...gradesCourses} />
         </div>
       </div>
+
+      {/* <div className="flex items-stretch gap-4">
+        <div className="flex-1">
+          <GradesCourses {...gradesCourses} />
+        </div>
+        <div className="w-80">
+          <GradesRetakeCourses {...gradesCourses} />
+        </div>
+      </div> */}
       {/* <GradesSkills /> */}
     </div>
   );

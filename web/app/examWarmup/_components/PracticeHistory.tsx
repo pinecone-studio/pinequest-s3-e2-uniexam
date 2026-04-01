@@ -130,7 +130,7 @@ export default function PracticeHistory({
                 ))}
               </>
             ) : items.length === 0 ? (
-              <div className="rounded-3xl border border-gray-200 bg-gray-50 px-5 py-4 text-sm text-gray-500">
+              <div className="rounded-lg border border-gray-200 bg-gray-50 px-5 py-4 text-sm text-gray-500">
                 Одоогоор бэлтгэл шалгалтын түүх алга.
               </div>
             ) : (
@@ -141,7 +141,7 @@ export default function PracticeHistory({
                   onClick={() => setSelectedItem(item)}
                   className="flex w-full flex-col gap-4 rounded-2xl border border-gray-200 bg-gray-50 px-5 py-3 text-left transition-colors hover:cursor-pointer hover:border-[#bfe3dd] hover:bg-[#f7fbfa] md:flex-row md:items-center md:justify-between"
                 >
-                  <div className="flex items-start gap-4">
+                  <div className="flex items-center gap-4">
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#e6f4f1] text-[#006d77]">
                       <BookOpen className="h-4 w-4" />
                     </div>
