@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useUser } from "@clerk/nextjs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CalendarDays, ChevronLeft, ChevronRight, Clock3 } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
 import { isHiddenStudentExam } from "@/lib/exam-visibility";
 import { cn } from "@/lib/utils";
 import { graphqlRequest } from "@/lib/graphql";
@@ -115,6 +115,13 @@ function isSameDay(a: Date, b: Date) {
   );
 }
 
+const isTomorrow = (date: Date, baseDate: Date) => {
+  const tomorrow = startOfDay(baseDate);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  return isSameDay(date, tomorrow);
+};
+
 const getDateKey = (date: Date) => {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -129,6 +136,20 @@ const formatListDate = (value: string) =>
     month: "2-digit",
     day: "2-digit",
   }).format(new Date(value));
+
+const getUpcomingExamDateLabel = (value: string, baseDate: Date) => {
+  const examDate = new Date(value);
+
+  if (Number.isNaN(examDate.getTime())) {
+    return "Тов тодорхойгүй";
+  }
+
+  if (isTomorrow(examDate, baseDate)) {
+    return "Маргааш шалгалттай";
+  }
+
+  return formatListDate(value);
+};
 
 const formatTime = (value: string) =>
   new Intl.DateTimeFormat("en-GB", {
@@ -147,6 +168,7 @@ const buildCalendarExams = (
       .filter((enrollment) => enrollment.student_id === studentId)
       .map((enrollment) => enrollment.course_id),
   );
+  const hasStudentEnrollments = enrolledCourseIds.size > 0;
 
   const completedExamIds = new Set(
     data.submissions
@@ -162,7 +184,9 @@ const buildCalendarExams = (
   const todayStart = startOfDay(today).getTime();
 
   return data.courses
-    .filter((course) => enrolledCourseIds.has(course.id))
+    .filter((course) =>
+      hasStudentEnrollments ? enrolledCourseIds.has(course.id) : true,
+    )
     .flatMap((course) =>
       (course.exams ?? [])
         .filter((exam) => !isHiddenStudentExam(exam.title))
@@ -205,12 +229,7 @@ export function ExamCalendar({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
-  const selectedDateRef = useRef<Date | null>(calendarToday);
   const { user, isLoaded } = useUser();
-
-  useEffect(() => {
-    selectedDateRef.current = selectedDate;
-  }, [selectedDate]);
 
   useEffect(() => {
     let cancelled = false;
@@ -257,22 +276,6 @@ export function ExamCalendar({
         setMessage(
           nextExams.length === 0 ? "Танд ойрын товлогдсон шалгалт алга." : null,
         );
-
-        if (nextExams.length > 0) {
-          const firstExamDate = new Date(nextExams[0].startTime);
-          const currentSelectedDate = selectedDateRef.current;
-
-          if (
-            !currentSelectedDate ||
-            !nextExams.some(
-              (exam) => exam.dateKey === getDateKey(currentSelectedDate),
-            )
-          ) {
-            setSelectedDate(firstExamDate);
-            setYear(firstExamDate.getFullYear());
-            setMonth(firstExamDate.getMonth());
-          }
-        }
       } catch (fetchError) {
         if (cancelled) return;
 
@@ -302,26 +305,20 @@ export function ExamCalendar({
 
   const upcomingExams = useMemo(() => exams.slice(0, 4), [exams]);
   const hiddenUpcomingCount = exams.length - upcomingExams.length;
-  const selectedDateKey = selectedDate ? getDateKey(selectedDate) : null;
-  const selectedDateExams = useMemo(
-    () =>
-      selectedDateKey
-        ? exams.filter((exam) => exam.dateKey === selectedDateKey)
-        : [],
-    [exams, selectedDateKey],
-  );
 
-  const isToday = (d: number) =>
-    isSameDay(new Date(year, month, d), calendarToday);
+  const isTodayDate = (date: Date) => isSameDay(date, calendarToday);
 
-  const isExam = (d: number) =>
-    exams.some((exam) => exam.dateKey === getDateKey(new Date(year, month, d)));
+  const hasExamOnDate = (date: Date) =>
+    exams.some((exam) => exam.dateKey === getDateKey(date));
 
-  const isSelected = (d: number) =>
-    selectedDate !== null && isSameDay(selectedDate, new Date(year, month, d));
+  const isSelectedDate = (date: Date) =>
+    selectedDate !== null && isSameDay(selectedDate, date);
 
-  const handleDayClick = (d: number) => {
-    const clicked = new Date(year, month, d);
+  const handleDayClick = (clicked: Date) => {
+    if (clicked.getMonth() !== month || clicked.getFullYear() !== year) {
+      setMonth(clicked.getMonth());
+      setYear(clicked.getFullYear());
+    }
 
     if (selectedDate && isSameDay(selectedDate, clicked)) {
       setSelectedDate(null);
@@ -360,7 +357,7 @@ export function ExamCalendar({
   return (
     <Card
       className={cn(
-        "flex min-h-[286px] min-w-0 w-full self-start flex-col overflow-hidden rounded-2xl border-white/40 bg-white/60 shadow-sm ring-1 ring-black/5 sm:min-h-[306px] lg:min-h-[324px] lg:max-w-[380px] xl:max-w-[392px]",
+        "flex min-h-[286px] min-w-0 w-full self-start flex-col overflow-hidden rounded-2xl border-white/40 bg-white/60 shadow-sm ring-1 ring-black/5 sm:min-h-[300px] lg:min-h-[320px] lg:max-w-[380px] xl:max-w-[392px]",
         className,
       )}
     >
@@ -452,40 +449,50 @@ export function ExamCalendar({
               </div>
 
               <div className="grid grid-cols-7 gap-y-1">
-                {Array.from({ length: firstDayOfWeek }, (_, index) => (
-                  <div
-                    key={`prev-${index + 1}`}
-                    className="flex h-[26px] items-center justify-center text-center text-[10px] text-slate-300"
-                  >
-                    {daysInPrevMonth - firstDayOfWeek + 1 + index}
-                  </div>
-                ))}
+                {Array.from({ length: firstDayOfWeek }, (_, index) => {
+                  const day = daysInPrevMonth - firstDayOfWeek + 1 + index;
+                  const date = new Date(year, month - 1, day);
+                  const examDay = hasExamOnDate(date);
+                  const selectedDay = isSelectedDate(date);
+
+                  return (
+                    <div
+                      key={`prev-${index + 1}`}
+                      onClick={() => handleDayClick(date)}
+                      className={cn(
+                        "mx-auto flex h-[26px] w-[26px] cursor-pointer select-none items-center justify-center rounded-full text-[10px] transition-all",
+                        examDay &&
+                          "bg-[#e6f4f1] font-bold text-[#006d77] ring-1 ring-[#006d77]/15",
+                        selectedDay && "scale-105 ring-2 ring-[#b7d8d2]",
+                        !examDay &&
+                          !selectedDay &&
+                          "text-slate-300 hover:bg-slate-100",
+                      )}
+                    >
+                      {day}
+                    </div>
+                  );
+                })}
 
                 {Array.from({ length: daysInMonth }, (_, index) => {
                   const day = index + 1;
-                  const todayDay = isToday(day);
-                  const examDay = isExam(day);
-                  const selectedDay = isSelected(day);
+                  const date = new Date(year, month, day);
+                  const todayDay = isTodayDate(date);
+                  const examDay = hasExamOnDate(date);
+                  const selectedDay = isSelectedDate(date);
 
                   return (
                     <div
                       key={day}
-                      onClick={() => handleDayClick(day)}
+                      onClick={() => handleDayClick(date)}
                       className={cn(
                         "mx-auto flex h-[26px] w-[26px] cursor-pointer select-none items-center justify-center rounded-full text-[10px] transition-all",
                         todayDay &&
-                          !selectedDay &&
                           "bg-[#006d77] font-bold text-white shadow-md shadow-[#006d77]/20",
                         examDay &&
                           !todayDay &&
-                          !selectedDay &&
                           "bg-[#e6f4f1] font-bold text-[#006d77] ring-1 ring-[#006d77]/15",
-                        selectedDay &&
-                          !todayDay &&
-                          "scale-110 bg-[#004f56] font-bold text-white ring-2 ring-[#c8e3dd]",
-                        selectedDay &&
-                          todayDay &&
-                          "scale-110 bg-[#00565e] font-bold text-white ring-2 ring-[#b7d8d2]",
+                        selectedDay && "scale-105 ring-2 ring-[#b7d8d2]",
                         !todayDay &&
                           !examDay &&
                           !selectedDay &&
@@ -497,88 +504,34 @@ export function ExamCalendar({
                   );
                 })}
 
-                {Array.from({ length: trailingDays }, (_, index) => (
-                  <div
-                    key={`next-${index + 1}`}
-                    className="flex h-[26px] items-center justify-center text-center text-[10px] text-slate-300"
-                  >
-                    {index + 1}
-                  </div>
-                ))}
-              </div>
+                {Array.from({ length: trailingDays }, (_, index) => {
+                  const day = index + 1;
+                  const date = new Date(year, month + 1, day);
+                  const examDay = hasExamOnDate(date);
+                  const selectedDay = isSelectedDate(date);
 
-              {upcomingExams.length > 0 ? (
-                <div className="mt-2.5 space-y-1">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                    Удахгүй болох
-                  </p>
-
-                  {upcomingExams.map((exam) => (
-                    <button
-                      key={exam.id}
-                      type="button"
-                      onClick={() => focusExamDate(exam.startTime)}
-                      className="group flex w-full items-center justify-between rounded-lg bg-[#e6f4f1]/90 px-3 py-1.5 text-left transition-colors hover:bg-[#d7ebe6]"
+                  return (
+                    <div
+                      key={`next-${index + 1}`}
+                      onClick={() => handleDayClick(date)}
+                      className={cn(
+                        "mx-auto flex h-[26px] w-[26px] cursor-pointer select-none items-center justify-center rounded-full text-[10px] transition-all",
+                        examDay &&
+                          "bg-[#e6f4f1] font-bold text-[#006d77] ring-1 ring-[#006d77]/15",
+                        selectedDay && "scale-105 ring-2 ring-[#b7d8d2]",
+                        !examDay &&
+                          !selectedDay &&
+                          "text-slate-300 hover:bg-slate-100",
+                      )}
                     >
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <div className="h-1.5 w-1.5 rounded-full bg-[#006d77]" />
-                          <span className="text-[11px] font-semibold text-[#006d77]">
-                            {formatListDate(exam.startTime)}
-                          </span>
-                        </div>
-                        <p className="mt-0.5 text-[10px] text-slate-500">
-                          {exam.courseCode} · {exam.title}
-                        </p>
-                      </div>
-
-                      <span className="text-[10px] font-medium text-[#006d77]">
-                        {formatTime(exam.startTime)}
-                      </span>
-                    </button>
-                  ))}
-
-                  {hiddenUpcomingCount > 0 ? (
-                    <p className="pt-1 text-[10px] font-medium text-slate-400">
-                      +{hiddenUpcomingCount} нэмэлт шалгалт байна
-                    </p>
-                  ) : null}
-                </div>
-              ) : message ? (
-                <div className="mt-3 rounded-xl bg-slate-50 px-3 py-2 text-[11px] text-slate-500">
-                  {message}
-                </div>
-              ) : null}
+                      {day}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
-            <div className="mt-auto pt-3">
-              {selectedDate && selectedDateExams.length > 0 ? (
-                <div className="rounded-2xl border border-slate-100 bg-white/60 px-3 py-2">
-                  <div className="mt-2 space-y-2">
-                    {selectedDateExams.map((exam) => (
-                      <div
-                        key={`${exam.id}-selected`}
-                        className="rounded-xl bg-slate-50 px-3 py-2"
-                      >
-                        <p className="text-[11px] font-semibold text-slate-800">
-                          {exam.title}
-                        </p>
-                        <p className="mt-0.5 text-[10px] text-slate-500">
-                          {exam.courseName || exam.courseCode}
-                        </p>
-                        <p className="mt-1 flex items-center gap-1 text-[10px] text-[#006d77]">
-                          <Clock3 className="h-3 w-3" />
-                          <span>
-                            {formatTime(exam.startTime)} -{" "}
-                            {formatTime(exam.endTime)}
-                          </span>
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-
+            <div className="pt-3">
               <div className="flex shrink-0 items-center gap-4 border-t border-slate-100 pt-2.5">
                 <div className="flex items-center gap-1.5">
                   <div className="h-2 w-2 rounded-full bg-[#006d77]" />
@@ -590,12 +543,6 @@ export function ExamCalendar({
                   <div className="h-2 w-2 rounded-full bg-[#e6f4f1] ring-1 ring-[#006d77]/20" />
                   <span className="text-[10px] font-medium text-slate-500">
                     Шалгалттай
-                  </span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <div className="h-2 w-2 rounded-full bg-[#004f56]" />
-                  <span className="text-[10px] font-medium text-slate-500">
-                    Сонгосон
                   </span>
                 </div>
               </div>

@@ -515,7 +515,7 @@ const CompletedExams = () => {
   return (
     <section
       id="submitted-exams"
-      className="mt-14 scroll-mt-24 lg:max-w-[calc(75%-0.375rem)]"
+      className="mt-14 w-full scroll-mt-24"
     >
       <button
         type="button"

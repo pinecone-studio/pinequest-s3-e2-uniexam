@@ -203,10 +203,10 @@ export function RecentSubmittedExams() {
     <section className="mt-6">
       <div className="mb-4 flex items-end justify-between gap-4">
         <div>
-          <h2 className="text-base font-bold text-slate-800">
+          <h2 className="text-sm font-bold text-slate-800">
             Сүүлд өгсөн шалгалтууд
           </h2>
-          <p className="mt-1 text-[13px] text-slate-500">
+          <p className=" pt-0.5 text-[12px] font-medium text-slate-400">
             Хамгийн сүүлд илгээсэн 3 шалгалтын товч мэдээлэл.
           </p>
         </div>
@@ -216,14 +216,14 @@ export function RecentSubmittedExams() {
           variant="outline"
           size="sm"
           onClick={() => router.push("/exams#submitted-exams")}
-          className="shrink-0"
+          className="shrink-0 px-2 py-0.5 text-[11px]"
         >
           Бүгдийг харах <ChevronRight className="h-3.5 w-3.5" />
         </Button>
       </div>
 
       {loading ? (
-        <div className="w-full space-y-2 lg:max-w-5xl">
+        <div className="w-full space-y-2 lg:max-w-5xl gap-2">
           {Array.from({ length: 3 }, (_, index) => (
             <Card
               key={`recent-submission-skeleton-${index + 1}`}
