@@ -253,7 +253,7 @@ function buildCourseGrades(
     .sort((left, right) => left.courseName.localeCompare(right.courseName));
 }
 
-type UseGradesCoursesResult = {
+export type UseGradesCoursesResult = {
   courses: GradesCourse[];
   loading: boolean;
   error: string | null;

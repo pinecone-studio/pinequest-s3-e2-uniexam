@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import {
   Card,
@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -25,7 +26,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { useGradesCourses } from "../_hooks/use-grades-courses";
+import type { UseGradesCoursesResult } from "../_hooks/use-grades-courses";
 
 function getLetterGrade(percentage: number): string {
   if (percentage >= 93) return "A";
@@ -49,9 +50,36 @@ function getGradeColor(percentage: number): string {
   return "text-red-500";
 }
 
-export default function GradesCourses() {
+type GradesCoursesProps = UseGradesCoursesResult;
+
+function GradesCourseItemSkeleton() {
+  return (
+    <div className="rounded-lg border">
+      <div className="h-auto w-full p-4">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <Skeleton className="h-6 w-17.5 rounded-full" />
+            <Skeleton className="h-5 w-45" />
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="text-right">
+              <Skeleton className="h-7 w-17.5" />
+            </div>
+            <Skeleton className="h-4 w-4" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function GradesCourses({
+  courses,
+  loading,
+  error,
+  message,
+}: GradesCoursesProps) {
   const [expandedCourses, setExpandedCourses] = useState<string[]>([]);
-  const { courses, loading, error, message } = useGradesCourses();
 
   const toggleCourse = (courseId: string) => {
     setExpandedCourses((prev) =>
@@ -60,14 +88,6 @@ export default function GradesCourses() {
         : [...prev, courseId],
     );
   };
-
-  useEffect(() => {
-    setExpandedCourses((prev) =>
-      prev.filter((courseId) =>
-        courses.some((course) => course.courseId === courseId),
-      ),
-    );
-  }, [courses]);
 
   return (
     <Card>
@@ -78,11 +98,11 @@ export default function GradesCourses() {
         </CardDescription>
       </CardHeader>
       <CardContent className="mt-5 space-y-4">
-        {loading ? (
-          <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
-            Дүнгийн мэдээллийг ачаалж байна...
-          </div>
-        ) : null}
+        {loading
+          ? Array.from({ length: 3 }).map((_, index) => (
+              <GradesCourseItemSkeleton key={index} />
+            ))
+          : null}
 
         {error ? (
           <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-600">
