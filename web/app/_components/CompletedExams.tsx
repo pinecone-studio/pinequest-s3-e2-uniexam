@@ -513,10 +513,7 @@ const CompletedExams = () => {
   }, [isDialogOpen, selectedExam]);
 
   return (
-    <section
-      id="submitted-exams"
-      className="mt-14 w-full scroll-mt-24"
-    >
+    <section id="submitted-exams" className="mt-14 w-full scroll-mt-24">
       <button
         type="button"
         onClick={() => setIsOpen((prev: boolean) => !prev)}
@@ -774,7 +771,7 @@ const CompletedExams = () => {
                           </span>
                           {item.score !== null && item.score !== undefined ? (
                             <span className="rounded-full bg-[#e6f4f1] px-3 py-1 text-[#006d77]">
-                              Оноо: {item.score}
+                              Авсан оноо: {item.score}
                             </span>
                           ) : null}
                         </div>

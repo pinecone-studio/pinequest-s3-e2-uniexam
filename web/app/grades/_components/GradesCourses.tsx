@@ -150,7 +150,7 @@ export default function GradesCourses({
                       <div className="flex items-center gap-4">
                         <div className="text-right">
                           {course.currentGrade !== null && letterGrade ? (
-                            <>
+                            <div className="flex items-center">
                               <span
                                 className={`text-lg font-semibold ${gradeColor}`}
                               >
@@ -159,7 +159,7 @@ export default function GradesCourses({
                               <span className="ml-2 text-sm text-muted-foreground">
                                 ({course.currentGrade}%)
                               </span>
-                            </>
+                            </div>
                           ) : (
                             <span className="text-sm text-muted-foreground">
                               Хүлээгдэж байна
@@ -182,7 +182,7 @@ export default function GradesCourses({
                             <TableRow>
                               <TableHead>Үнэлгээ</TableHead>
                               <TableHead className="text-center">
-                                Оноо
+                                Авсан оноо
                               </TableHead>
                               <TableHead className="text-center">
                                 Дээд оноо

@@ -4,13 +4,13 @@ import { useState } from "react";
 import {
   AlertTriangle,
   BadgePercent,
-  BookOpen,
   Camera,
   ChartColumn,
   Clock,
   Keyboard,
+  LibraryBig,
+  NotebookText,
   Shield,
-  Target,
 } from "lucide-react";
 import {
   Card,
@@ -162,15 +162,15 @@ export default function PracticeSetup({
         <Card
           className={`cursor-pointer transition-all ${
             practiceMode === "exam"
-              ? "border-primary ring-1 ring-primary"
+              ? "border-primary ring-1 ring-[#006d77]"
               : "hover:border-primary/50"
           }`}
           onClick={() => setPracticeMode("exam")}
         >
           <CardHeader>
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                <BookOpen className="h-5 w-5 text-primary" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#e6f4f1]">
+                <LibraryBig className="h-5 w-5 text-[#006d77]" />
               </div>
               <div>
                 <CardTitle className="text-lg">Шалгалтаар бэлдэх</CardTitle>
@@ -185,15 +185,15 @@ export default function PracticeSetup({
         <Card
           className={`cursor-pointer transition-all ${
             practiceMode === "topic"
-              ? "border-primary ring-1 ring-primary"
+              ? "border-primary ring-1 ring-[#006d77]"
               : "hover:border-primary/50"
           }`}
           onClick={() => setPracticeMode("topic")}
         >
           <CardHeader>
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                <Target className="h-5 w-5 text-primary" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#e6f4f1]">
+                <NotebookText className="h-5 w-5 text-[#006d77]" />
               </div>
               <div>
                 <CardTitle className="text-lg">Сэдвээр бэлдэх</CardTitle>
@@ -464,7 +464,7 @@ export default function PracticeSetup({
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Өнөөдрийн явц</CardTitle>
-            <ChartColumn className="h-4 w-4 text-muted-foreground" />
+            <ChartColumn className="h-4 w-4 text-[#006d77]" strokeWidth={2} />
           </CardHeader>
           <CardContent>
             {historyLoading ? (
@@ -474,7 +474,9 @@ export default function PracticeSetup({
               </div>
             ) : (
               <>
-                <div className="text-2xl font-bold">{todayHistory.length}</div>
+                <div className="text-2xl font-semibold">
+                  {todayHistory.length}
+                </div>
                 <p className="text-xs text-muted-foreground">
                   {answeredToday} асуултанд хариулсан
                 </p>
@@ -487,7 +489,7 @@ export default function PracticeSetup({
             <CardTitle className="text-sm font-medium">
               Зөв хариултын дундаж
             </CardTitle>
-            <BadgePercent className="h-4 w-4 text-muted-foreground" />
+            <BadgePercent className="h-4 w-4 text-[#006d77]" strokeWidth={2} />
           </CardHeader>
           <CardContent>
             {historyLoading ? (
@@ -497,8 +499,15 @@ export default function PracticeSetup({
               </div>
             ) : (
               <>
-                <div className="text-2xl font-bold">{averageAccuracy}%</div>
-                <Progress value={averageAccuracy} className="mt-2 h-1.5" />
+                {/* <div className="text-2xl font-bold">{averageAccuracy}%</div>
+                <Progress value={averageAccuracy} className="mt-2 h-1.5 " /> */}
+                <div className="text-2xl font-semibold ">
+                  {averageAccuracy}%
+                </div>
+                <Progress
+                  value={averageAccuracy}
+                  className="mt-2 h-1.5 **:data-[slot=progress-indicator]:bg-[#006d77] **:data-[slot=progress-indicator]:rounded-full"
+                />
               </>
             )}
           </CardContent>
@@ -508,7 +517,7 @@ export default function PracticeSetup({
             <CardTitle className="text-sm font-medium">
               Зарцуулсан хугацаа
             </CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
+            <Clock className="h-4 w-4 text-[#006d77]" strokeWidth={2} />
           </CardHeader>
           <CardContent>
             {historyLoading ? (
@@ -518,7 +527,7 @@ export default function PracticeSetup({
               </div>
             ) : (
               <>
-                <div className="text-2xl font-bold">
+                <div className="text-2xl font-semibold">
                   {formatDurationLabel(spentSecondsThisWeek)}
                 </div>
                 <p className="text-xs text-muted-foreground">

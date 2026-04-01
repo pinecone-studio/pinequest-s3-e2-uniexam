@@ -101,7 +101,7 @@ export default function PracticeQuestion({
           <span className="text-muted-foreground">
             Асуулт {session.currentQuestion + 1} / {totalQuestions}
           </span>
-          <Badge variant="outline">
+          <Badge className="bg-[#e6f4f1] text-[#006d77]">
             {currentQuestion.difficulty === "easy"
               ? "Хялбар"
               : currentQuestion.difficulty === "medium"
@@ -119,7 +119,10 @@ export default function PracticeQuestion({
 
       <Card>
         <CardHeader>
-          <Badge variant="secondary" className="w-fit">
+          <Badge
+            variant="secondary"
+            className="w-fit bg-[#e6f4f1] text-[#006d77]"
+          >
             {currentQuestion.topic}
           </Badge>
           <CardTitle className="mt-4 text-xl leading-relaxed">

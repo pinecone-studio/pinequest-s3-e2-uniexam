@@ -124,7 +124,7 @@ export default function GradesRetakeCourses({
                       onClick={() =>
                         toast.success(
                           `${course.courseName} хичээлийн хүсэлт амжилттай илгээгдлээ.`,
-                          { position: "bottom-right" },
+                          { position: "top-right" },
                         )
                       }
                     >

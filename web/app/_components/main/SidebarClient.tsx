@@ -59,7 +59,7 @@ const SidebarClient = ({ displayName, isSignedIn }: Props) => {
           <Icon size={22} className="shrink-0" />
         </span>
         <span
-          className={`ml-3 max-w-0 overflow-hidden whitespace-nowrap text-sm opacity-0 transition-all duration-200 group-hover:max-w-40 group-hover:opacity-100 ${
+          className={`ml-3 whitespace-nowrap text-sm ${
             isActive ? "font-semibold" : ""
           }`}
         >
@@ -70,7 +70,7 @@ const SidebarClient = ({ displayName, isSignedIn }: Props) => {
   };
 
   return (
-    <aside className="group sticky top-0 hidden h-screen shrink-0 border-r border-gray-200 bg-white px-3 py-6 transition-all duration-300 md:flex md:w-20 md:hover:w-64">
+    <aside className="sticky top-0 hidden h-screen w-64 shrink-0 border-r border-gray-200 bg-white px-3 py-6 md:flex">
       <div className="flex w-full flex-col justify-between">
         <div className="flex flex-col gap-8">
           <div
@@ -82,7 +82,7 @@ const SidebarClient = ({ displayName, isSignedIn }: Props) => {
                 U
               </span>
             </div>
-            <span className="ml-3 max-w-0 overflow-hidden whitespace-nowrap text-base font-semibold text-[#0c464c] opacity-0 transition-all duration-200 group-hover:max-w-40 group-hover:opacity-100">
+            <span className="ml-3 whitespace-nowrap text-base font-semibold text-[#0c464c]">
               UniExam
             </span>
           </div>
@@ -109,7 +109,7 @@ const SidebarClient = ({ displayName, isSignedIn }: Props) => {
                   />
                 </div>
               </ClerkLoaded>
-              <div className="ml-3 min-w-0 max-w-0 overflow-hidden opacity-0 transition-all duration-200 group-hover:max-w-40 group-hover:opacity-100">
+              <div className="ml-3 min-w-0">
                 <p className="truncate text-sm font-medium text-gray-900">
                   {displayName}
                 </p>
@@ -126,7 +126,7 @@ const SidebarClient = ({ displayName, isSignedIn }: Props) => {
                   <span className="flex h-10 w-10 shrink-0 items-center justify-center">
                     <LogIn size={20} />
                   </span>
-                  <span className="ml-3 max-w-0 overflow-hidden whitespace-nowrap opacity-0 transition-all duration-200 group-hover:max-w-30 group-hover:opacity-100">
+                  <span className="ml-3 whitespace-nowrap">
                     Нэвтрэх
                   </span>
                 </Button>
@@ -136,7 +136,7 @@ const SidebarClient = ({ displayName, isSignedIn }: Props) => {
                   <span className="flex h-10 w-10 shrink-0 items-center justify-center">
                     <LogOut size={20} />
                   </span>
-                  <span className="ml-3 max-w-0 overflow-hidden whitespace-nowrap opacity-0 transition-all duration-200 group-hover:max-w-30 group-hover:opacity-100">
+                  <span className="ml-3 whitespace-nowrap">
                     Бүртгүүлэх
                   </span>
                 </Button>

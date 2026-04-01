@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Inter, JetBrains_Mono, Roboto_Mono } from "next/font/google";
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
-import { Toaster } from "sonner";
+import { Toaster } from "@/components/ui/sonner";
 import ConditionalLayout from "./_components/main/ConditionalLayout";
 import Sidebar from "./_components/main/Sidebar";
 // import Sidebar from "./_components/main/Sidebar";
