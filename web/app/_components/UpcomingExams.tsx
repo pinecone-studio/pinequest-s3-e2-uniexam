@@ -496,7 +496,7 @@ export default function UpcomingExams() {
                         <Button
                           type="button"
                           onClick={() => handleOpenWarning(exam)}
-                          className="hover:cursor-pointer flex shrink-0 rounded-md items-center gap-0.5 bg-[#006d77] px-2 py-0 h-6 text-[12px]"
+                          className="hover:cursor-pointer flex shrink-0 rounded-md items-center gap-0.5 bg-[#006d77] px-3 py-0 h-7 text-[12px]"
                         >
                           Шалгалт өгөх <ChevronRight className="w-1.5 h-1.5" />
                         </Button>

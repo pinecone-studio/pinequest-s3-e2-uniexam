@@ -317,7 +317,7 @@ export function StatCards() {
         stats.enrolledCoursesCount > 0
           ? `${stats.upcomingExamsCount} ойрын шалгалттай`
           : "Бүртгэлтэй хичээл алга",
-      icon: <BookOpen className="w-4 h-4 text-slate-400" />,
+      icon: <BookOpen className="w-4 h-4 text-[#006d77]" />,
     },
     {
       label: "Өгөх шалгалт",
@@ -325,7 +325,7 @@ export function StatCards() {
       sub: stats.nextExamAt
         ? `Дараагийнх: ${formatDateTime(stats.nextExamAt)}`
         : "Товлогдсон шалгалт алга",
-      icon: <Clock className="w-4 h-4 text-slate-400" />,
+      icon: <Clock className="w-4 h-4 text-[#006d77]" />,
     },
     {
       label: "Өгсөн шалгалт",
@@ -334,7 +334,7 @@ export function StatCards() {
         stats.completedExamsCount > 0
           ? `${stats.totalAnswersCount} хариулт илгээсэн`
           : "Илгээсэн шалгалт алга",
-      icon: <FileCheck2 className="w-4 h-4 text-slate-400" />,
+      icon: <FileCheck2 className="w-4 h-4 text-[#006d77]" />,
     },
     {
       label: "Дундаж үнэлгээ",
@@ -348,7 +348,7 @@ export function StatCards() {
             ? `${averageScoreSummary} · ${stats.reviewedCount} шалгалт үнэлэгдсэн`
             : `${stats.reviewedCount} шалгалт үнэлэгдсэн`
           : "Шалгасан үнэлгээ хараахан алга",
-      icon: <Target className="w-4 h-4 text-slate-400" />,
+      icon: <Target className="w-4 h-4 text-[#006d77]" />,
     },
   ];
 
@@ -359,7 +359,7 @@ export function StatCards() {
           {Array.from({ length: 4 }, (_, index) => (
             <Card
               key={`stat-skeleton-${index + 1}`}
-              className="overflow-hidden rounded-xl border-white/40 bg-white/60 shadow-sm ring-1 ring-black/5"
+              className="rounded-xl border-white/40 bg-white/60 ring-1 ring-black/5"
             >
               <CardContent className="flex h-full flex-col justify-between">
                 <div className="mb-0.5 flex items-center justify-between">
@@ -389,7 +389,7 @@ export function StatCards() {
             {statItems.map((stat) => (
               <Card
                 key={stat.label}
-                className="overflow-hidden rounded-xl border-white/40 bg-white/60 shadow-sm ring-1 ring-black/5"
+                className="overflow-hidden rounded-2xl border-white/40 bg-white/60 ring-1 ring-black/6"
               >
                 <CardContent className="flex h-full flex-col justify-between">
                   <div className="mb-0.5 flex items-center justify-between">

@@ -359,20 +359,20 @@ export function MyExamSessions({ className }: MyExamSessionsProps) {
     <TooltipProvider>
       <Card
         className={cn(
-          "overflow-hidden rounded-2xl border-white/40 bg-white/60 shadow-sm ring-1 ring-black/5",
+          "overflow-hidden rounded-2xl border-white/40 bg-white/60  ring-1 ring-black/8",
           className,
         )}
       >
         <CardHeader className="flex flex-row items-start justify-between gap-4 px-5 pb-3 pt-1">
           <div>
-            <CardTitle className="flex items-center gap-2 text-sm font-bold text-slate-800">
+            <CardTitle className="flex items-start gap-2 text-sm font-bold text-slate-800">
               <div className="rounded-lg bg-[#e6f4f1] p-1.5 text-[#006d77]">
                 <Clock3 className="h-3.5 w-3.5" />
               </div>
               Миний шалгалтууд
             </CardTitle>
             <CardDescription className="pl-9 text-[12px] font-medium text-slate-400">
-              Эхний 3 өгөх шалгалтыг list хэлбэрээр харуулж байна.
+              Ойрын өгөх шалгалтууд болон тэдгээрийн мэдээлэл.
             </CardDescription>
           </div>
 
@@ -449,7 +449,7 @@ export function MyExamSessions({ className }: MyExamSessionsProps) {
                           </p>
                         </div>
 
-                        <h3 className="mt-0.5 text-[16px] font-semibold text-gray-900">
+                        <h3 className="mt-0.5 text-[14px] font-semibold leading-tight">
                           {exam.title}
                         </h3>
 

@@ -204,10 +204,10 @@ export function RecentSubmittedExams() {
       <div className="mb-4 flex items-end justify-between gap-4">
         <div>
           <h2 className="text-sm font-bold text-slate-800">
-            Сүүлд өгсөн шалгалтууд
+            Ойрын өгсөн шалгалтууд
           </h2>
           <p className=" pt-0.5 text-[12px] font-medium text-slate-400">
-            Хамгийн сүүлд илгээсэн 3 шалгалтын товч мэдээлэл.
+            Сүүлийн өгсөн шалгалтууд болон тэдгээрийн мэдээлэл.
           </p>
         </div>
 
@@ -223,21 +223,27 @@ export function RecentSubmittedExams() {
       </div>
 
       {loading ? (
-        <div className="w-full space-y-2 lg:max-w-5xl gap-2">
+        <div className="w-full space-y-3">
           {Array.from({ length: 3 }, (_, index) => (
             <Card
               key={`recent-submission-skeleton-${index + 1}`}
-              className="overflow-hidden rounded-xl border-white/40 bg-white/60 shadow-sm ring-1 ring-black/5"
+              className="overflow-hidden rounded-2xl border-white/40 bg-white/60 ring-1 shadow-none ring-black/5"
             >
-              <CardContent className="flex items-center justify-between gap-1.5 px-3 py-1">
-                <div className="flex items-start gap-1.5">
-                  <Skeleton className="h-7 w-7 rounded-md bg-slate-200" />
-                  <div className="space-y-1">
-                    <Skeleton className="h-2.5 w-20 bg-slate-200" />
-                    <Skeleton className="h-3.5 w-44 bg-slate-200" />
+              <CardContent className="px-3 py-1.5">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <Skeleton className="h-8 w-8 shrink-0 rounded-lg bg-slate-200" />
+                    <div className="min-w-0 space-y-1.5">
+                      <div className="flex items-center gap-1.5">
+                        <Skeleton className="h-2.5 w-24 bg-slate-200" />
+                        <Skeleton className="h-2.5 w-10 bg-slate-200" />
+                      </div>
+                      <Skeleton className="h-4 w-44 bg-slate-200" />
+                    </div>
                   </div>
+
+                  <Skeleton className="h-6 w-16 shrink-0 rounded-full bg-slate-200" />
                 </div>
-                <Skeleton className="h-5 w-16 rounded-full bg-slate-200" />
               </CardContent>
             </Card>
           ))}
@@ -245,23 +251,23 @@ export function RecentSubmittedExams() {
       ) : null}
 
       {error ? (
-        <div className="w-full rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-600 lg:max-w-5xl">
+        <div className="w-full rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-600">
           {error}
         </div>
       ) : null}
 
       {!loading && !error && items.length === 0 ? (
-        <div className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 text-sm text-slate-500 lg:max-w-5xl">
+        <div className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 text-sm text-slate-500">
           {message}
         </div>
       ) : null}
 
       {!loading && !error && items.length > 0 ? (
-        <div className="w-full space-y-1">
+        <div className="w-full space-y-3">
           {items.map((item) => (
             <Card
               key={item.id}
-              className="overflow-hidden rounded-2xl border-slate-100 bg-white/70 shadow-sm transition-hover hover:bg-white"
+              className="overflow-hidden rounded-2xl border-white/40 bg-white/60 ring-1 shadow-none ring-black/5"
             >
               <CardContent className="px-3 py-1.5">
                 <div className="flex items-center justify-between gap-2">
