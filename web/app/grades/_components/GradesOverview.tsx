@@ -6,10 +6,10 @@ import { TrendingUp } from "lucide-react";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { graphqlRequest } from "@/lib/graphql";
 import { isHiddenStudentExam } from "@/lib/exam-visibility";
 
@@ -262,6 +262,7 @@ function buildCourseGrades(
 export default function GradesOverview() {
   const { user, isLoaded } = useUser();
   const [courses, setCourses] = useState<GradesCourse[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
@@ -272,11 +273,13 @@ export default function GradesOverview() {
 
     const loadGrades = async () => {
       try {
+        setLoading(true);
         const studentEmail = user?.primaryEmailAddress?.emailAddress;
 
         if (!studentEmail) {
           if (cancelled) return;
           setCourses([]);
+          setLoading(false);
           return;
         }
 
@@ -356,6 +359,10 @@ export default function GradesOverview() {
         if (!cancelled) {
           setCourses([]);
         }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     };
 
@@ -398,8 +405,17 @@ export default function GradesOverview() {
           {/* <Award className="h-4 w-4 text-primary" /> */}
           {/* </CardHeader> */}
           <CardContent className="p-0">
-            <div className="text-3xl font-bold">{overallGPA.toFixed(2)}</div>
-            <p className="text-xs text-muted-foreground mt-2">4.0-аас</p>
+            {loading ? (
+              <>
+                <Skeleton className="h-9 w-[68px]" />
+                <Skeleton className="mt-2 h-4 w-[42px]" />
+              </>
+            ) : (
+              <>
+                <div className="text-3xl font-bold">{overallGPA.toFixed(2)}</div>
+                <p className="text-xs text-muted-foreground mt-2">4.0-аас</p>
+              </>
+            )}
           </CardContent>
         </Card>
         <Card className="gap-2 p-6">
@@ -408,8 +424,17 @@ export default function GradesOverview() {
           {/* <BookOpen className="h-4 w-4 text-muted-foreground" /> */}
           {/* </CardHeader> */}
           <CardContent className="p-0">
-            <div className="text-3xl font-bold">{totalCredits}</div>
-            <p className="text-xs text-muted-foreground mt-2">Энэ улирал</p>
+            {loading ? (
+              <>
+                <Skeleton className="h-9 w-[32px]" />
+                <Skeleton className="mt-2 h-4 w-[58px]" />
+              </>
+            ) : (
+              <>
+                <div className="text-3xl font-bold">{totalCredits}</div>
+                <p className="text-xs text-muted-foreground mt-2">Энэ улирал</p>
+              </>
+            )}
           </CardContent>
         </Card>
         <Card className="gap-2 p-6">
@@ -418,8 +443,17 @@ export default function GradesOverview() {
           {/* <BarChart3 className="h-4 w-4 text-muted-foreground" /> */}
           {/* </CardHeader> */}
           <CardContent className="p-0">
-            <div className="text-3xl font-bold">{averageGrade}%</div>
-            <p className="text-xs text-muted-foreground mt-2">Бүх хичээлээр</p>
+            {loading ? (
+              <>
+                <Skeleton className="h-9 w-[76px]" />
+                <Skeleton className="mt-2 h-4 w-[74px]" />
+              </>
+            ) : (
+              <>
+                <div className="text-3xl font-bold">{averageGrade}%</div>
+                <p className="text-xs text-muted-foreground mt-2">Бүх хичээлээр</p>
+              </>
+            )}
           </CardContent>
         </Card>
         <Card className="gap-2 p-6">
@@ -428,10 +462,19 @@ export default function GradesOverview() {
             <TrendingUp className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent className="p-0">
-            <div className="text-3xl font-bold text-[#42c66e]">+0.15</div>
-            <p className="text-xs text-muted-foreground mt-2">
-              Энэ сард GPA өссөн
-            </p>
+            {loading ? (
+              <>
+                <Skeleton className="h-9 w-[62px]" />
+                <Skeleton className="mt-2 h-4 w-[88px]" />
+              </>
+            ) : (
+              <>
+                <div className="text-3xl font-bold text-[#42c66e]">+0.15</div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Энэ сард GPA өссөн
+                </p>
+              </>
+            )}
           </CardContent>
         </Card>
       </div>

@@ -391,249 +391,253 @@ export default function UpcomingExams() {
     router.push(`/exam?examId=${selectedExam.id}`);
   };
 
-  const visibleExams = exams.filter((exam) => !isExamExpired(exam, currentTime));
+  const visibleExams = exams.filter(
+    (exam) => !isExamExpired(exam, currentTime),
+  );
 
   return (
     <TooltipProvider>
       <div>
-      <h2 className="font-bold pb-7 text-[16px] text-slate-800 whitespace-nowrap transition-colors">
-        Өгөх шалгалтууд
-      </h2>
+        <h2 className="font-bold pb-7 text-[16px] text-slate-800 whitespace-nowrap transition-colors">
+          Өгөх шалгалтууд
+        </h2>
 
-      {loading ? (
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-          {Array.from({ length: 4 }, (_, index) => (
-            <div
-              key={`upcoming-skeleton-${index + 1}`}
-              className="h-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3"
-            >
-              <div className="flex h-full min-h-30 w-full flex-col justify-between gap-4">
-                <div className="space-y-2">
-                  <Skeleton className="h-3 w-24 bg-slate-200" />
-                  <Skeleton className="h-5 w-4/5 bg-slate-200" />
-                  <Skeleton className="h-5 w-3/5 bg-slate-200" />
-                </div>
-
-                <div className="flex w-full items-center justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <Skeleton className="h-4 w-20 bg-slate-200" />
-                    <Skeleton className="h-4 w-16 bg-slate-200" />
-                  </div>
-
-                  <Skeleton className="h-9 w-28 rounded-md bg-slate-200" />
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : null}
-
-      {error ? (
-        <div className="rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-600">
-          {error}
-        </div>
-      ) : null}
-
-      {!loading && !error && visibleExams.length === 0 ? (
-        <div className="rounded-2xl border border-gray-200 bg-gray-50 px-5 py-4 text-sm text-gray-500">
-          Одоогоор шалгалттай хичээл алга.
-        </div>
-      ) : null}
-
-      {!loading && visibleExams.length > 0 ? (
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-          {visibleExams.map((exam) => {
-            const examCanStart = canStartExam(exam, currentTime);
-            const examStartMessage = getExamStartAvailabilityMessage(
-              exam,
-              currentTime,
-            );
-
-            return (
+        {loading ? (
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+            {Array.from({ length: 4 }, (_, index) => (
               <div
-                key={exam.id}
-                className="h-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-4"
+                key={`upcoming-skeleton-${index + 1}`}
+                className="h-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3"
               >
                 <div className="flex h-full min-h-30 w-full flex-col justify-between gap-4">
-                  <div>
-                    <p className="text-[11px] font-medium text-[#006d77]">
-                      {exam.subject}
-                    </p>
-
-                    <h3 className="text-[18px] font-semibold text-gray-900">
-                      {exam.title}
-                    </h3>
-
-                    <p className="mt-1 text-[11px] text-slate-500">
-                      {getExamDurationLabel(exam.duration)}
-                    </p>
+                  <div className="space-y-2">
+                    <Skeleton className="h-3 w-24 bg-slate-200" />
+                    <Skeleton className="h-5 w-4/5 bg-slate-200" />
+                    <Skeleton className="h-5 w-3/5 bg-slate-200" />
                   </div>
 
-                  <div className="flex w-full flex-wrap items-center justify-between gap-2">
-                    <div className="flex min-w-0 flex-wrap items-center gap-2 text-gray-500 text-[10px]">
-                      {exam.hasKnownStartTime ? (
-                        <>
-                          <div className="flex items-center gap-0.5 whitespace-nowrap">
-                            <Calendar className="w-2.5 h-2.5" />
-                            <span>{exam.date}</span>
-                          </div>
-
-                          <div className="flex items-center gap-0.5 whitespace-nowrap">
-                            <Clock className="w-2.5 h-2.5" />
-                            <span>{exam.time}</span>
-                          </div>
-                        </>
-                      ) : (
-                        <div className="whitespace-nowrap">
-                          <span>Эхлэх хугацаа тодорхойгүй</span>
-                        </div>
-                      )}
+                  <div className="flex w-full items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <Skeleton className="h-4 w-20 bg-slate-200" />
+                      <Skeleton className="h-4 w-16 bg-slate-200" />
                     </div>
 
-                    {examCanStart ? (
-                      <Button
-                        type="button"
-                        onClick={() => handleOpenWarning(exam)}
-                        className="hover:cursor-pointer flex shrink-0 rounded-md items-center gap-0.5 bg-[#006d77] px-2 py-0 h-6 text-[11px]"
-                      >
-                        Шалгалт өгөх <ChevronRight className="w-1.5 h-1.5" />
-                      </Button>
-                    ) : (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span className="inline-flex shrink-0">
-                            <Button
-                              type="button"
-                              disabled
-                              className="flex h-6 shrink-0 items-center gap-0.5 rounded-md bg-[#006d77] px-2 py-0 text-[11px] text-white/90 hover:cursor-not-allowed"
-                            >
-                              Шалгалт өгөх{" "}
-                              <ChevronRight className="h-1.5 w-1.5" />
-                            </Button>
-                          </span>
-                        </TooltipTrigger>
-                        <TooltipContent side="top" sideOffset={6}>
-                          {examStartMessage}
-                        </TooltipContent>
-                      </Tooltip>
-                    )}
+                    <Skeleton className="h-9 w-28 rounded-md bg-slate-200" />
                   </div>
                 </div>
               </div>
-            );
-          })}
-        </div>
-      ) : null}
+            ))}
+          </div>
+        ) : null}
 
-      <Dialog
-        open={isWarningOpen}
-        onOpenChange={(open) => {
-          setIsWarningOpen(open);
+        {error ? (
+          <div className="rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-600">
+            {error}
+          </div>
+        ) : null}
 
-          if (!open) {
-            setSelectedExam(null);
-          }
-        }}
-      >
-        <DialogContent className="p-0 sm:max-w-xl" showCloseButton={false}>
-          <DialogHeader className=" gap-1 border-b border-slate-100 px-7 py-5">
-            <DialogTitle className="flex items-center gap-2 text-lg font-semibold text-slate-900">
-              <AlertTriangle className="h-5 w-5 text-[#d97706]" />
-              Шалгалтын өмнөх сануулга
-            </DialogTitle>
-            <DialogDescription className="text-xs pl-7 text-slate-500">
-              Шалгалтаа эхлүүлэхээс өмнө дараах мэдээлэлтэй танилцана уу.
-            </DialogDescription>
-          </DialogHeader>
+        {!loading && !error && visibleExams.length === 0 ? (
+          <div className="rounded-2xl border border-gray-200 bg-gray-50 px-5 py-4 text-sm text-gray-500">
+            Одоогоор шалгалттай хичээл алга.
+          </div>
+        ) : null}
 
-          <div className="space-y-3 px-6 py-4">
-            {selectedExam ? (
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-                <p className="text-[11px] font-medium text-[#006d77]">
-                  {selectedExam.subject}
-                </p>
-                <h3 className="mt-1 text-base font-semibold text-slate-900">
-                  {selectedExam.title}
-                </h3>
-              </div>
-            ) : null}
+        {!loading && visibleExams.length > 0 ? (
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+            {visibleExams.map((exam) => {
+              const examCanStart = canStartExam(exam, currentTime);
+              const examStartMessage = getExamStartAvailabilityMessage(
+                exam,
+                currentTime,
+              );
 
-            <div className="space-y-3">
-              <div className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3">
-                <Shield className="mt-0.5 h-4 w-4 shrink-0 text-[#006d77]" />
-                <div>
-                  <p className="text-sm font-medium text-slate-800">
-                    Tab, focus, гарах оролдлогууд хянагдана
-                  </p>
-                  <p className="mt-1 text-xs text-slate-500">
-                    Шалгалтын үеэр tab солих, цонхны focus алдах, window blur,
-                    цонхноос гарах, мөн шалгалтын хэсгээс гарах оролдлогууд
-                    анхааруулгад бүртгэгдэнэ.
-                  </p>
+              return (
+                <div
+                  key={exam.id}
+                  className="h-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-4"
+                >
+                  <div className="flex h-full min-h-30 w-full flex-col justify-between gap-4">
+                    <div>
+                      <p className="text-[11px] font-medium text-[#006d77]">
+                        {exam.subject}
+                      </p>
+
+                      <h3 className="text-[18px] font-semibold text-gray-900">
+                        {exam.title}
+                      </h3>
+
+                      <p className="mt-1 text-[11px] text-slate-500">
+                        {getExamDurationLabel(exam.duration)}
+                      </p>
+                    </div>
+
+                    <div className="flex w-full flex-wrap items-center justify-between gap-2">
+                      <div className="flex min-w-0 flex-wrap items-center gap-2 text-gray-500 text-[10px]">
+                        {exam.hasKnownStartTime ? (
+                          <>
+                            <div className="flex items-center gap-0.5 whitespace-nowrap">
+                              <Calendar className="w-2.5 h-2.5" />
+                              <span>{exam.date}</span>
+                            </div>
+
+                            <div className="flex items-center gap-0.5 whitespace-nowrap">
+                              <Clock className="w-2.5 h-2.5" />
+                              <span>{exam.time}</span>
+                            </div>
+                          </>
+                        ) : (
+                          <div className="whitespace-nowrap">
+                            <span>Эхлэх хугацаа тодорхойгүй</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {examCanStart ? (
+                        <Button
+                          type="button"
+                          onClick={() => handleOpenWarning(exam)}
+                          className="hover:cursor-pointer flex shrink-0 rounded-md items-center gap-0.5 bg-[#006d77] px-2 py-0 h-6 text-[11px]"
+                        >
+                          Шалгалт өгөх <ChevronRight className="w-1.5 h-1.5" />
+                        </Button>
+                      ) : (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="inline-flex shrink-0">
+                              <Button
+                                type="button"
+                                disabled
+                                className="flex h-6 shrink-0 items-center gap-0.5 rounded-md bg-[#006d77] px-2 py-0 text-[11px] text-white/90 hover:cursor-not-allowed"
+                              >
+                                Шалгалт өгөх{" "}
+                                <ChevronRight className="h-1.5 w-1.5" />
+                              </Button>
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" sideOffset={6}>
+                            {examStartMessage}
+                          </TooltipContent>
+                        </Tooltip>
+                      )}
+                    </div>
+                  </div>
                 </div>
-              </div>
+              );
+            })}
+          </div>
+        ) : null}
 
-              <div className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3">
-                <Camera className="mt-0.5 h-4 w-4 shrink-0 text-[#006d77]" />
-                <div>
-                  <p className="text-sm font-medium text-slate-800">
-                    Камерын хяналт ажиллаж байна
+        <Dialog
+          open={isWarningOpen}
+          onOpenChange={(open) => {
+            setIsWarningOpen(open);
+
+            if (!open) {
+              setSelectedExam(null);
+            }
+          }}
+        >
+          <DialogContent className="p-0 sm:max-w-xl" showCloseButton={false}>
+            <DialogHeader className=" gap-1 border-b border-slate-100 px-7 py-5">
+              <DialogTitle className="flex items-center gap-2 text-lg font-semibold text-slate-900">
+                <AlertTriangle className="h-5 w-5 text-[#d97706]" />
+                Шалгалтын өмнөх сануулга
+              </DialogTitle>
+              <DialogDescription className="text-xs pl-7 text-slate-500">
+                Шалгалтаа эхлүүлэхээс өмнө дараах мэдээлэлтэй танилцана уу.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-3 px-6 py-4">
+              {selectedExam ? (
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                  <p className="text-[11px] font-medium text-[#006d77]">
+                    {selectedExam.subject}
                   </p>
-                  <p className="mt-1 text-xs text-slate-500">
-                    Олон хүн илрэх, царай харагдахгүй болох, доош удаан харах,
-                    эсвэл утас харагдах үед систем анхааруулга өгнө.
-                  </p>
+                  <h3 className="mt-1 text-base font-semibold text-slate-900">
+                    {selectedExam.title}
+                  </h3>
                 </div>
-              </div>
+              ) : null}
 
-              <div className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3">
-                <Keyboard className="mt-0.5 h-4 w-4 shrink-0 text-[#006d77]" />
-                <div>
-                  <p className="text-sm font-medium text-slate-800">
-                    Shortcut болон хуулах үйлдэл хориотой
-                  </p>
-                  <p className="mt-1 text-xs text-slate-500">
-                    Ctrl, Alt, Meta товчлол, F12, PrintScreen, баруун товч,
-                    copy, paste, cut зэрэг үйлдлүүдийг систем хориглоно.
-                  </p>
+              <div className="space-y-3">
+                <div className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3">
+                  <Shield className="mt-0.5 h-4 w-4 shrink-0 text-[#006d77]" />
+                  <div>
+                    <p className="text-sm font-medium text-slate-800">
+                      Tab, focus, гарах оролдлогууд хянагдана
+                    </p>
+                    <p className="mt-1 text-xs text-slate-500">
+                      Шалгалтын үеэр tab солих, цонхны focus алдах, window blur,
+                      цонхноос гарах, мөн шалгалтын хэсгээс гарах оролдлогууд
+                      анхааруулгад бүртгэгдэнэ.
+                    </p>
+                  </div>
                 </div>
-              </div>
 
-              <div className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3">
-                <Clock className="mt-0.5 h-4 w-4 shrink-0 text-[#006d77]" />
-                <div>
-                  <p className="text-sm font-medium text-slate-800">
-                    {/* Бэлэн болсон үедээ шалгалтаа эхлүүлнэ үү */}
-                    Анхааруулга !!!
-                  </p>
-                  <p className="mt-1 text-xs text-slate-500">
-                    Оюутанд өгсөн бүх анхааруулга багшийн хяналтын самбарт бодит
-                    хугацаанд (Real-time) бүртгэгдэж очихыг анхаарна уу.
-                  </p>
+                <div className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3">
+                  <Camera className="mt-0.5 h-4 w-4 shrink-0 text-[#006d77]" />
+                  <div>
+                    <p className="text-sm font-medium text-slate-800">
+                      Камерын хяналт ажиллаж байна
+                    </p>
+                    <p className="mt-1 text-xs text-slate-500">
+                      Олон хүн илрэх, царай харагдахгүй болох, доош удаан харах,
+                      эсвэл утас харагдах үед систем анхааруулга өгнө.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3">
+                  <Keyboard className="mt-0.5 h-4 w-4 shrink-0 text-[#006d77]" />
+                  <div>
+                    <p className="text-sm font-medium text-slate-800">
+                      Shortcut болон хуулах үйлдэл хориотой
+                    </p>
+                    <p className="mt-1 text-xs text-slate-500">
+                      Ctrl, Alt, Meta товчлол, F12, PrintScreen, баруун товч,
+                      copy, paste, cut зэрэг үйлдлүүдийг систем хориглоно.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3">
+                  <Clock className="mt-0.5 h-4 w-4 shrink-0 text-[#006d77]" />
+                  <div>
+                    <p className="text-sm font-medium text-slate-800">
+                      {/* Бэлэн болсон үедээ шалгалтаа эхлүүлнэ үү */}
+                      Анхааруулга !!!
+                    </p>
+                    <p className="mt-1 text-xs text-slate-500">
+                      Оюутанд өгсөн бүх анхааруулга багшийн хяналтын самбарт
+                      бодит хугацаанд (Real-time) бүртгэгдэж очихыг анхаарна уу.
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <DialogFooter className="-mx-0 -mb-0 rounded-b-none border-t-0 bg-transparent px-6 pb-5 pt-0">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setIsWarningOpen(false)}
-            >
-              Буцах
-            </Button>
-            <Button
-              type="button"
-              onClick={handleStartExam}
-              className="bg-[#006d77]"
-              disabled={!selectedExam || !canStartExam(selectedExam, currentTime)}
-            >
-              Шалгалт өгөх
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            <DialogFooter className="-mx-0 -mb-0 rounded-b-none border-t-0 bg-transparent px-6 pb-5 pt-0">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsWarningOpen(false)}
+              >
+                Буцах
+              </Button>
+              <Button
+                type="button"
+                onClick={handleStartExam}
+                className="bg-[#006d77]"
+                disabled={
+                  !selectedExam || !canStartExam(selectedExam, currentTime)
+                }
+              >
+                Шалгалт өгөх
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </TooltipProvider>
   );

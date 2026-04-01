@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { isHiddenStudentExam } from "@/lib/exam-visibility";
 import { graphqlRequest } from "@/lib/graphql";
 import {
@@ -72,6 +73,7 @@ const WARMUP_EXAMS_QUERY = `
 `;
 
 export default function PracticePage() {
+  const searchParams = useSearchParams();
   const [exams, setExams] = useState<PracticeExamSummary[]>([]);
   const [examsLoading, setExamsLoading] = useState(true);
   const [examsError, setExamsError] = useState<string | null>(null);
@@ -90,6 +92,7 @@ export default function PracticePage() {
   const [practiceMode, setPracticeMode] = useState<PracticeMode>("exam");
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
   const [difficulty, setDifficulty] = useState<PracticeDifficulty>("medium");
+  const requestedExamId = searchParams.get("examId");
 
   useEffect(() => {
     let cancelled = false;
@@ -155,6 +158,21 @@ export default function PracticePage() {
     setHistoryItems(loadPracticeHistory());
     setHistoryLoading(false);
   }, []);
+
+  useEffect(() => {
+    if (!requestedExamId || exams.length === 0) {
+      return;
+    }
+
+    const matchedExam = exams.find((exam) => exam.id === requestedExamId);
+
+    if (!matchedExam) {
+      return;
+    }
+
+    setPracticeMode("exam");
+    setSelectedExam(matchedExam.id);
+  }, [exams, requestedExamId]);
 
   useEffect(() => {
     if (!session?.showResults || historyRecorded || practiceQuestions.length === 0) {
