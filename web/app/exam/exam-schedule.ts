@@ -17,20 +17,18 @@ const parseExamDate = (value: string | null | undefined) => {
 export const getScheduledEndsAtMs = (
   exam: Pick<ExamMeta, "durationSeconds" | "startTime" | "endTime">,
 ) => {
-  const scheduledStart = parseExamDate(exam.startTime);
+  const explicitEnd = parseExamDate(exam.endTime);
+  if (explicitEnd) {
+    return explicitEnd.getTime();
+  }
 
+  const scheduledStart = parseExamDate(exam.startTime);
   if (
     scheduledStart &&
     Number.isFinite(exam.durationSeconds) &&
     exam.durationSeconds > 0
   ) {
     return scheduledStart.getTime() + exam.durationSeconds * 1000;
-  }
-
-  const explicitEnd = parseExamDate(exam.endTime);
-
-  if (explicitEnd) {
-    return explicitEnd.getTime();
   }
 
   return null;
@@ -52,7 +50,9 @@ export const getScheduledStartedAtIso = (
     Number.isFinite(exam.durationSeconds) &&
     exam.durationSeconds > 0
   ) {
-    return new Date(fallbackEndsAtMs - exam.durationSeconds * 1000).toISOString();
+    return new Date(
+      fallbackEndsAtMs - exam.durationSeconds * 1000,
+    ).toISOString();
   }
 
   return new Date().toISOString();
