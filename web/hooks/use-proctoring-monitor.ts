@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type RefObject } from "react";
 import {
   createProctorDetector,
   type ProctorFrameState,
 } from "@/lib/face-detector";
 
-type UseProctorMonitorReturn = {
-  videoRef: React.RefObject<HTMLVideoElement | null>;
+export type UseProctorMonitorReturn = {
+  videoRef: RefObject<HTMLVideoElement | null>;
+  streamRef: RefObject<MediaStream | null>;
   isReady: boolean;
   error: string;
   state: ProctorFrameState;
@@ -25,6 +26,7 @@ const INITIAL_STATE: ProctorFrameState = {
 
 export function useProctorMonitor(): UseProctorMonitorReturn {
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
 
   const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState("");
@@ -94,6 +96,7 @@ export function useProctorMonitor(): UseProctorMonitorReturn {
           return;
         }
 
+        streamRef.current = stream;
         video.srcObject = stream;
 
         await waitForVideoData(video);
@@ -167,7 +170,6 @@ export function useProctorMonitor(): UseProctorMonitorReturn {
           };
 
           setState(stableState);
-
           rafId = requestAnimationFrame(loop);
         };
 
@@ -181,7 +183,7 @@ export function useProctorMonitor(): UseProctorMonitorReturn {
       }
     }
 
-    start();
+    void start();
 
     return () => {
       isCancelled = true;
@@ -192,11 +194,13 @@ export function useProctorMonitor(): UseProctorMonitorReturn {
       if (stream) {
         stream.getTracks().forEach((track) => track.stop());
       }
+      streamRef.current = null;
     };
   }, []);
 
   return {
     videoRef,
+    streamRef,
     isReady,
     error,
     state,

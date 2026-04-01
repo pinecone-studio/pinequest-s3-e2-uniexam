@@ -11,6 +11,7 @@ import { MonitoringPageSkeleton } from "./_components/MonitoringPageSkeleton";
 import { StatCard } from "./_components/StatCard";
 import { students } from "./_data/students";
 import { monitoringCssVars } from "./_lib/theme";
+import { LiveMonitorPanel } from "./_components/LiveMonitorPanel";
 
 type StudentFilter = "all" | "alert";
 
@@ -98,7 +99,7 @@ export default function MonitoringPage() {
           classOptions={classOptions}
           onClassChange={handleClassChange}
         />
-
+        <LiveMonitorPanel roomId="exam-room-1" />
         <div className="grid gap-8 md:grid-cols-2 xl:grid-cols-4 ">
           <StatCard
             title="Нийт сурагч"

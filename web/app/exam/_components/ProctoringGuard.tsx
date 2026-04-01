@@ -1,12 +1,22 @@
 "use client";
 
-import { useProctorMonitor } from "@/hooks/use-proctoring-monitor";
+import {
+  useProctorMonitor,
+  type UseProctorMonitorReturn,
+} from "@/hooks/use-proctoring-monitor";
 import { useEffect, useMemo, useRef } from "react";
 import { toast } from "sonner";
 
-export function ProctoringGuard() {
-  const { videoRef, isReady, error, state } = useProctorMonitor();
+type ProctoringWarningsProps = Pick<
+  UseProctorMonitorReturn,
+  "isReady" | "error" | "state"
+>;
 
+export function ProctoringWarnings({
+  isReady,
+  error,
+  state,
+}: ProctoringWarningsProps) {
   const flags = useMemo(() => {
     const next: string[] = [];
 
@@ -30,7 +40,6 @@ export function ProctoringGuard() {
     const now = Date.now();
     const signature = flags.join("|");
 
-    // same warning давтаж битгий spam хий
     if (
       signature === lastToastRef.current &&
       now - lastToastTimeRef.current < 4000
@@ -70,13 +79,26 @@ export function ProctoringGuard() {
     });
   }, [error]);
 
+  return null;
+}
+
+export function ProctoringGuard() {
+  const monitor = useProctorMonitor();
+
   return (
-    <video
-      ref={videoRef}
-      autoPlay
-      muted
-      playsInline
-      className="absolute -left-[9999px] top-0 h-px w-px opacity-0 pointer-events-none"
-    />
+    <>
+      <ProctoringWarnings
+        isReady={monitor.isReady}
+        error={monitor.error}
+        state={monitor.state}
+      />
+      <video
+        ref={monitor.videoRef}
+        autoPlay
+        muted
+        playsInline
+        className="absolute -left-[9999px] top-0 h-px w-px opacity-0 pointer-events-none"
+      />
+    </>
   );
 }
