@@ -96,7 +96,7 @@ export default function AdvancedFilter({
                     onClick={() => toggleItem(c, setClassFilter)}
                     className={`px-3 py-1.5 rounded-lg border text-sm transition ${
                       active
-                        ? "bg-violet-600 text-white border-violet-600 shadow-sm"
+                        ? "bg-blue-600 text-white border-violet-600 shadow-sm"
                         : "bg-white text-slate-700 border-slate-300 hover:border-violet-300 hover:bg-violet-50"
                     }`}
                   >
@@ -118,7 +118,7 @@ export default function AdvancedFilter({
                     onClick={() => toggleItem(m, setMajorFilter)}
                     className={`px-3 py-1.5 rounded-lg border text-sm transition ${
                       active
-                        ? "bg-emerald-600 text-white border-emerald-600 shadow-sm"
+                        ? "bg-blue-600 text-white border-emerald-600 shadow-sm"
                         : "bg-white text-slate-700 border-slate-300 hover:border-emerald-300 hover:bg-emerald-50"
                     }`}
                   >
