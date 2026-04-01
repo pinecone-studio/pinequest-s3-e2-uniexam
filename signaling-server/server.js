@@ -11,6 +11,14 @@ const io = new Server(server, {
 io.on("connection", (socket) => {
   console.log("connected:", socket.id);
 
+  const emitSignaling = ({ roomId, to, event, payload }) => {
+    if (to) {
+      io.to(to).emit(event, payload);
+      return;
+    }
+    socket.to(roomId).emit(event, payload);
+  };
+
   socket.on("join-room", ({ roomId, role }) => {
     socket.join(roomId);
     socket.data.roomId = roomId;
@@ -24,30 +32,50 @@ io.on("connection", (socket) => {
     });
   });
 
-  socket.on("request-offer", ({ roomId }) => {
-    socket.to(roomId).emit("request-offer", {
-      from: socket.id,
+  socket.on("request-offer", ({ roomId, to }) => {
+    emitSignaling({
+      roomId,
+      to,
+      event: "request-offer",
+      payload: {
+        from: socket.id,
+      },
     });
   });
 
-  socket.on("offer", ({ roomId, sdp }) => {
-    socket.to(roomId).emit("offer", {
-      sdp,
-      from: socket.id,
+  socket.on("offer", ({ roomId, sdp, to }) => {
+    emitSignaling({
+      roomId,
+      to,
+      event: "offer",
+      payload: {
+        sdp,
+        from: socket.id,
+      },
     });
   });
 
-  socket.on("answer", ({ roomId, sdp }) => {
-    socket.to(roomId).emit("answer", {
-      sdp,
-      from: socket.id,
+  socket.on("answer", ({ roomId, sdp, to }) => {
+    emitSignaling({
+      roomId,
+      to,
+      event: "answer",
+      payload: {
+        sdp,
+        from: socket.id,
+      },
     });
   });
 
-  socket.on("ice-candidate", ({ roomId, candidate }) => {
-    socket.to(roomId).emit("ice-candidate", {
-      candidate,
-      from: socket.id,
+  socket.on("ice-candidate", ({ roomId, candidate, to }) => {
+    emitSignaling({
+      roomId,
+      to,
+      event: "ice-candidate",
+      payload: {
+        candidate,
+        from: socket.id,
+      },
     });
   });
 
