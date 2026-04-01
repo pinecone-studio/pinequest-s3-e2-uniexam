@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { graphqlRequest } from "@/lib/graphql";
+import { getQuestionTypeLabel } from "@/lib/question-type-label";
 import { cn } from "@/lib/utils";
 
 type CompletedExamCard = {
@@ -196,37 +197,6 @@ const getStatusLabel = (status: CompletedExamCard["status"]) => {
   }
 
   return "Илгээсэн";
-};
-
-const getQuestionTypeLabel = (value: string | null | undefined) => {
-  const normalized = value?.trim().toLowerCase() ?? "";
-
-  if (
-    normalized.includes("short") ||
-    normalized.includes("essay") ||
-    normalized.includes("text") ||
-    normalized.includes("open")
-  ) {
-    return "Задгай асуулт";
-  }
-
-  if (
-    normalized.includes("multiple") ||
-    normalized.includes("choice") ||
-    normalized.includes("select")
-  ) {
-    return "Сонголттой";
-  }
-
-  if (normalized.includes("true") || normalized.includes("false")) {
-    return "Үнэн / Худал";
-  }
-
-  if (normalized.includes("fill")) {
-    return "Нөхөх";
-  }
-
-  return value?.trim() || "Тодорхойгүй";
 };
 
 const CompletedExams = () => {

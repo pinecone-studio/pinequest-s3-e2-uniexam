@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight, Flag } from "lucide-react";
 import { useExamState } from "../_hooks/use-exam-states";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { getQuestionTypeLabel } from "@/lib/question-type-label";
 import {
   EXAM_WARNING_CODES,
   useExamWarningTracker,
@@ -85,6 +86,9 @@ export const ExamQA = () => {
   return (
     <div>
       <main className="flex-1 flex flex-col px-8 py-30 max-w-3xl mx-auto w-full">
+        <span className="mb-3 inline-flex w-fit rounded-full bg-[#e6f4f1] px-3 py-1 text-xs font-semibold text-[#006d77]">
+          {getQuestionTypeLabel(currentQuestion.type)}
+        </span>
         <p className="text-gray-800 text-base font-medium mb-6">
           {currentQuestion.question}
         </p>

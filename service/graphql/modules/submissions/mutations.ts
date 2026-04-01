@@ -15,6 +15,9 @@ type CreateSubmissionArgs = {
   final_score?: number;
 };
 
+const EXAM_AUTO_SUBMITTED_ERROR =
+  "Exam time is over. Submission has been auto-submitted.";
+
 function isValidTransition(
   from: SubmissionStatus | null,
   to: SubmissionStatus,
@@ -64,6 +67,43 @@ async function getExamTiming(examId: string) {
   return { start, end, duration };
 }
 
+async function maybeAutoSubmitExpiredSubmission(
+  submissionId: string,
+  current: {
+    status: SubmissionStatus | null;
+    started_at: string;
+    submitted_at: string | null;
+    exam_id: string;
+  },
+) {
+  if (current.status !== "in_progress") {
+    return false;
+  }
+
+  const { end, duration } = await getExamTiming(current.exam_id);
+  const startedAt = parseDate(current.started_at, "submission started_at");
+  const effectiveEnd = computeEffectiveEnd(startedAt, end, duration);
+  const now = new Date();
+
+  if (now < effectiveEnd) {
+    return false;
+  }
+
+  const { error } = await supabase
+    .from("submissions")
+    .update({
+      status: "submitted",
+      submitted_at: current.submitted_at ?? now.toISOString(),
+    })
+    .eq("id", submissionId);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return true;
+}
+
 export const submissionMutations = {
   createSubmission: async (_: unknown, args: CreateSubmissionArgs) => {
     const { start, end } = await getExamTiming(args.exam_id);
@@ -74,7 +114,8 @@ export const submissionMutations = {
 
     const payload = {
       ...args,
-      started_at: now.toISOString(), // server цагийг хатуу барина
+      // Шалгалтын хугацааг товлосон эхлэх цагаас тооцно.
+      started_at: start.toISOString(),
       status: args.status ?? "in_progress",
       attempt_number: args.attempt_number ?? 1,
     };
@@ -106,7 +147,7 @@ export const submissionMutations = {
   ) => {
     const { data: current, error: currentErr } = await supabase
       .from("submissions")
-      .select("status")
+      .select("status, started_at, submitted_at, exam_id")
       .eq("id", args.id)
       .maybeSingle();
 
@@ -120,6 +161,17 @@ export const submissionMutations = {
       if (!isValidTransition(from, to)) {
         throw new Error(`Invalid status transition: ${from} -> ${to}`);
       }
+    }
+
+    if (
+      await maybeAutoSubmitExpiredSubmission(args.id, {
+        status: (current.status ?? null) as SubmissionStatus | null,
+        started_at: current.started_at,
+        submitted_at: current.submitted_at,
+        exam_id: current.exam_id,
+      })
+    ) {
+      throw new Error(EXAM_AUTO_SUBMITTED_ERROR);
     }
 
     const payload = pickDefined({

@@ -14,6 +14,9 @@ import {
 } from "../exam-schedule";
 import { useExamWarningTracker } from "../_hooks/use-exam-warning-tracker";
 
+const AUTO_SUBMITTED_ERROR_MESSAGE =
+  "Exam time is over. Submission has been auto-submitted.";
+
 export const ExamProgressBar = () => {
   const {
     exam,
@@ -112,11 +115,19 @@ export const ExamProgressBar = () => {
       toast.success("Шалгалт амжилттай илгээгдлээ");
       router.push("/exams");
     } catch (error) {
-      toast.error(
+      const errorMessage =
         error instanceof Error
           ? error.message
-          : "Шалгалтын хариулт хадгалахад алдаа гарлаа.",
-      );
+          : "Шалгалтын хариулт хадгалахад алдаа гарлаа.";
+
+      if (errorMessage === AUTO_SUBMITTED_ERROR_MESSAGE) {
+        clearSavedExam();
+        toast.error(errorMessage);
+        router.push("/exams");
+        return;
+      }
+
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }

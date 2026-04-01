@@ -38,6 +38,9 @@ type SubmissionAnswer = {
   score?: number;
 };
 
+const AUTO_SUBMITTED_ERROR_MESSAGE =
+  "Exam time is over. Submission has been auto-submitted.";
+
 const CREATE_SUBMISSION_MUTATION = `
   mutation CreateSubmission(
     $studentId: String!
@@ -207,11 +210,22 @@ export const submitExamToBackend = async ({
   );
 
   // 3) Одоо л submission-оо SUBMITTED болгоно.
-  await graphqlRequest<UpdateSubmissionResponse>(UPDATE_SUBMISSION_MUTATION, {
-    id: submissionId,
-    submittedAt,
-    status: "submitted",
-  });
+  try {
+    await graphqlRequest<UpdateSubmissionResponse>(UPDATE_SUBMISSION_MUTATION, {
+      id: submissionId,
+      submittedAt,
+      status: "submitted",
+    });
+  } catch (error) {
+    // If the backend already auto-submitted at the cutoff, the answers were
+    // saved successfully and we can continue with the normal finish flow.
+    if (
+      !(error instanceof Error) ||
+      error.message !== AUTO_SUBMITTED_ERROR_MESSAGE
+    ) {
+      throw error;
+    }
+  }
 
   // 4) Auto-grade боломжтой бол reviewed + score-ууд.
   if (canAutoGradeSubmission(questions)) {

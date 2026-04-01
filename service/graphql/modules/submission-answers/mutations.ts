@@ -21,6 +21,8 @@ async function assertSubmissionWritable(submissionId: string) {
   if (subErr) throw new Error(subErr.message);
   if (!sub) throw new Error("Submission not found");
 
+  // Deadline enforcement happens when the submission is finalized so
+  // answers are not dropped if the student submits at the exact cutoff.
   if (sub.status !== "in_progress") {
     throw new Error("Submission is not editable");
   }
