@@ -84,6 +84,7 @@ export function ProctoringWarnings({
 export function ProctoringGuard() {
   const monitor = useProctorMonitor();
   const pcRef = useRef<RTCPeerConnection | null>(null);
+  const teacherPeerIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (monitor.error) return;
@@ -98,7 +99,7 @@ export function ProctoringGuard() {
     });
     pcRef.current = pc;
 
-    const createAndSendOffer = async () => {
+    const createAndSendOffer = async (targetPeerId?: string) => {
       try {
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
@@ -106,6 +107,7 @@ export function ProctoringGuard() {
         socket.emit("offer", {
           roomId,
           sdp: offer,
+          to: targetPeerId,
         });
       } catch (error) {
         console.error("offer error:", error);
@@ -117,6 +119,7 @@ export function ProctoringGuard() {
         socket.emit("ice-candidate", {
           roomId,
           candidate: event.candidate,
+          to: teacherPeerIdRef.current ?? undefined,
         });
       }
     };
@@ -130,17 +133,28 @@ export function ProctoringGuard() {
       role: "student",
     });
 
-    socket.on("peer-joined", async ({ role }) => {
-      if (role === "teacher") {
-        await createAndSendOffer();
+    socket.on("peer-joined", async ({ role, socketId }) => {
+      if (role === "teacher" && socketId) {
+        teacherPeerIdRef.current = socketId;
+        await createAndSendOffer(socketId);
       }
     });
 
-    socket.on("request-offer", async () => {
-      await createAndSendOffer();
+    socket.on("request-offer", async ({ from }) => {
+      if (!from) return;
+      teacherPeerIdRef.current = from;
+      await createAndSendOffer(from);
     });
 
-    socket.on("answer", async ({ sdp }) => {
+    socket.on("answer", async ({ sdp, from }) => {
+      if (!sdp) return;
+      if (teacherPeerIdRef.current && from && teacherPeerIdRef.current !== from) {
+        return;
+      }
+      if (from && !teacherPeerIdRef.current) {
+        teacherPeerIdRef.current = from;
+      }
+
       try {
         await pc.setRemoteDescription(new RTCSessionDescription(sdp));
       } catch (error) {
@@ -148,8 +162,11 @@ export function ProctoringGuard() {
       }
     });
 
-    socket.on("ice-candidate", async ({ candidate }) => {
+    socket.on("ice-candidate", async ({ candidate, from }) => {
       if (!candidate) return;
+      if (teacherPeerIdRef.current && from && teacherPeerIdRef.current !== from) {
+        return;
+      }
 
       try {
         await pc.addIceCandidate(new RTCIceCandidate(candidate));
@@ -166,6 +183,7 @@ export function ProctoringGuard() {
 
       pc.close();
       pcRef.current = null;
+      teacherPeerIdRef.current = null;
     };
   }, [monitor.error, monitor.isReady, monitor.streamRef]);
 

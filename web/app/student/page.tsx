@@ -9,6 +9,7 @@ const ROOM_ID = "exam-room-1";
 
 export default function StudentPage() {
   const pcRef = useRef<RTCPeerConnection | null>(null);
+  const teacherPeerIdRef = useRef<string | null>(null);
   const [status, setStatus] = useState("initializing...");
 
   const monitor = useProctorMonitor();
@@ -21,7 +22,7 @@ export default function StudentPage() {
 
     const socket = getSocket();
 
-    const createAndSendOffer = async () => {
+    const createAndSendOffer = async (targetPeerId?: string) => {
       if (!pcRef.current) return;
 
       try {
@@ -31,6 +32,7 @@ export default function StudentPage() {
         socket.emit("offer", {
           roomId: ROOM_ID,
           sdp: offer,
+          to: targetPeerId,
         });
 
         setStatus("offer sent");
@@ -49,6 +51,7 @@ export default function StudentPage() {
           socket.emit("ice-candidate", {
             roomId: ROOM_ID,
             candidate: event.candidate,
+            to: teacherPeerIdRef.current ?? undefined,
           });
         }
       };
@@ -87,18 +90,28 @@ export default function StudentPage() {
       }
     };
 
-    socket.on("peer-joined", async ({ role }) => {
-      if (role === "teacher") {
-        await createAndSendOffer();
+    socket.on("peer-joined", async ({ role, socketId }) => {
+      if (role === "teacher" && socketId) {
+        teacherPeerIdRef.current = socketId;
+        await createAndSendOffer(socketId);
       }
     });
 
-    socket.on("request-offer", async () => {
-      await createAndSendOffer();
+    socket.on("request-offer", async ({ from }) => {
+      if (!from) return;
+      teacherPeerIdRef.current = from;
+      await createAndSendOffer(from);
     });
 
-    socket.on("answer", async ({ sdp }) => {
+    socket.on("answer", async ({ sdp, from }) => {
       if (!pcRef.current) return;
+      if (!sdp) return;
+      if (teacherPeerIdRef.current && from && teacherPeerIdRef.current !== from) {
+        return;
+      }
+      if (from && !teacherPeerIdRef.current) {
+        teacherPeerIdRef.current = from;
+      }
 
       try {
         await pcRef.current.setRemoteDescription(
@@ -110,8 +123,11 @@ export default function StudentPage() {
       }
     });
 
-    socket.on("ice-candidate", async ({ candidate }) => {
+    socket.on("ice-candidate", async ({ candidate, from }) => {
       if (!pcRef.current || !candidate) return;
+      if (teacherPeerIdRef.current && from && teacherPeerIdRef.current !== from) {
+        return;
+      }
 
       try {
         await pcRef.current.addIceCandidate(new RTCIceCandidate(candidate));
@@ -130,6 +146,7 @@ export default function StudentPage() {
 
       pcRef.current?.close();
       pcRef.current = null;
+      teacherPeerIdRef.current = null;
     };
   }, [monitor.isReady, monitor.error, monitor.streamRef]);
 
