@@ -10,9 +10,11 @@ enum QuestionDifficulty {
     text: String
     image_url: String
     type: String
+    question_type: String
     difficulty: QuestionDifficulty
     category: String
     order_index: Int
+    max_points: Int
     answers: [Answer]
   }
 

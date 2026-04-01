@@ -484,4 +484,98 @@ export const examMutations = {
 
     return question;
   },
+
+  addOpenEndedQuestion: async (
+    _: unknown,
+    args: {
+      exam_id: string;
+      content: string;
+      image_url?: string | null;
+      difficulty: "easy" | "medium" | "hard";
+      max_points?: number;
+    },
+  ) => {
+    // 1. Insert question row with type = open_ended
+    const { data: question, error: qErr } = await supabase
+      .from("questions")
+      .insert([{
+        text: args.content.trim(),
+        image_url: args.image_url ?? null,
+        type: "open_ended",
+        question_type: "open_ended",
+        difficulty: args.difficulty,
+        max_points: args.max_points ?? 1,
+      }])
+      .select()
+      .single();
+    if (qErr) throw new Error(qErr.message);
+
+    // 2. Get next order_index
+    const { data: existing } = await supabase
+      .from("exam_questions")
+      .select("order_index")
+      .eq("exam_id", args.exam_id)
+      .order("order_index", { ascending: false })
+      .limit(1);
+    const nextOrder = existing && existing.length > 0
+      ? ((existing[0].order_index ?? 0) + 1)
+      : 0;
+
+    // 3. Link to exam
+    const { error: eqErr } = await supabase
+      .from("exam_questions")
+      .insert([{
+        exam_id: args.exam_id,
+        question_id: question.id,
+        order_index: nextOrder,
+        points: args.max_points ?? 1,
+      }]);
+    if (eqErr) {
+      await supabase.from("questions").delete().eq("id", question.id);
+      throw new Error(eqErr.message);
+    }
+
+    return { ...question, order_index: nextOrder };
+  },
+
+  updateOpenEndedQuestion: async (
+    _: unknown,
+    args: {
+      id: string;
+      content: string;
+      image_url?: string | null;
+      difficulty: "easy" | "medium" | "hard";
+      max_points?: number;
+    },
+  ) => {
+    const { data: question, error: qErr } = await supabase
+      .from("questions")
+      .update({
+        text: args.content.trim(),
+        image_url: args.image_url ?? null,
+        difficulty: args.difficulty,
+        max_points: args.max_points ?? 1,
+      })
+      .eq("id", args.id)
+      .select()
+      .single();
+    if (qErr) throw new Error(qErr.message);
+
+    // Also update points in junction table
+    await supabase
+      .from("exam_questions")
+      .update({ points: args.max_points ?? 1 })
+      .eq("question_id", args.id);
+
+    return question;
+  },
+
+  deleteQuestion: async (_: unknown, args: { id: string }) => {
+    // Remove junction rows first
+    await supabase.from("exam_questions").delete().eq("question_id", args.id);
+    await supabase.from("answers").delete().eq("question_id", args.id);
+    const { error } = await supabase.from("questions").delete().eq("id", args.id);
+    if (error) throw new Error(error.message);
+    return true;
+  },
 };

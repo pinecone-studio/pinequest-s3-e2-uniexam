@@ -6,6 +6,11 @@ enum QuestionDifficulty {
   hard
 }
 
+enum QuestionType {
+  multiple_choice
+  open_ended
+}
+
   type Exam {
     id: String
     course_id: String
@@ -102,5 +107,23 @@ enum QuestionDifficulty {
       options: [String!]!
       correctOptionIndex: Int!
     ): Question
+
+    addOpenEndedQuestion(
+      exam_id: String!
+      content: String!
+      image_url: String
+      difficulty: QuestionDifficulty!
+      max_points: Int
+    ): Question
+
+    updateOpenEndedQuestion(
+      id: String!
+      content: String!
+      image_url: String
+      difficulty: QuestionDifficulty!
+      max_points: Int
+    ): Question
+
+    deleteQuestion(id: String!): Boolean
   }
 `;
