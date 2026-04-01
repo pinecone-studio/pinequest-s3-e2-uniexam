@@ -10,6 +10,8 @@ export type RubricCriterion = {
 
 export type EssayQuestion = {
   id: number;
+  questionId: string;
+  submissionAnswerId?: string | null;
   question: string;
   studentAnswer: string;
   rubric: RubricCriterion[];
@@ -24,6 +26,7 @@ export type Student = {
   submittedAt: string; // e.g. "5м өмнө"
   status: SubmissionStatus;
   mcScore: number;
+  finalScore?: number | null;
   mcTotal: number;
   essays: EssayQuestion[];
 };

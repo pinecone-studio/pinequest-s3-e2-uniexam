@@ -131,7 +131,7 @@ export default function PracticeHistory({
               </>
             ) : items.length === 0 ? (
               <div className="rounded-3xl border border-gray-200 bg-gray-50 px-5 py-4 text-sm text-gray-500">
-                Одоогоор warmup түүх алга.
+                Одоогоор бэлтгэл шалгалтын түүх алга.
               </div>
             ) : (
               items.map((item) => (
@@ -188,10 +188,10 @@ export default function PracticeHistory({
         <DialogContent className="max-h-[85vh] overflow-hidden p-0 sm:max-w-3xl">
           <DialogHeader className="border-b border-slate-100 px-6 py-5">
             <DialogTitle className="text-lg font-semibold text-slate-900">
-              {selectedItem?.title ?? "Warmup түүх"}
+              {selectedItem?.title ?? "Шалгалтын бэлтгэл түүх"}
             </DialogTitle>
             <DialogDescription className="text-sm text-slate-500">
-              Энэ warmup оролдлогын хариу, зөв хариулт, тайлбарууд.
+              Энэ бэлтгэл шалгалтын оролдлогын хариу, зөв хариулт, тайлбарууд.
             </DialogDescription>
           </DialogHeader>
 

@@ -53,7 +53,6 @@ type StatItem = {
   value: string;
   sub: string;
   icon: React.ReactNode;
-  extra?: React.ReactNode;
 };
 
 const DASHBOARD_STATS_QUERY = `
@@ -138,6 +137,30 @@ const getLatestSubmissionPerExam = (
     });
 
   return [...latestByExam.values()];
+};
+
+const getAverageScoreSummary = (value: number | null | undefined) => {
+  if (typeof value !== "number" || Number.isNaN(value)) {
+    return null;
+  }
+
+  if (value >= 90) {
+    return "Маш сайн";
+  }
+
+  if (value >= 80) {
+    return "Сайн";
+  }
+
+  if (value >= 70) {
+    return "Хэвийн";
+  }
+
+  if (value >= 60) {
+    return "Анхаарах хэрэгтэй";
+  }
+
+  return "Сайжруулах хэрэгтэй";
 };
 
 const buildStats = (
@@ -284,6 +307,8 @@ export function StatCards() {
     };
   }, [isLoaded, user?.primaryEmailAddress?.emailAddress]);
 
+  const averageScoreSummary = getAverageScoreSummary(stats.averageScore);
+
   const statItems: StatItem[] = [
     {
       label: "Бүртгэлтэй хичээл",
@@ -292,7 +317,7 @@ export function StatCards() {
         stats.enrolledCoursesCount > 0
           ? `${stats.upcomingExamsCount} ойрын шалгалттай`
           : "Бүртгэлтэй хичээл алга",
-      icon: <BookOpen className="w-4 h-4 text-slate-400" />,
+      icon: <BookOpen className="w-4 h-4 text-[#006d77]" />,
     },
     {
       label: "Өгөх шалгалт",
@@ -300,7 +325,7 @@ export function StatCards() {
       sub: stats.nextExamAt
         ? `Дараагийнх: ${formatDateTime(stats.nextExamAt)}`
         : "Товлогдсон шалгалт алга",
-      icon: <Clock className="w-4 h-4 text-slate-400" />,
+      icon: <Clock className="w-4 h-4 text-[#006d77]" />,
     },
     {
       label: "Өгсөн шалгалт",
@@ -309,28 +334,21 @@ export function StatCards() {
         stats.completedExamsCount > 0
           ? `${stats.totalAnswersCount} хариулт илгээсэн`
           : "Илгээсэн шалгалт алга",
-      icon: <FileCheck2 className="w-4 h-4 text-slate-400" />,
+      icon: <FileCheck2 className="w-4 h-4 text-[#006d77]" />,
     },
     {
       label: "Дундаж үнэлгээ",
       value:
         stats.averageScore !== null
-          ? `${stats.averageScore}%`
+          ? `${stats.averageScore} оноо`
           : "Хүлээгдэж байна...",
       sub:
         stats.reviewedCount > 0
-          ? `${stats.reviewedCount} шалгалт үнэлэгдсэн`
+          ? averageScoreSummary
+            ? `${averageScoreSummary} · ${stats.reviewedCount} шалгалт үнэлэгдсэн`
+            : `${stats.reviewedCount} шалгалт үнэлэгдсэн`
           : "Шалгасан үнэлгээ хараахан алга",
-      icon: <Target className="w-4 h-4 text-slate-400" />,
-      extra:
-        stats.averageScore !== null ? (
-          <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-[#e6f4f1]">
-            <div
-              className="h-full rounded-full bg-[#006d77] transition-all duration-700"
-              style={{ width: `${stats.averageScore}%` }}
-            />
-          </div>
-        ) : undefined,
+      icon: <Target className="w-4 h-4 text-[#006d77]" />,
     },
   ];
 
@@ -341,7 +359,7 @@ export function StatCards() {
           {Array.from({ length: 4 }, (_, index) => (
             <Card
               key={`stat-skeleton-${index + 1}`}
-              className="overflow-hidden rounded-xl border-white/40 bg-white/60 shadow-sm ring-1 ring-black/5"
+              className="rounded-xl border-white/40 bg-white/60 ring-1 ring-black/5"
             >
               <CardContent className="flex h-full flex-col justify-between">
                 <div className="mb-0.5 flex items-center justify-between">
@@ -351,8 +369,7 @@ export function StatCards() {
 
                 <div>
                   <Skeleton className="h-6 w-16 bg-slate-200" />
-                  <Skeleton className="mt-2 h-1 w-full rounded-full bg-slate-200" />
-                  <Skeleton className="mt-2 h-3 w-24 bg-slate-200" />
+                  <Skeleton className="mt-2 h-3 w-28 bg-slate-200" />
                 </div>
               </CardContent>
             </Card>
@@ -372,7 +389,7 @@ export function StatCards() {
             {statItems.map((stat) => (
               <Card
                 key={stat.label}
-                className="overflow-hidden rounded-xl border-white/40 bg-white/60 shadow-sm ring-1 ring-black/5"
+                className="overflow-hidden rounded-2xl border-white/40 bg-white/60 ring-1 ring-black/6"
               >
                 <CardContent className="flex h-full flex-col justify-between">
                   <div className="mb-0.5 flex items-center justify-between">
@@ -386,8 +403,6 @@ export function StatCards() {
                     <div className="py-1 text-lg font-bold leading-none text-slate-900">
                       {stat.value}
                     </div>
-
-                    {stat.extra ? stat.extra : null}
 
                     <div className="mt-2 text-[10px] font-medium leading-tight text-slate-400">
                       {stat.sub}

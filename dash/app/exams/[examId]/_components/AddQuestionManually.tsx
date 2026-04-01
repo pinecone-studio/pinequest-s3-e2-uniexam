@@ -148,14 +148,14 @@ export function AddQuestionManually({
         showCloseButton={!saving}
         className="sm:max-w-lg max-h-[min(90vh,720px)] flex flex-col gap-0 overflow-hidden p-0"
       >
-        <div className="border-b border-border/80 px-4 py-3 shrink-0">
+        <div className="border-b border-slate-100 px-5 py-4 shrink-0">
           <DialogHeader>
-            <DialogTitle>
-              {mode === "edit" ? "Асуулт засах" : "Гараар асуулт нэмэх"}
+            <DialogTitle className="text-base font-semibold text-slate-900">
+              {mode === "edit" ? "Асуулт засах" : "Шинэ асуулт нэмэх"}
             </DialogTitle>
           </DialogHeader>
         </div>
-        <div className="overflow-y-auto flex-1 px-4 py-4 min-h-0">
+        <div className="overflow-y-auto flex-1 px-5 py-4 min-h-0">
           <ExamQuestionCard
             index={0}
             question={draft}
@@ -165,23 +165,21 @@ export function AddQuestionManually({
             onUploadStateChange={setUploading}
           />
         </div>
-        <div className="flex justify-end gap-2 border-t border-border/80 bg-muted/20 px-4 py-3 shrink-0">
+        <div className="flex justify-end gap-2 border-t border-slate-100 bg-slate-50/60 px-5 py-3 shrink-0">
           <DialogClose asChild>
-            <Button type="button" variant="ghost" disabled={saving}>
+            <Button type="button" variant="ghost" size="sm" disabled={saving}>
               Болих
             </Button>
           </DialogClose>
           <Button
             type="button"
-            className="bg-[#006fee] hover:bg-[#005bc4] text-white"
+            size="sm"
+            className="bg-blue-600 hover:bg-blue-700 text-white min-w-[90px]"
             disabled={saving || uploading}
             onClick={() => void handleSave()}
           >
             {saving ? (
-              <>
-                <Loader2 className="size-4 animate-spin mr-2 inline" />
-                Хадгалж байна…
-              </>
+              <><Loader2 className="size-4 animate-spin mr-1.5 inline" />Хадгалж байна…</>
             ) : mode === "edit" ? (
               "Хадгалах"
             ) : (

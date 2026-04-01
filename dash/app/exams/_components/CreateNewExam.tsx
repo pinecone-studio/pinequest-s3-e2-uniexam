@@ -202,21 +202,21 @@ export const CreateNewExam = () => {
       }}
     >
       <DialogTrigger asChild>
-        <Button className="bg-[#006fee] hover:bg-[#005bc4] text-white flex gap-2">
-          <Plus size={18} /> Шалгалт үүсгэх
+        <Button className="bg-blue-600 hover:bg-blue-700 text-white gap-2 shadow-sm">
+          <Plus size={16} /> Шалгалт үүсгэх
         </Button>
       </DialogTrigger>
       <DialogContent
         showCloseButton={!saving}
         className="sm:max-w-md max-h-[min(90vh,720px)] flex flex-col gap-0 overflow-hidden p-0"
       >
-        <div className="border-b border-border/80 px-4 py-3 shrink-0">
+        <div className="border-b border-slate-100 px-5 py-4 shrink-0">
           <DialogHeader>
-            <DialogTitle className="text-lg font-semibold">
+            <DialogTitle className="text-base font-semibold text-slate-900">
               {step === "shell" && "Шинэ шалгалт үүсгэх"}
               {step === "ai" && "AI туслах"}
             </DialogTitle>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-slate-500 mt-0.5">
               {step === "shell" &&
                 "Үндсэн мэдээллээ оруулна уу. Асуултуудаа дараагийн алхамд нэмнэ."}
               {step === "ai" && "AI урсгалаа энд холбоно."}
@@ -377,23 +377,21 @@ export const CreateNewExam = () => {
         </div>
 
         {step === "shell" && (
-          <div className="flex justify-end gap-3 border-t border-border/80 bg-muted/20 px-4 py-3 shrink-0">
+          <div className="flex justify-end gap-2 border-t border-slate-100 bg-slate-50/60 px-5 py-3 shrink-0">
             <DialogClose asChild>
-              <Button type="button" variant="ghost" disabled={saving}>
+              <Button type="button" variant="ghost" size="sm" disabled={saving}>
                 Болих
               </Button>
             </DialogClose>
             <Button
               type="button"
-              className="bg-[#006fee] hover:bg-[#005bc4] text-white min-w-[120px]"
+              size="sm"
+              className="bg-blue-600 hover:bg-blue-700 text-white min-w-[110px]"
               onClick={() => void handleCreateShell()}
               disabled={saving}
             >
               {saving ? (
-                <>
-                  <Loader2 className="size-4 animate-spin mr-2 inline" />
-                  Үүсгэж байна…
-                </>
+                <><Loader2 className="size-4 animate-spin mr-1.5 inline" />Үүсгэж байна…</>
               ) : (
                 "Үргэлжлүүлэх"
               )}

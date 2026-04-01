@@ -167,9 +167,9 @@ export const EditExamDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md" showCloseButton={!saving}>
         <DialogHeader>
-          <DialogTitle>Шалгалт засах</DialogTitle>
+          <DialogTitle className="text-lg font-semibold text-slate-900">Шалгалт засах</DialogTitle>
         </DialogHeader>
-        <div className="py-2">
+        <div className="space-y-4 py-1">
           <FieldGroup className="gap-4">
             <Field>
               <Label htmlFor="edit-exam-name">Шалгалтын нэр</Label>
@@ -239,23 +239,26 @@ export const EditExamDialog = ({
               </Select>
             </Field>
             <Field>
-                <Label>Шалгалтын ковер зураг (заавал биш)</Label>
-                <div className="mt-2 flex items-center gap-4">
+                <Label className="text-sm font-medium text-slate-700">
+                  Ковер зураг{" "}
+                  <span className="text-slate-400 font-normal">(заавал биш)</span>
+                </Label>
+                <div className="mt-2 flex items-center gap-3">
                   {imageUrl ? (
-                    <div className="relative size-20 rounded-lg border overflow-hidden">
+                    <div className="relative size-20 rounded-xl border border-slate-200 overflow-hidden shadow-sm group">
                       <img src={imageUrl} alt="Exam cover" className="size-full object-cover" />
                       <button
                         type="button"
                         onClick={() => setImageUrl(null)}
-                        className="absolute top-1 right-1 bg-white/80 rounded-full p-0.5 hover:bg-white"
+                        className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity rounded-xl"
                       >
-                        <X size={14} className="text-red-600" />
+                        <X size={16} className="text-white" />
                       </button>
                     </div>
                   ) : (
-                    <label className="flex flex-col items-center justify-center size-20 rounded-lg border border-dashed border-slate-300 bg-slate-50 cursor-pointer hover:bg-slate-100 transition-colors">
-                      <ImageIcon className="size-6 text-slate-400" />
-                      <span className="text-[10px] text-slate-500 mt-1">Зураг</span>
+                    <label className="flex flex-col items-center justify-center size-20 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 cursor-pointer hover:border-blue-300 hover:bg-blue-50/60 transition-all">
+                      <ImageIcon className="size-5 text-slate-400" />
+                      <span className="text-[10px] text-slate-500 mt-1 font-medium">Зураг нэмэх</span>
                       <input
                         type="file"
                         accept="image/*"
@@ -277,29 +280,36 @@ export const EditExamDialog = ({
                       />
                     </label>
                   )}
-                  {uploading && <Loader2 className="size-5 animate-spin text-[#006fee]" />}
+                  {uploading && (
+                    <div className="flex items-center gap-2 text-sm text-slate-500">
+                      <Loader2 className="size-4 animate-spin text-blue-500" />
+                      <span>Хуулж байна...</span>
+                    </div>
+                  )}
                 </div>
               </Field>
           </FieldGroup>
         </div>
-        <div className="flex justify-end gap-3 pt-2">
+        <div className="flex justify-end gap-2 pt-4 border-t border-slate-100">
           <Button
             type="button"
             variant="ghost"
+            size="sm"
             onClick={() => onOpenChange(false)}
             disabled={saving}
           >
             Болих
           </Button>
           <Button
+            size="sm"
             onClick={() => void handleUpdate()}
-            disabled={saving}
-            className="bg-[#006fee] hover:bg-[#005bc4] text-white"
+            disabled={saving || uploading}
+            className="bg-blue-600 hover:bg-blue-700 text-white min-w-[90px]"
           >
             {saving ? (
-               <><Loader2 className="size-4 animate-spin mr-2 inline" /> Хадгалж байна…</>
+              <><Loader2 className="size-4 animate-spin mr-1.5 inline" />Хадгалж байна…</>
             ) : (
-               "Хадгалах"
+              "Хадгалах"
             )}
           </Button>
         </div>

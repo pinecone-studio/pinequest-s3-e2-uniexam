@@ -1,19 +1,11 @@
- "use client";
+"use client";
 
 import { useEffect, useState } from "react";
 import { useUser } from "@clerk/nextjs";
-import { TrendingUp } from "lucide-react";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { graphqlRequest } from "@/lib/graphql";
 import { isHiddenStudentExam } from "@/lib/exam-visibility";
+import { graphqlRequest } from "@/lib/graphql";
 
-type GradesCourse = {
+export type GradesCourse = {
   courseId: string;
   courseCode: string;
   courseName: string;
@@ -112,6 +104,8 @@ const EXAM_QUESTIONS_QUERY = `
     }
   }
 `;
+
+const EMPTY_MESSAGE = "Одоогоор дүнгийн мэдээлэл алга.";
 
 function getTimestamp(value: string | null | undefined) {
   if (!value) {
@@ -230,10 +224,6 @@ function buildCourseGrades(
           (exam): exam is GradesCourse["exams"][number] => exam !== null,
         );
 
-      if (exams.length === 0) {
-        return null;
-      }
-
       const reviewedExams = exams.filter(
         (exam) => exam.score !== null && exam.maxScore > 0,
       );
@@ -245,6 +235,10 @@ function buildCourseGrades(
         (sum, exam) => sum + exam.maxScore,
         0,
       );
+
+      if (exams.length === 0) {
+        return null;
+      }
 
       return {
         courseId: course.id,
@@ -259,10 +253,19 @@ function buildCourseGrades(
     .sort((left, right) => left.courseName.localeCompare(right.courseName));
 }
 
-export default function GradesOverview() {
+export type UseGradesCoursesResult = {
+  courses: GradesCourse[];
+  loading: boolean;
+  error: string | null;
+  message: string | null;
+};
+
+export function useGradesCourses(): UseGradesCoursesResult {
   const { user, isLoaded } = useUser();
   const [courses, setCourses] = useState<GradesCourse[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -274,11 +277,16 @@ export default function GradesOverview() {
     const loadGrades = async () => {
       try {
         setLoading(true);
+        setError(null);
+        setMessage(null);
+
         const studentEmail = user?.primaryEmailAddress?.emailAddress;
 
         if (!studentEmail) {
           if (cancelled) return;
+
           setCourses([]);
+          setMessage("Дүнгээ харахын тулд нэвтэрнэ үү.");
           setLoading(false);
           return;
         }
@@ -293,6 +301,7 @@ export default function GradesOverview() {
 
         if (!studentId) {
           setCourses([]);
+          setMessage("Таны оюутны мэдээлэл олдсонгүй.");
           return;
         }
 
@@ -355,10 +364,15 @@ export default function GradesOverview() {
         );
 
         setCourses(nextCourses);
-      } catch {
-        if (!cancelled) {
-          setCourses([]);
-        }
+        setMessage(nextCourses.length === 0 ? EMPTY_MESSAGE : null);
+      } catch (fetchError) {
+        if (cancelled) return;
+
+        setError(
+          fetchError instanceof Error
+            ? fetchError.message
+            : "Дүнгийн мэдээлэл дуудахад алдаа гарлаа.",
+        );
       } finally {
         if (!cancelled) {
           setLoading(false);
@@ -373,111 +387,5 @@ export default function GradesOverview() {
     };
   }, [isLoaded, user?.primaryEmailAddress?.emailAddress]);
 
-  const gradedCourses = courses.filter(
-    (course) => typeof course.currentGrade === "number",
-  );
-  const averageGrade =
-    gradedCourses.length > 0
-      ? Math.round(
-          gradedCourses.reduce(
-            (acc, grade) => acc + (grade.currentGrade ?? 0),
-            0,
-          ) / gradedCourses.length,
-        )
-      : 0;
-  const overallGPA =
-    gradedCourses.length > 0 ? (averageGrade / 100) * 4 : 0;
-  const totalCredits = courses.length;
-
-  return (
-    <>
-      <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold tracking-tight">Дүн</h1>
-        <p className="text-muted-foreground">
-          Бүх хичээл дээрх үзүүлэлтээ хянах
-        </p>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="gap-2 p-6">
-          {/* <CardHeader className="flex flex-row items-center justify-between pb-2"> */}
-          <CardTitle className="text-sm font-medium">GPA</CardTitle>
-          {/* <Award className="h-4 w-4 text-primary" /> */}
-          {/* </CardHeader> */}
-          <CardContent className="p-0">
-            {loading ? (
-              <>
-                <Skeleton className="h-9 w-[68px]" />
-                <Skeleton className="mt-2 h-4 w-[42px]" />
-              </>
-            ) : (
-              <>
-                <div className="text-3xl font-bold">{overallGPA.toFixed(2)}</div>
-                <p className="text-xs text-muted-foreground mt-2">4.0-аас</p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-        <Card className="gap-2 p-6">
-          {/* <CardHeader className="flex flex-row items-center justify-between pb-2"> */}
-          <CardTitle className="text-sm font-medium">Кредит</CardTitle>
-          {/* <BookOpen className="h-4 w-4 text-muted-foreground" /> */}
-          {/* </CardHeader> */}
-          <CardContent className="p-0">
-            {loading ? (
-              <>
-                <Skeleton className="h-9 w-[32px]" />
-                <Skeleton className="mt-2 h-4 w-[58px]" />
-              </>
-            ) : (
-              <>
-                <div className="text-3xl font-bold">{totalCredits}</div>
-                <p className="text-xs text-muted-foreground mt-2">Энэ улирал</p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-        <Card className="gap-2 p-6">
-          {/* <CardHeader className="flex flex-row items-center justify-between pb-2"> */}
-          <CardTitle className="text-sm font-medium">Дундаж дүн</CardTitle>
-          {/* <BarChart3 className="h-4 w-4 text-muted-foreground" /> */}
-          {/* </CardHeader> */}
-          <CardContent className="p-0">
-            {loading ? (
-              <>
-                <Skeleton className="h-9 w-[76px]" />
-                <Skeleton className="mt-2 h-4 w-[74px]" />
-              </>
-            ) : (
-              <>
-                <div className="text-3xl font-bold">{averageGrade}%</div>
-                <p className="text-xs text-muted-foreground mt-2">Бүх хичээлээр</p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-        <Card className="gap-2 p-6">
-          <CardHeader className="flex flex-row items-center justify-between px-0">
-            <CardTitle className="text-sm font-medium">Үзүүлэлт</CardTitle>
-            <TrendingUp className="h-4 w-4 text-green-500" />
-          </CardHeader>
-          <CardContent className="p-0">
-            {loading ? (
-              <>
-                <Skeleton className="h-9 w-[62px]" />
-                <Skeleton className="mt-2 h-4 w-[88px]" />
-              </>
-            ) : (
-              <>
-                <div className="text-3xl font-bold text-[#42c66e]">+0.15</div>
-                <p className="text-xs text-muted-foreground mt-2">
-                  Энэ сард GPA өссөн
-                </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-    </>
-  );
+  return { courses, loading, error, message };
 }
