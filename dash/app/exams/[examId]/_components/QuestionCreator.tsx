@@ -115,7 +115,7 @@ export function QuestionCreator({
   examId: string;
   onSaved: () => void;
 }) {
-  const [activeTab, setActiveTab] = useState("manual");
+  const [activeTab, setActiveTab] = useState("text");
   const [drafts, setDrafts] = useState<ExamQuestionDraft[]>([
     createEmptyQuestion(),
   ]);
@@ -275,11 +275,13 @@ export function QuestionCreator({
   };
 
   return (
-    <div className="border border-neutral-200 bg-white">
+    <div className="border border-neutral-200 bg-white rounded-2xl">
       <div className="border-b border-neutral-200 px-6 py-4">
         <div className="flex items-center gap-2">
           <Plus size={16} className="text-neutral-500" />
-          <h3 className="text-sm font-semibold text-neutral-800">Асуулт нэмэх</h3>
+          <h3 className="text-sm font-semibold text-neutral-800">
+            Асуулт нэмэх
+          </h3>
         </div>
       </div>
 
@@ -287,10 +289,10 @@ export function QuestionCreator({
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="mb-6 grid h-9 w-full grid-cols-4 rounded-md bg-neutral-100 p-0.5">
             {[
-              { id: "manual", label: "Тест", icon: ListChecks },
-              { id: "open", label: "Задгай", icon: AlignLeft },
-              { id: "ocr", label: "Зургаас", icon: Sparkles },
-              { id: "text", label: "Текстээс", icon: FileText },
+              { id: "text", label: "Текстээс хуулах", icon: FileText },
+              { id: "manual", label: "Тест гараар шивэх", icon: ListChecks },
+              { id: "open", label: "Задгай даалгавар", icon: AlignLeft },
+              { id: "ocr", label: "Зурагаас AI", icon: Sparkles },
             ].map((tab) => (
               <TabsTrigger
                 key={tab.id}
@@ -385,8 +387,7 @@ export function QuestionCreator({
                             if (!file) return;
                             setOeUploading(true);
                             try {
-                              const url =
-                                await uploadImageToCloudinary(file);
+                              const url = await uploadImageToCloudinary(file);
                               setOeImageUrl(url);
                             } finally {
                               setOeUploading(false);
@@ -399,7 +400,19 @@ export function QuestionCreator({
                 </div>
               </div>
 
-              <div className="flex justify-end pt-2">
+              <div className="flex justify-end gap-2 pt-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setOeContent("Дараах даалгаврыг бодож хариуг бичнэ үү.");
+                    setOeImageUrl("https://res.cloudinary.com/dczx8w4x1/image/upload/v1775129114/exam-options/ytadwklaurqvx6q6qjew.png");
+                    toast.info("Жишээ хуулагдлаа");
+                  }}
+                  className="h-9 text-xs text-neutral-500"
+                >
+                  Жишээ оруулах
+                </Button>
                 <Button
                   onClick={() => void handleSaveOpenEnded()}
                   disabled={oeSaving || oeUploading || !oeContent.trim()}
@@ -421,11 +434,9 @@ export function QuestionCreator({
             <div className="flex flex-col items-center justify-center rounded-md border border-dashed border-neutral-300 bg-neutral-50 py-12 text-center">
               <Sparkles size={24} className="mb-3 text-neutral-400" />
               <h4 className="text-sm font-medium text-neutral-700">
-                Зургаас асуулт таних
+                AI нь шалгалтын зургийг текст рүү хөрвүүлнэ.
               </h4>
-              <p className="mt-1 text-xs text-neutral-400">
-                Шалгалтын материалын зургийг оруулан AI-аар таниулна.
-              </p>
+
               <input
                 type="file"
                 accept="image/*"
@@ -463,13 +474,38 @@ export function QuestionCreator({
                   Текст өгөгдөл
                 </Label>
                 <Textarea
-                  placeholder={"1. Асуулт?\na) Хариулт 1\nb) Хариулт 2..."}
-                  className="min-h-48 resize-none rounded-md border-neutral-200 p-3 text-sm leading-relaxed focus:ring-0"
+                  placeholder={
+                    "Та бэлдсэн шалгалтын асуултаа энд copy-past хийж оруулна уу."
+                  }
+                  className="min-h-30 resize-none rounded-md border-neutral-200 p-3 text-sm leading-relaxed focus:ring-0"
                   value={rawText}
                   onChange={(e) => setRawText(e.target.value)}
                 />
               </div>
-              <div className="flex justify-end">
+              <div className="flex justify-end gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setRawText(`1. Дараах бодомжуудаас аль нь зөв бэ? /1 оноо/
+А. Нийгэм бол хүмүүсийн хамтын амьдрал, харилцаа холбооны систем мөн
+В. Нийгэм бол төрийн харилцаа С. Нийгэм бол угсаатны харилцаа
+D. Нийгэм бол хүмүүсийн соёлын харилцаа Е. Нийгэм бол хүний амьдрах орчин
+2. Энгийн нийгмийн ялгагдах шинжид аль нь хамааралгүй вэ? /1 оноо/
+А. Овог төрлийн холбоо В. Нийгмийн овгийн зохион байгуулалт
+С. Эд хөрөнгийн ялгаагүй байдал D. Анги давхраа,төр үүссэн
+Е. 50000-40000 жилийн өмнө үүссэн
+3. Хүмүүс бие биетэйгээ харилцан үйлчлэх үйл явцыг юу гэж нэрлэдэг вэ? /1 оноо/
+А. Нийгмийн харилцаа В. Нийгмийн харилцан үйлдэл С. Нийгмийн үйл ажиллагаа
+D. Нийгмийн зан заншил Е. Нийгмийн хууль
+4. Нийгмийн харилцааг эртний үед ямар арга хэрэгслээр зохицуулдаг байсан бэ? /1 оноо/
+А. Ёс заншил В. Эрх зүй С. Хууль D. Зарлиг Е. Тогтоол шийдвэр`);
+                    toast.info("Жишээ хуулагдлаа");
+                  }}
+                  className="h-9 text-xs text-neutral-500"
+                >
+                  Жишээ хуулах
+                </Button>
                 <Button
                   onClick={handleTextParse}
                   disabled={!rawText.trim()}

@@ -354,18 +354,16 @@ export default function ExamDetailPage() {
                   {sorted.map((a, i) => (
                     <li
                       key={a.id}
-                      className={`flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm ${
-                        a.is_correct
+                      className={`flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm ${a.is_correct
                           ? "bg-emerald-50 border border-emerald-200"
                           : "bg-slate-50 border border-transparent"
-                      }`}
+                        }`}
                     >
                       <span
-                        className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
-                          a.is_correct
+                        className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${a.is_correct
                             ? "bg-emerald-500 text-white"
                             : "bg-slate-200 text-slate-500"
-                        }`}
+                          }`}
                       >
                         {String.fromCharCode(65 + i)}
                       </span>
@@ -391,7 +389,7 @@ export default function ExamDetailPage() {
           icon={<AlignLeft className="size-4 text-slate-400" />}
           count={oeQuestions.length}
           emptyText="Задгай асуулт байхгүй байна"
-          emptyDesc="Доорх хэсгээс «Задгай» таб дээр нэмнэ үү"
+          emptyDesc=""
         >
           {oeQuestions.map((q) => {
             const diff = q.difficulty ? diffConfig[q.difficulty] : null;
@@ -677,7 +675,7 @@ function QuestionCard({
           </span>
           <div className="min-w-0 flex-1">
             <p className="font-medium text-slate-900 leading-snug">{text}</p>
-            <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+            {/* <div className="flex items-center gap-2 mt-1.5 flex-wrap">
               {diff && (
                 <span
                   className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${diff.cls}`}
@@ -686,7 +684,7 @@ function QuestionCard({
                 </span>
               )}
               {badge}
-            </div>
+            </div> */}
           </div>
         </div>
         <div className="flex shrink-0 gap-1">

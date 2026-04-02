@@ -85,17 +85,22 @@ export default function ExamDashboard() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await graphqlRequest<{ exams: GqlExam[] | null }>(EXAMS_QUERY);
+      const data = await graphqlRequest<{ exams: GqlExam[] | null }>(
+        EXAMS_QUERY,
+      );
       const rows = (data.exams ?? [])
         .filter((exam) => !isHiddenDashboardExam(exam.title))
         .map(mapExam)
         .sort(
           (a, b) =>
-            new Date(b.rawStartTime).getTime() - new Date(a.rawStartTime).getTime(),
+            new Date(b.rawStartTime).getTime() -
+            new Date(a.rawStartTime).getTime(),
         );
       setExams(rows);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Шалгалтууд ачаалагдаагүй.");
+      toast.error(
+        err instanceof Error ? err.message : "Шалгалтууд ачаалагдаагүй.",
+      );
       setExams([]);
     } finally {
       setLoading(false);
@@ -108,13 +113,19 @@ export default function ExamDashboard() {
 
   const filteredExams = useMemo(() => {
     return exams.filter((exam) => {
-      const matchesSearch = exam.title.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesSearch = exam.title
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase());
       let matchesStatus = true;
       if (statusFilter !== "all") {
-        if (statusFilter === "in-progress" && exam.status !== "Авагдаж байгаа") matchesStatus = false;
-        if (statusFilter === "scheduled" && exam.status !== "Төлөвлөгдсөн") matchesStatus = false;
-        if (statusFilter === "completed" && exam.status !== "Дууссан") matchesStatus = false;
-        if (statusFilter === "drafts" && exam.status !== "Драфт") matchesStatus = false;
+        if (statusFilter === "in-progress" && exam.status !== "Авагдаж байгаа")
+          matchesStatus = false;
+        if (statusFilter === "scheduled" && exam.status !== "Төлөвлөгдсөн")
+          matchesStatus = false;
+        if (statusFilter === "completed" && exam.status !== "Дууссан")
+          matchesStatus = false;
+        if (statusFilter === "drafts" && exam.status !== "Драфт")
+          matchesStatus = false;
       }
       return matchesSearch && matchesStatus;
     });
@@ -125,7 +136,9 @@ export default function ExamDashboard() {
       <div className="max-w-6xl mx-auto px-6 py-8 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">Шалгалт</h1>
+          <h1 className="text-2xl font-semibold text-gray-900 tracking-tight pl-5">
+            Шалгалтуудын удирдлага
+          </h1>
           <CreateNewExam />
         </div>
 
@@ -144,7 +157,7 @@ export default function ExamDashboard() {
           </div>
         ) : filteredExams.length === 0 ? (
           <div className="py-20 text-center border border-dashed border-gray-200 rounded-lg bg-gray-50">
-            <p className="text-sm text-gray-400">Шалгалт олдсонгүй.</p>
+            <p className="text-sm text-gray-400">Шалгалт байхгүй байна.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
