@@ -8,7 +8,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 type ExamCardProps = {
   course: ClassCourse;
@@ -31,12 +31,12 @@ export const ExamCard = ({ course }: ExamCardProps) => {
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button
+                <Badge
                   variant="outline"
-                  className="inline-block max-w-[100px] truncate text-xs"
+                  className="inline-block max-w-[100px] truncate text-xs py-0.5"
                 >
                   {course.assignmentLabel}
-                </Button>
+                </Badge>
               </TooltipTrigger>
               <TooltipContent sideOffset={8}>
                 {course.assignmentLabel}
