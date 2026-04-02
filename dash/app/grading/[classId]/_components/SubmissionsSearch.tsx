@@ -41,7 +41,7 @@ export const SubmissionsSearch = ({
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder="Оюутан хайх..."
-          className="w-full pl-9 pr-4 py-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-0 bg-white"
+          className="w-full pl-9 pr-4 py-2 text-xl border border-gray-200 rounded-lg focus:outline-none focus:ring-0 bg-white"
         />
       </div>
 
