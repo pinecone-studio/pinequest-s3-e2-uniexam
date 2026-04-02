@@ -2,12 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -67,7 +62,9 @@ export function ExamQuestionCard({
       toast.success("Асуултын зураг амжилттай оруулагдлаа.");
     } catch (e) {
       toast.error(
-        e instanceof Error ? e.message : "Асуултын зураг оруулахад алдаа гарлаа.",
+        e instanceof Error
+          ? e.message
+          : "Асуултын зураг оруулахад алдаа гарлаа.",
       );
     } finally {
       setUploadingQuestionImage(false);
@@ -75,9 +72,8 @@ export function ExamQuestionCard({
     }
   };
 
-
   return (
-    <Card className="border-slate-200/80 bg-white shadow-sm">
+    <Card className="border-neutral-200 bg-white rounded-md">
       <CardHeader className="flex flex-row items-start justify-between gap-2 pb-2">
         <CardTitle className="text-sm font-medium text-slate-800">
           Асуулт {index + 1}
@@ -112,7 +108,7 @@ export function ExamQuestionCard({
               />
               <Label
                 htmlFor={`q-${question.id}-question-image-file`}
-                className="inline-flex items-center gap-1 rounded-md border border-dashed border-slate-300 px-2 py-1 text-xs text-slate-600 cursor-pointer hover:bg-slate-50"
+                className="inline-flex items-center gap-1 rounded-md border border-dashed border-neutral-300 px-2 py-1 text-xs text-neutral-600 cursor-pointer hover:bg-neutral-50"
               >
                 <ImageIcon className="size-3.5" />
                 {uploadingQuestionImage ? "Түр хүлээнэ үү…" : "Асуултын зураг"}
@@ -135,14 +131,12 @@ export function ExamQuestionCard({
             id={`q-${question.id}-content`}
             placeholder="Асуултаа бичнэ үү"
             value={question.content}
-            onChange={(e) =>
-              onChange({ ...question, content: e.target.value })
-            }
+            onChange={(e) => onChange({ ...question, content: e.target.value })}
             rows={3}
-            className="resize-y min-h-[80px]"
+            className="resize-y min-h-20"
           />
           {question.image_url && (
-            <div className="mt-2 rounded-md border border-slate-200 bg-slate-50 p-2">
+            <div className="mt-2 rounded-md border border-neutral-200 bg-neutral-50 p-2">
               <img
                 src={question.image_url}
                 alt="Асуултын зураг"

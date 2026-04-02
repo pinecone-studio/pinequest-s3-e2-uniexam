@@ -117,9 +117,9 @@ export function EditOpenEndedDialog({
         showCloseButton={!saving}
         className="sm:max-w-lg max-h-[min(90vh,680px)] flex flex-col gap-0 overflow-hidden p-0"
       >
-        <div className="border-b border-slate-100 px-5 py-4 shrink-0">
+        <div className="border-b border-neutral-200 px-5 py-4 shrink-0">
           <DialogHeader>
-            <DialogTitle className="text-base font-semibold text-slate-900">
+            <DialogTitle className="text-base font-semibold text-neutral-900">
               Задгай асуулт засах
             </DialogTitle>
           </DialogHeader>
@@ -128,11 +128,11 @@ export function EditOpenEndedDialog({
         <div className="overflow-y-auto flex-1 px-5 py-5 min-h-0">
           <FieldGroup className="gap-4">
             <Field>
-              <Label className="text-sm font-medium text-slate-700">
+              <Label className="text-sm font-medium text-neutral-700">
                 Асуултын текст
               </Label>
               <Textarea
-                className="mt-1 resize-none min-h-25 rounded-xl border-slate-200"
+                className="mt-1 resize-none min-h-25 rounded-md border-neutral-200"
                 placeholder="Асуултаа дэлгэрэнгүй бичнэ үү..."
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
@@ -143,7 +143,7 @@ export function EditOpenEndedDialog({
 
             <div className="grid grid-cols-2 gap-3">
               <Field>
-                <Label className="text-sm font-medium text-slate-700">
+                <Label className="text-sm font-medium text-neutral-700">
                   Хэцүүн
                 </Label>
                 <Select
@@ -163,7 +163,7 @@ export function EditOpenEndedDialog({
               </Field>
 
               <Field>
-                <Label className="text-sm font-medium text-slate-700">
+                <Label className="text-sm font-medium text-neutral-700">
                   Дээд оноо
                 </Label>
                 <Input
@@ -179,13 +179,13 @@ export function EditOpenEndedDialog({
             </div>
 
             <Field>
-              <Label className="text-sm font-medium text-slate-700">
+              <Label className="text-sm font-medium text-neutral-700">
                 Зураг{" "}
-                <span className="text-slate-400 font-normal">(заавал биш)</span>
+                <span className="text-neutral-400 font-normal">(заавал биш)</span>
               </Label>
               <div className="mt-2 flex items-center gap-3">
                 {imageUrl ? (
-                  <div className="relative size-24 rounded-xl border border-slate-200 overflow-hidden shadow-sm group">
+                  <div className="relative size-24 rounded-md border border-neutral-200 overflow-hidden group">
                     <img
                       src={imageUrl}
                       alt=""
@@ -200,9 +200,9 @@ export function EditOpenEndedDialog({
                     </button>
                   </div>
                 ) : (
-                  <label className="flex flex-col items-center justify-center size-24 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 cursor-pointer hover:border-blue-300 hover:bg-blue-50/60 transition-all">
-                    <ImageIcon className="size-5 text-slate-400" />
-                    <span className="text-[10px] text-slate-500 mt-1 font-medium">
+                  <label className="flex flex-col items-center justify-center size-24 rounded-md border border-dashed border-neutral-300 bg-neutral-50 cursor-pointer hover:border-neutral-400 hover:bg-neutral-100 transition-colors">
+                    <ImageIcon className="size-5 text-neutral-400" />
+                    <span className="text-[10px] text-neutral-500 mt-1 font-medium">
                       Зураг нэмэх
                     </span>
                     <input
@@ -227,8 +227,8 @@ export function EditOpenEndedDialog({
                   </label>
                 )}
                 {uploading && (
-                  <div className="flex items-center gap-2 text-sm text-slate-500">
-                    <Loader2 className="size-4 animate-spin text-blue-500" />
+                  <div className="flex items-center gap-2 text-sm text-neutral-500">
+                    <Loader2 className="size-4 animate-spin text-neutral-500" />
                     <span>Хуулж байна...</span>
                   </div>
                 )}
@@ -237,7 +237,7 @@ export function EditOpenEndedDialog({
           </FieldGroup>
         </div>
 
-        <div className="flex justify-end gap-2 border-t border-slate-100 bg-slate-50/60 px-5 py-3 shrink-0">
+        <div className="flex justify-end gap-2 border-t border-neutral-200 bg-neutral-50 px-5 py-3 shrink-0">
           <DialogClose asChild>
             <Button type="button" variant="ghost" size="sm" disabled={saving}>
               Болих
@@ -245,7 +245,7 @@ export function EditOpenEndedDialog({
           </DialogClose>
           <Button
             size="sm"
-            className="bg-blue-600 hover:bg-blue-700 text-white min-w-22.5"
+            className="bg-neutral-900 hover:bg-black text-white min-w-22.5"
             disabled={saving || uploading}
             onClick={() => void handleSave()}
           >
