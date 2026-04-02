@@ -7,12 +7,13 @@ import { useExamState } from "../_hooks/use-exam-states";
 import ExamTimer from "./ExamTimer";
 import { Send, Sparkles } from "lucide-react";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   getScheduledEndsAtMs,
   getScheduledStartedAtIso,
 } from "../exam-schedule";
 import { useExamWarningTracker } from "../_hooks/use-exam-warning-tracker";
+import { getExamReturnToFromSearchParams } from "@/lib/exam-navigation";
 
 const AUTO_SUBMITTED_ERROR_MESSAGE =
   "Exam time is over. Submission has been auto-submitted.";
@@ -34,11 +35,13 @@ export const ExamProgressBar = () => {
   } = useExamState();
   const { flushWarningLogs } = useExamWarningTracker();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, isLoaded } = useUser();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const progress = Math.round((answeredCount / totalQuestions) * 100);
   const scheduledEndsAtMs = getScheduledEndsAtMs(exam);
   const isExamLocked = sessionStatus !== "active";
+  const returnTo = getExamReturnToFromSearchParams(searchParams);
 
   const getStartedAt = () => {
     // exam.startTime байвал шууд тэрийг ашигла, localStorage хэрэггүй
@@ -122,7 +125,7 @@ export const ExamProgressBar = () => {
       clearSavedExam();
       setSessionStatus("submitted");
       toast.success("Шалгалт амжилттай илгээгдлээ");
-      router.push("/exams");
+      router.push(returnTo);
     } catch (error) {
       const errorMessage =
         error instanceof Error
@@ -133,7 +136,7 @@ export const ExamProgressBar = () => {
         clearSavedExam();
         setSessionStatus("submitted");
         toast.error(errorMessage);
-        router.push("/exams");
+        router.push(returnTo);
         return;
       }
 

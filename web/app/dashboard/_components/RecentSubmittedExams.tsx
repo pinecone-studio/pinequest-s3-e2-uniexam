@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { CalendarDays, ChevronRight, FileCheck2 } from "lucide-react";
+import { CompletedExamDetailDialog } from "@/app/_components/CompletedExamDetailDialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -35,11 +36,19 @@ type RecentSubmittedExamsResponse = {
 
 type RecentSubmissionCard = {
   id: string;
+  examId: string;
   title: string;
   subject: string;
   submittedAt: string;
   answeredCount: number;
+  totalQuestions: number;
   status: "submitted" | "reviewed";
+};
+
+type ExamQuestionsCountResponse = {
+  examQuestions: {
+    id: string;
+  }[];
 };
 
 const RECENT_SUBMISSIONS_LIMIT = 3;
@@ -70,6 +79,14 @@ const RECENT_SUBMITTED_EXAMS_QUERY = `
   }
 `;
 
+const EXAM_QUESTIONS_COUNT_QUERY = `
+  query ExamQuestionsCount($examId: String!) {
+    examQuestions(exam_id: $examId) {
+      id
+    }
+  }
+`;
+
 const formatSubmittedAt = (value: string) => {
   const submittedAt = new Date(value);
 
@@ -89,18 +106,13 @@ const getStatusLabel = (status: RecentSubmissionCard["status"]) =>
   status === "reviewed" ? "Шалгасан" : "Илгээсэн";
 
 const buildRecentSubmissions = (
-  data: RecentSubmittedExamsResponse,
-  studentId: string,
+  submissions: RecentSubmittedExamsResponse["submissions"],
+  exams: RecentSubmittedExamsResponse["exams"],
+  examQuestionCountByExamId: Map<string, number>,
 ) => {
-  const examsById = new Map(data.exams.map((exam) => [exam.id, exam]));
+  const examsById = new Map(exams.map((exam) => [exam.id, exam]));
 
-  return data.submissions
-    .filter(
-      (submission) =>
-        submission.student_id === studentId &&
-        submission.submitted_at &&
-        (submission.status === "submitted" || submission.status === "reviewed"),
-    )
+  return submissions
     .map<RecentSubmissionCard | null>((submission) => {
       const exam = examsById.get(submission.exam_id);
 
@@ -110,26 +122,26 @@ const buildRecentSubmissions = (
 
       return {
         id: submission.id,
+        examId: submission.exam_id,
         title: exam.title,
         subject: exam.course?.name ?? exam.course?.code ?? "Хичээл тодорхойгүй",
         submittedAt: submission.submitted_at as string,
         answeredCount: submission.answers?.length ?? 0,
+        totalQuestions: examQuestionCountByExamId.get(submission.exam_id) ?? 0,
         status: submission.status as "submitted" | "reviewed",
       };
     })
     .filter((item): item is RecentSubmissionCard => item !== null)
-    .sort(
-      (left, right) =>
-        new Date(right.submittedAt).getTime() -
-        new Date(left.submittedAt).getTime(),
-    )
-    .slice(0, RECENT_SUBMISSIONS_LIMIT);
 };
 
 export function RecentSubmittedExams() {
   const { user, isLoaded } = useUser();
   const router = useRouter();
   const [items, setItems] = useState<RecentSubmissionCard[]>([]);
+  const [selectedExam, setSelectedExam] = useState<RecentSubmissionCard | null>(
+    null,
+  );
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -172,7 +184,46 @@ export function RecentSubmittedExams() {
           return;
         }
 
-        const nextItems = buildRecentSubmissions(response, studentId);
+        const recentSubmissions = response.submissions
+          .filter(
+            (submission) =>
+              submission.student_id === studentId &&
+              submission.submitted_at &&
+              (submission.status === "submitted" ||
+                submission.status === "reviewed"),
+          )
+          .sort(
+            (left, right) =>
+              new Date(right.submitted_at ?? "").getTime() -
+              new Date(left.submitted_at ?? "").getTime(),
+          )
+          .slice(0, RECENT_SUBMISSIONS_LIMIT);
+
+        const examQuestionCounts = await Promise.all(
+          Array.from(new Set(recentSubmissions.map((item) => item.exam_id))).map(
+            async (examId) => {
+              const examQuestionsData =
+                await graphqlRequest<ExamQuestionsCountResponse>(
+                  EXAM_QUESTIONS_COUNT_QUERY,
+                  { examId },
+                );
+
+              return [
+                examId,
+                examQuestionsData.examQuestions?.length ?? 0,
+              ] as const;
+            },
+          ),
+        );
+
+        if (cancelled) return;
+
+        const nextItems = buildRecentSubmissions(
+          recentSubmissions,
+          response.exams,
+          new Map(examQuestionCounts),
+        );
+
         setItems(nextItems);
         setMessage(
           nextItems.length === 0 ? "Одоогоор өгсөн шалгалт алга." : null,
@@ -265,48 +316,65 @@ export function RecentSubmittedExams() {
       {!loading && !error && items.length > 0 ? (
         <div className="w-full space-y-3">
           {items.map((item) => (
-            <Card
+            <button
               key={item.id}
-              className="overflow-hidden rounded-2xl border-white/40 bg-white/60 ring-1 shadow-none ring-black/5"
+              type="button"
+              onClick={() => {
+                setSelectedExam(item);
+                setIsDialogOpen(true);
+              }}
+              className="block w-full rounded-2xl text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#006d77]/30"
             >
-              <CardContent className="px-3 py-1.5">
-                <div className="flex items-center justify-between gap-2">
-                  {/* Зүүн тал: Icon болон Text */}
-                  <div className="flex min-w-0 items-center gap-2">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#f0f9f8] text-[#006d77]">
-                      <FileCheck2 className="h-4 w-4" />
-                    </div>
-
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-[12px] font-medium text-[#006d77]/70">
-                          {item.subject}
-                        </span>
-                        <span className="mb-0.5 text-slate-300">•</span>
-                        <span className="flex items-center gap-1 text-[12px] font-medium leading-none text-slate-500">
-                          <CalendarDays className="h-3 w-3" />
-                          {formatSubmittedAt(item.submittedAt)}
-                        </span>
+              <Card className="overflow-hidden rounded-2xl border-white/40 bg-white/60 ring-1 shadow-none ring-black/5 transition-colors hover:bg-[#f7fbfa] hover:ring-[#bfe3dd]">
+                <CardContent className="px-3 py-1.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex min-w-0 items-center gap-2">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#f0f9f8] text-[#006d77]">
+                        <FileCheck2 className="h-4 w-4" />
                       </div>
 
-                      <h3 className="mt-0.5 text-[14px] font-semibold leading-tight">
-                        {item.title}
-                      </h3>
-                    </div>
-                  </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[12px] font-medium text-[#006d77]/70">
+                            {item.subject}
+                          </span>
+                          <span className="mb-0.5 text-slate-300">•</span>
+                          <span className="flex items-center gap-1 text-[12px] font-medium leading-none text-slate-500">
+                            <CalendarDays className="h-3 w-3" />
+                            {formatSubmittedAt(item.submittedAt)}
+                          </span>
+                        </div>
 
-                  {/* Баруун тал: Статус болон Хариултын тоо */}
-                  <div className="flex shrink-0 items-center gap-2">
-                    <div className="rounded-full bg-[#e6f4f1] px-2.5 py-1 text-[12px] font-semibold text-[#006d77]">
-                      {getStatusLabel(item.status)}
+                        <h3 className="mt-0.5 text-[14px] font-semibold leading-tight">
+                          {item.title}
+                        </h3>
+                      </div>
+                    </div>
+
+                    <div className="flex shrink-0 items-center gap-2">
+                      <div className="rounded-full bg-[#e6f4f1] px-2.5 py-1 text-[12px] font-semibold text-[#006d77]">
+                        {getStatusLabel(item.status)}
+                      </div>
                     </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </button>
           ))}
         </div>
       ) : null}
+
+      <CompletedExamDetailDialog
+        open={isDialogOpen}
+        exam={selectedExam}
+        onOpenChange={(open) => {
+          setIsDialogOpen(open);
+
+          if (!open) {
+            setSelectedExam(null);
+          }
+        }}
+      />
     </section>
   );
 }

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { Calendar, ChevronRight, Clock, Clock3 } from "lucide-react";
+import { ExamStartWarningDialog } from "@/app/_components/ExamStartWarningDialog";
 import {
   Card,
   CardContent,
@@ -20,6 +21,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { graphqlRequest } from "@/lib/graphql";
+import { buildExamHref } from "@/lib/exam-navigation";
 import {
   buildDashboardExamCards,
   buildStudentUpcomingExamCards,
@@ -80,6 +82,10 @@ export function MyExamSessions({ className }: MyExamSessionsProps) {
   const [hasMounted, setHasMounted] = useState(false);
   const [exams, setExams] = useState<UpcomingExamCard[]>([]);
   const [currentTime, setCurrentTime] = useState(0);
+  const [selectedExam, setSelectedExam] = useState<UpcomingExamCard | null>(
+    null,
+  );
+  const [isWarningOpen, setIsWarningOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -89,6 +95,24 @@ export function MyExamSessions({ className }: MyExamSessionsProps) {
     () => buildDashboardExamCards(exams, currentTime),
     [currentTime, exams],
   );
+
+  const handleOpenWarning = (exam: UpcomingExamCard) => {
+    if (!canStartExam(exam, currentTime)) {
+      return;
+    }
+
+    setSelectedExam(exam);
+    setIsWarningOpen(true);
+  };
+
+  const handleStartExam = () => {
+    if (!selectedExam || !canStartExam(selectedExam, currentTime)) {
+      return;
+    }
+
+    setIsWarningOpen(false);
+    router.push(buildExamHref(selectedExam.id, "/dashboard"));
+  };
 
   useEffect(() => {
     setHasMounted(true);
@@ -317,7 +341,7 @@ export function MyExamSessions({ className }: MyExamSessionsProps) {
                       {examCanStart ? (
                         <Button
                           type="button"
-                          onClick={() => router.push(`/exam?examId=${exam.id}`)}
+                          onClick={() => handleOpenWarning(exam)}
                           className="flex h-7 shrink-0 items-center gap-0.5 self-start rounded-md bg-[#006d77] px-3 py-0 text-[12px] hover:cursor-pointer lg:self-center"
                         >
                           Шалгалт өгөх <ChevronRight className="h-1.5 w-1.5" />
@@ -349,6 +373,20 @@ export function MyExamSessions({ className }: MyExamSessionsProps) {
           )}
         </CardContent>
       </Card>
+
+      <ExamStartWarningDialog
+        open={isWarningOpen}
+        exam={selectedExam}
+        currentTime={currentTime}
+        onOpenChange={(open) => {
+          setIsWarningOpen(open);
+
+          if (!open) {
+            setSelectedExam(null);
+          }
+        }}
+        onStart={handleStartExam}
+      />
     </TooltipProvider>
   );
 }

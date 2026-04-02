@@ -16,7 +16,7 @@ export const getQuestionTypeLabel = (value: string | null | undefined) => {
     normalized.includes("select") ||
     normalized.includes("mcq")
   ) {
-    return "Олон сонголттой";
+    return "Сонголттой";
   }
 
   if (normalized.includes("true") || normalized.includes("false")) {

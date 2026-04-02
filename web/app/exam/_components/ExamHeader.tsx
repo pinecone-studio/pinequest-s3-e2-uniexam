@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useExamState } from "../_hooks/use-exam-states";
 import { ChevronLeft } from "lucide-react";
 import {
@@ -12,6 +12,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { getExamReturnToFromSearchParams } from "@/lib/exam-navigation";
 
 const localizeExamLabel = (value: string) =>
   value
@@ -23,7 +24,9 @@ const localizeExamLabel = (value: string) =>
 export const ExamHeader = () => {
   const { exam } = useExamState();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isLeaveDialogOpen, setIsLeaveDialogOpen] = useState(false);
+  const returnTo = getExamReturnToFromSearchParams(searchParams);
   const localizedSubtitle = exam.subtitle
     ? localizeExamLabel(exam.subtitle)
     : undefined;
@@ -60,7 +63,7 @@ export const ExamHeader = () => {
           <AlertDialogFooter className="mx-0 mb-0 border-0 bg-transparent p-0 pt-4">
             <AlertDialogCancel>Үлдэх</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => router.back()}
+              onClick={() => router.push(returnTo)}
               className="bg-[#00565e] text-white hover:bg-[#00565e]"
             >
               Гарах
