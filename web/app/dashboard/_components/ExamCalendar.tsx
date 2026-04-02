@@ -26,11 +26,6 @@ type ExamCalendarResponse = {
   studentByEmail: {
     id: string;
   } | null;
-  enrollments: {
-    id: string;
-    student_id: string;
-    course_id: string;
-  }[];
   submissions: {
     id: string;
     student_id: string;
@@ -67,11 +62,6 @@ const EXAM_CALENDAR_QUERY = `
   query ExamCalendar($email: String!) {
     studentByEmail(email: $email) {
       id
-    }
-    enrollments {
-      id
-      student_id
-      course_id
     }
     submissions {
       id
@@ -135,12 +125,6 @@ const buildCalendarExams = (
   studentId: string,
   today: Date,
 ) => {
-  const enrolledCourseIds = new Set(
-    data.enrollments
-      .filter((enrollment) => enrollment.student_id === studentId)
-      .map((enrollment) => enrollment.course_id),
-  );
-
   const completedExamIds = new Set(
     data.submissions
       .filter(
@@ -155,7 +139,6 @@ const buildCalendarExams = (
   const todayStart = startOfDay(today).getTime();
 
   return data.courses
-    .filter((course) => enrolledCourseIds.has(course.id))
     .flatMap((course) =>
       (course.exams ?? [])
         .filter((exam) => !isHiddenStudentExam(exam.title))
@@ -281,7 +264,12 @@ export function ExamCalendar({
     return () => {
       cancelled = true;
     };
-  }, [calendarToday, isLoaded, refreshKey, user?.primaryEmailAddress?.emailAddress]);
+  }, [
+    calendarToday,
+    isLoaded,
+    refreshKey,
+    user?.primaryEmailAddress?.emailAddress,
+  ]);
 
   const firstDayOfWeek = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -537,14 +525,14 @@ export function ExamCalendar({
               <div className="pt-3">
                 <div className="flex shrink-0 items-center gap-4 border-t border-slate-100 pt-2.5">
                   <div className="flex items-center gap-1.5">
-                    <div className="h-2 w-2 rounded-full bg-[#006d77]" />
-                    <span className="text-[10px] font-medium text-slate-500">
+                    <div className="h-2.5 w-2.5 rounded-full bg-[#006d77]" />
+                    <span className="text-[12px] font-medium text-slate-500">
                       Өнөөдөр
                     </span>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <div className="h-2 w-2 rounded-full bg-[#e6f4f1] ring-1 ring-[#006d77]/20" />
-                    <span className="text-[10px] font-medium text-slate-500">
+                    <div className="h-2.5 w-2.5 rounded-full bg-[#e6f4f1] ring-1 ring-[#006d77]/20" />
+                    <span className="text-[12px] font-medium text-slate-500">
                       Шалгалттай
                     </span>
                   </div>

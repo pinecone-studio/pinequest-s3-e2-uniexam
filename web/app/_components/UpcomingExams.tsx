@@ -28,62 +28,31 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { isHiddenStudentExam } from "@/lib/exam-visibility";
 import { graphqlRequest } from "@/lib/graphql";
+import {
+  buildStudentUpcomingExamCards,
+  buildUpcomingExamCards,
+  canStartExam,
+  getExamDurationLabel,
+  getExamStartAvailabilityMessage,
+  isExamExpired,
+  type ExamCourse,
+  type ExamSubmissionSummary,
+  type UpcomingExamCard,
+} from "@/lib/upcoming-exams";
 
 type CourseExamResponse = {
-  courses: {
-    id: string;
-    name: string;
-    code: string;
-    exams: {
-      id: string;
-      title: string;
-      start_time: string | null;
-      end_time: string | null;
-      duration: number | null;
-      type: string;
-    }[];
-  }[];
+  courses: ExamCourse[];
 };
 
 type SignedInUpcomingExamsResponse = {
   studentByEmail: {
     id: string;
   } | null;
-  submissions: {
+  submissions: (ExamSubmissionSummary & {
     id: string;
-    student_id: string;
-    exam_id: string;
-    status: "in_progress" | "submitted" | "reviewed" | null;
-  }[];
+  })[];
   courses: CourseExamResponse["courses"];
-};
-
-type UpcomingExamCard = {
-  id: string;
-  subject: string;
-  title: string;
-  date: string;
-  time: string;
-  duration: number | null;
-  hasKnownStartTime: boolean;
-  startsAt: string;
-  endsAt: string;
-};
-
-const parseExamDate = (value: string | null | undefined) => {
-  if (!value || value.trim().length === 0) {
-    return null;
-  }
-
-  const parsed = new Date(value);
-
-  if (Number.isNaN(parsed.getTime())) {
-    return null;
-  }
-
-  return parsed;
 };
 
 const UPCOMING_EXAMS_QUERY = `
@@ -131,127 +100,6 @@ const UPCOMING_EXAMS_COURSES_ONLY_QUERY = `
   }
 `;
 
-const formatExamDate = (value: string | null | undefined) => {
-  const parsed = parseExamDate(value);
-
-  if (!parsed) {
-    return "0000-00-00";
-  }
-
-  return new Intl.DateTimeFormat("en-CA", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(parsed);
-};
-
-const formatExamTime = (value: string | null | undefined) => {
-  const parsed = parseExamDate(value);
-
-  if (!parsed) {
-    return "00:00";
-  }
-
-  return new Intl.DateTimeFormat("en-GB", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  }).format(parsed);
-};
-
-const getExamDurationLabel = (value: number | null | undefined) => {
-  if (typeof value !== "number" || Number.isNaN(value) || value <= 0) {
-    return "Үргэлжлэх хугацаа тодорхойгүй";
-  }
-
-  return `Нийт ${value} минут үргэлжилнэ`;
-};
-
-const getExamEndsAt = (exam: UpcomingExamCard) => {
-  const startsAt = parseExamDate(exam.startsAt);
-
-  if (
-    startsAt &&
-    typeof exam.duration === "number" &&
-    !Number.isNaN(exam.duration) &&
-    exam.duration > 0
-  ) {
-    return new Date(startsAt.getTime() + exam.duration * 60 * 1000);
-  }
-
-  const explicitEnd = parseExamDate(exam.endsAt);
-
-  if (explicitEnd) {
-    return explicitEnd;
-  }
-
-  return null;
-};
-
-const isExamExpired = (exam: UpcomingExamCard, currentTime: number) => {
-  const endsAt = getExamEndsAt(exam);
-
-  if (!endsAt) {
-    return false;
-  }
-
-  return endsAt.getTime() < currentTime;
-};
-
-const canStartExam = (exam: UpcomingExamCard, currentTime: number) => {
-  const startsAt = parseExamDate(exam.startsAt);
-
-  if (!startsAt) {
-    return false;
-  }
-
-  if (isExamExpired(exam, currentTime)) {
-    return false;
-  }
-
-  return startsAt.getTime() <= currentTime;
-};
-
-const getExamStartAvailabilityMessage = (
-  exam: UpcomingExamCard,
-  currentTime: number,
-) => {
-  const startsAt = parseExamDate(exam.startsAt);
-
-  if (!startsAt) {
-    return "Эхлэх хугацаа тодорхойгүй";
-  }
-
-  if (startsAt.getTime() > currentTime) {
-    return "Шалгалт өгөх хугацаа болоогүй байна";
-  }
-
-  return null;
-};
-
-const buildUpcomingExamCards = (courses: CourseExamResponse["courses"]) =>
-  courses
-    .flatMap((course) =>
-      (course.exams ?? [])
-        .filter((exam) => !isHiddenStudentExam(exam.title))
-        .map((exam) => ({
-          id: exam.id,
-          subject: course.name || course.code,
-          title: exam.title,
-          date: formatExamDate(exam.start_time),
-          time: formatExamTime(exam.start_time),
-          duration: exam.duration,
-          hasKnownStartTime: Boolean(parseExamDate(exam.start_time)),
-          startsAt: exam.start_time ?? "",
-          endsAt: exam.end_time ?? "",
-        })),
-    )
-    .sort(
-      (left, right) =>
-        (parseExamDate(left.startsAt)?.getTime() ?? Number.MAX_SAFE_INTEGER) -
-        (parseExamDate(right.startsAt)?.getTime() ?? Number.MAX_SAFE_INTEGER),
-    );
-
 export default function UpcomingExams() {
   const [exams, setExams] = useState<UpcomingExamCard[]>([]);
   const [loading, setLoading] = useState(true);
@@ -295,21 +143,7 @@ export default function UpcomingExams() {
 
           if (cancelled) return;
 
-          const nextExams = buildUpcomingExamCards(data.courses).map(
-            (exam) => ({
-              id: exam.id,
-              subject: exam.subject,
-              title: exam.title,
-              date: exam.date,
-              time: exam.time,
-              duration: exam.duration,
-              hasKnownStartTime: exam.hasKnownStartTime,
-              startsAt: exam.startsAt,
-              endsAt: exam.endsAt,
-            }),
-          );
-
-          setExams(nextExams);
+          setExams(buildUpcomingExamCards(data.courses));
           return;
         }
 
@@ -323,32 +157,19 @@ export default function UpcomingExams() {
         if (cancelled) return;
 
         const studentId = data.studentByEmail?.id;
-        const completedExamIds = new Set(
-          data.submissions
-            .filter(
-              (submission) =>
-                submission.student_id === studentId &&
-                (submission.status === "submitted" ||
-                  submission.status === "reviewed"),
-            )
-            .map((submission) => submission.exam_id),
+
+        if (!studentId) {
+          setExams([]);
+          return;
+        }
+
+        setExams(
+          buildStudentUpcomingExamCards(
+            data.courses,
+            data.submissions,
+            studentId,
+          ),
         );
-
-        const nextExams = buildUpcomingExamCards(data.courses)
-          .filter((exam) => !completedExamIds.has(exam.id))
-          .map((exam) => ({
-            id: exam.id,
-            subject: exam.subject,
-            title: exam.title,
-            date: exam.date,
-            time: exam.time,
-            duration: exam.duration,
-            hasKnownStartTime: exam.hasKnownStartTime,
-            startsAt: exam.startsAt,
-            endsAt: exam.endsAt,
-          }));
-
-        setExams(nextExams);
       } catch (fetchError) {
         if (cancelled) return;
         setError(
