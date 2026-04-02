@@ -2,17 +2,16 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useUser } from "@clerk/nextjs";
-import {
-  BadgePercent,
-  BookOpen,
-  Clock,
-  FileCheck2,
-} from "lucide-react";
+import { BadgePercent, BookOpen, Clock, FileCheck2 } from "lucide-react";
 import { useGradesCourses } from "@/app/grades/_hooks/use-grades-courses";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { isHiddenStudentExam } from "@/lib/exam-visibility";
 import { graphqlRequest } from "@/lib/graphql";
+import {
+  buildStudentUpcomingExamCards,
+  isExamExpired,
+  type ExamCourse,
+} from "@/lib/upcoming-exams";
 import { DASHBOARD_DATA_SYNC_EVENT } from "./dashboard-data-sync";
 
 type DashboardStatsResponse = {
@@ -35,14 +34,7 @@ type DashboardStatsResponse = {
       id: string;
     }[];
   }[];
-  courses: {
-    id: string;
-    exams: {
-      id: string;
-      title?: string;
-      start_time: string;
-    }[];
-  }[];
+  courses: ExamCourse[];
 };
 
 type StatsState = {
@@ -85,10 +77,15 @@ const DASHBOARD_STATS_QUERY = `
     }
     courses {
       id
+      name
+      code
       exams {
         id
         title
         start_time
+        end_time
+        duration
+        type
       }
     }
   }
@@ -150,6 +147,7 @@ const buildStats = (
   data: DashboardStatsResponse,
   studentId: string,
 ): StatsState => {
+  const now = Date.now();
   const enrolledCourseIds = new Set(
     data.enrollments
       .filter((enrollment) => enrollment.student_id === studentId)
@@ -171,24 +169,15 @@ const buildStats = (
     ),
   );
 
-  const completedExamIds = new Set(
-    completedSubmissions.map((submission) => submission.exam_id),
-  );
+  const visibleUpcomingExams = buildStudentUpcomingExamCards(
+    data.courses,
+    studentSubmissions,
+    studentId,
+  ).filter((exam) => !isExamExpired(exam, now));
 
-  const upcomingExams = enrolledCourses
-    .flatMap((course) => course.exams ?? [])
-    .filter((exam) => {
-      const startsAt = getTimestamp(exam.start_time);
-      return (
-        startsAt >= Date.now() &&
-        !completedExamIds.has(exam.id) &&
-        !isHiddenStudentExam(exam.title)
-      );
-    })
-    .sort(
-      (left, right) =>
-        getTimestamp(left.start_time) - getTimestamp(right.start_time),
-    );
+  const nextUpcomingExamAt =
+    visibleUpcomingExams.find((exam) => getTimestamp(exam.startsAt) > now)
+      ?.startsAt ?? null;
 
   const reviewedSubmissions = completedSubmissions.filter(
     (submission) =>
@@ -207,7 +196,7 @@ const buildStats = (
 
   return {
     enrolledCoursesCount: enrolledCourses.length,
-    upcomingExamsCount: upcomingExams.length,
+    upcomingExamsCount: visibleUpcomingExams.length,
     completedExamsCount: completedSubmissions.length,
     totalAnswersCount: completedSubmissions.reduce(
       (sum, submission) => sum + (submission.answers?.length ?? 0),
@@ -215,7 +204,7 @@ const buildStats = (
     ),
     averageScore,
     reviewedCount: reviewedSubmissions.length,
-    nextExamAt: upcomingExams[0]?.start_time ?? null,
+    nextExamAt: nextUpcomingExamAt,
   };
 };
 
@@ -335,15 +324,17 @@ export function StatCards() {
         stats.enrolledCoursesCount > 0
           ? `${stats.upcomingExamsCount} ойрын шалгалттай`
           : "Бүртгэлтэй хичээл алга",
-      icon: <BookOpen className="w-4 h-4 text-[#006d77]" />,
+      icon: <BookOpen className="w-5 h-5 text-[#006d77]" />,
     },
     {
       label: "Өгөх шалгалт",
       value: String(stats.upcomingExamsCount),
       sub: stats.nextExamAt
         ? `Дараагийнх: ${formatDateTime(stats.nextExamAt)}`
-        : "Товлогдсон шалгалт алга",
-      icon: <Clock className="w-4 h-4 text-[#006d77]" />,
+        : stats.upcomingExamsCount > 0
+          ? "Яг одоо өгөх боломжтой"
+          : "Товлогдсон шалгалт алга",
+      icon: <Clock className="w-5 h-5 text-[#006d77]" />,
     },
     {
       label: "Өгсөн шалгалт",
@@ -352,17 +343,16 @@ export function StatCards() {
         stats.completedExamsCount > 0
           ? `${stats.totalAnswersCount} хариулт илгээсэн`
           : "Илгээсэн шалгалт алга",
-      icon: <FileCheck2 className="w-4 h-4 text-[#006d77]" />,
+      icon: <FileCheck2 className="w-5 h-5 text-[#006d77]" />,
     },
     {
       label: "GPA",
-      value:
-        !gradesLoading ? overallGPA.toFixed(2) : "Хүлээгдэж байна...",
+      value: !gradesLoading ? overallGPA.toFixed(2) : "Хүлээгдэж байна...",
       sub:
         !gradesLoading && gradedCoursesCount > 0
           ? `4.0-аас · ${gradedCoursesCount} хичээл үнэлэгдсэн`
           : "4.0-аас",
-      icon: <BadgePercent className="w-4 h-4 text-[#006d77]" />,
+      icon: <BadgePercent className="w-5 h-5 text-[#006d77]" />,
     },
   ];
 
@@ -403,7 +393,7 @@ export function StatCards() {
             {statItems.map((stat) => (
               <Card
                 key={stat.label}
-                className="overflow-hidden rounded-2xl border-white/40 bg-white/60 ring-1 ring-black/6"
+                className="overflow-hidden p-3 rounded-2xl border-white/40 bg-white/60 ring-1 ring-black/6"
               >
                 <CardContent className="flex h-full flex-col justify-between">
                   <div className="mb-0.5 flex items-center justify-between">
@@ -418,7 +408,7 @@ export function StatCards() {
                       {stat.value}
                     </div>
 
-                    <div className="mt-2 text-[10px] font-medium leading-tight text-slate-400">
+                    <div className="mt-1 text-[12px] font-medium leading-tight text-slate-400">
                       {stat.sub}
                     </div>
                   </div>

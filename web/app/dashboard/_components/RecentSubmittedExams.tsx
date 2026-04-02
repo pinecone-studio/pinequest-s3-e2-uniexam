@@ -206,7 +206,7 @@ export function RecentSubmittedExams() {
           <h2 className="text-sm font-bold text-slate-800">
             Ойрын өгсөн шалгалтууд
           </h2>
-          <p className=" pt-0.5 text-[12px] font-medium text-slate-400">
+          <p className=" pt-1 text-[13px] font-medium text-slate-400">
             Сүүлийн өгсөн шалгалтууд болон тэдгээрийн мэдээлэл.
           </p>
         </div>
@@ -279,11 +279,11 @@ export function RecentSubmittedExams() {
 
                     <div className="min-w-0">
                       <div className="flex items-center gap-1.5">
-                        <span className="text-[10px] font-semibold uppercase leading-none tracking-wider text-[#006d77]/70">
+                        <span className="text-[12px] font-medium text-[#006d77]/70">
                           {item.subject}
                         </span>
                         <span className="mb-0.5 text-slate-300">•</span>
-                        <span className="flex items-center gap-1 text-[10px] font-medium leading-none text-slate-500">
+                        <span className="flex items-center gap-1 text-[12px] font-medium leading-none text-slate-500">
                           <CalendarDays className="h-3 w-3" />
                           {formatSubmittedAt(item.submittedAt)}
                         </span>
@@ -297,7 +297,7 @@ export function RecentSubmittedExams() {
 
                   {/* Баруун тал: Статус болон Хариултын тоо */}
                   <div className="flex shrink-0 items-center gap-2">
-                    <div className="rounded-full bg-[#e6f4f1] px-2.5 py-1 text-[10px] font-bold text-[#006d77]">
+                    <div className="rounded-full bg-[#e6f4f1] px-2.5 py-1 text-[12px] font-semibold text-[#006d77]">
                       {getStatusLabel(item.status)}
                     </div>
                   </div>

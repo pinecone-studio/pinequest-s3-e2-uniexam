@@ -594,7 +594,9 @@ const CompletedExams = () => {
 
                         <div className="pt-1 text-xs text-gray-500 flex items-center gap-3">
                           <CalendarDays className="h-3 w-3" />
-                          <span>{formatSubmittedDateOnly(exam.submittedAt)}</span>
+                          <span>
+                            {formatSubmittedDateOnly(exam.submittedAt)}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -640,7 +642,7 @@ const CompletedExams = () => {
                 <div className="grid gap-3 md:grid-cols-4">
                   <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
                     <p className="text-xs font-medium text-slate-500">Хичээл</p>
-                    <p className="mt-1 text-sm font-semibold text-slate-800">
+                    <p className="mt-1 text-sm font-medium text-slate-800">
                       {selectedExam.subject ?? "Тодорхойгүй"}
                     </p>
                   </div>

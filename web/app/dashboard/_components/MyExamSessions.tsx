@@ -19,8 +19,17 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { isHiddenStudentExam } from "@/lib/exam-visibility";
 import { graphqlRequest } from "@/lib/graphql";
+import {
+  buildDashboardExamCards,
+  buildStudentUpcomingExamCards,
+  canStartExam,
+  getExamDurationLabel,
+  getExamStartAvailabilityMessage,
+  type ExamCourse,
+  type ExamSubmissionSummary,
+  type UpcomingExamCard,
+} from "@/lib/upcoming-exams";
 import { cn } from "@/lib/utils";
 import { DASHBOARD_DATA_SYNC_EVENT } from "./dashboard-data-sync";
 
@@ -28,42 +37,10 @@ type DashboardExamSessionsResponse = {
   studentByEmail: {
     id: string;
   } | null;
-  enrollments: {
+  submissions: (ExamSubmissionSummary & {
     id: string;
-    student_id: string;
-    course_id: string;
-  }[];
-  submissions: {
-    id: string;
-    student_id: string;
-    exam_id: string;
-    status: "in_progress" | "submitted" | "reviewed" | null;
-  }[];
-  courses: {
-    id: string;
-    name: string;
-    code: string;
-    exams: {
-      id: string;
-      title: string;
-      start_time: string;
-      end_time: string | null;
-      duration: number | null;
-      type: string;
-    }[];
-  }[];
-};
-
-type SessionExamCard = {
-  id: string;
-  title: string;
-  subject: string;
-  date: string;
-  time: string;
-  duration: number | null;
-  hasKnownStartTime: boolean;
-  startsAt: string;
-  endsAt: string;
+  })[];
+  courses: ExamCourse[];
 };
 
 interface MyExamSessionsProps {
@@ -74,11 +51,6 @@ const DASHBOARD_EXAM_SESSIONS_QUERY = `
   query DashboardExamSessions($email: String!) {
     studentByEmail(email: $email) {
       id
-    }
-    enrollments {
-      id
-      student_id
-      course_id
     }
     submissions {
       id
@@ -102,169 +74,11 @@ const DASHBOARD_EXAM_SESSIONS_QUERY = `
   }
 `;
 
-const parseExamDate = (value: string | null | undefined) => {
-  if (!value || value.trim().length === 0) {
-    return null;
-  }
-
-  const parsed = new Date(value);
-
-  if (Number.isNaN(parsed.getTime())) {
-    return null;
-  }
-
-  return parsed;
-};
-
-const formatExamDate = (value: string | null | undefined) => {
-  const parsed = parseExamDate(value);
-
-  if (!parsed) {
-    return "0000-00-00";
-  }
-
-  return new Intl.DateTimeFormat("en-CA", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(parsed);
-};
-
-const formatExamTime = (value: string | null | undefined) => {
-  const parsed = parseExamDate(value);
-
-  if (!parsed) {
-    return "00:00";
-  }
-
-  return new Intl.DateTimeFormat("en-GB", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  }).format(parsed);
-};
-
-const getExamDurationLabel = (value: number | null | undefined) => {
-  if (typeof value !== "number" || Number.isNaN(value) || value <= 0) {
-    return "Үргэлжлэх хугацаа тодорхойгүй";
-  }
-
-  return `Нийт ${value} минут үргэлжилнэ`;
-};
-
-const getExamEndsAt = (exam: SessionExamCard) => {
-  const startsAt = parseExamDate(exam.startsAt);
-
-  if (
-    startsAt &&
-    typeof exam.duration === "number" &&
-    !Number.isNaN(exam.duration) &&
-    exam.duration > 0
-  ) {
-    return new Date(startsAt.getTime() + exam.duration * 60 * 1000);
-  }
-
-  const explicitEnd = parseExamDate(exam.endsAt);
-
-  if (explicitEnd) {
-    return explicitEnd;
-  }
-
-  return null;
-};
-
-const isExamExpired = (exam: SessionExamCard, currentTime: number) => {
-  const endsAt = getExamEndsAt(exam);
-
-  if (!endsAt) {
-    return false;
-  }
-
-  return endsAt.getTime() < currentTime;
-};
-
-const canStartExam = (exam: SessionExamCard, currentTime: number) => {
-  const startsAt = parseExamDate(exam.startsAt);
-
-  if (!startsAt) {
-    return false;
-  }
-
-  if (isExamExpired(exam, currentTime)) {
-    return false;
-  }
-
-  return startsAt.getTime() <= currentTime;
-};
-
-const getExamStartAvailabilityMessage = (
-  exam: SessionExamCard,
-  currentTime: number,
-) => {
-  const startsAt = parseExamDate(exam.startsAt);
-
-  if (!startsAt) {
-    return "Эхлэх хугацаа тодорхойгүй";
-  }
-
-  if (startsAt.getTime() > currentTime) {
-    return "Шалгалт өгөх хугацаа болоогүй байна";
-  }
-
-  return null;
-};
-
-const buildDashboardUpcomingExams = (
-  data: DashboardExamSessionsResponse,
-  studentId: string,
-) => {
-  const enrolledCourseIds = new Set(
-    data.enrollments
-      .filter((enrollment) => enrollment.student_id === studentId)
-      .map((enrollment) => enrollment.course_id),
-  );
-
-  const completedExamIds = new Set(
-    data.submissions
-      .filter(
-        (submission) =>
-          submission.student_id === studentId &&
-          (submission.status === "submitted" ||
-            submission.status === "reviewed"),
-      )
-      .map((submission) => submission.exam_id),
-  );
-
-  return data.courses
-    .filter((course) => enrolledCourseIds.has(course.id))
-    .flatMap((course) =>
-      (course.exams ?? [])
-        .filter((exam) => !isHiddenStudentExam(exam.title))
-        .map((exam) => ({
-          id: exam.id,
-          title: exam.title,
-          subject: course.name || course.code,
-          date: formatExamDate(exam.start_time),
-          time: formatExamTime(exam.start_time),
-          duration: exam.duration,
-          hasKnownStartTime: Boolean(parseExamDate(exam.start_time)),
-          startsAt: exam.start_time,
-          endsAt: exam.end_time ?? "",
-        })),
-    )
-    .filter((exam) => !completedExamIds.has(exam.id))
-    .sort(
-      (left, right) =>
-        (parseExamDate(left.startsAt)?.getTime() ?? Number.MAX_SAFE_INTEGER) -
-        (parseExamDate(right.startsAt)?.getTime() ?? Number.MAX_SAFE_INTEGER),
-    );
-};
-
 export function MyExamSessions({ className }: MyExamSessionsProps) {
   const { user, isLoaded } = useUser();
   const router = useRouter();
   const [hasMounted, setHasMounted] = useState(false);
-  const [exams, setExams] = useState<SessionExamCard[]>([]);
+  const [exams, setExams] = useState<UpcomingExamCard[]>([]);
   const [currentTime, setCurrentTime] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -272,7 +86,7 @@ export function MyExamSessions({ className }: MyExamSessionsProps) {
   const [refreshKey, setRefreshKey] = useState(0);
 
   const visibleExams = useMemo(
-    () => exams.filter((exam) => !isExamExpired(exam, currentTime)).slice(0, 3),
+    () => buildDashboardExamCards(exams, currentTime),
     [currentTime, exams],
   );
 
@@ -338,16 +152,20 @@ export function MyExamSessions({ className }: MyExamSessionsProps) {
 
         if (!studentId) {
           setExams([]);
-          setMessage("Хичээлээ сонгоод удахгүй болох шалгалтуудаа эндээс хараарай.");
+          setMessage("Шалгалтын мэдээллээ харахын тулд бүртгэлээ шалгана уу.");
           return;
         }
 
-        const nextExams = buildDashboardUpcomingExams(response, studentId);
+        const nextExams = buildStudentUpcomingExamCards(
+          response.courses,
+          response.submissions,
+          studentId,
+        );
 
         setExams(nextExams);
         setMessage(
           nextExams.length === 0
-            ? "Сонгосон хичээл дээр тань идэвхтэй шалгалт алга."
+            ? "Одоогоор идэвхтэй эсвэл ойрын шалгалт алга."
             : null,
         );
       } catch (fetchError) {
@@ -382,15 +200,20 @@ export function MyExamSessions({ className }: MyExamSessionsProps) {
       >
         <CardHeader className="flex flex-row items-start justify-between gap-4 px-5 pb-3 pt-1">
           <div>
-            <CardTitle className="flex items-start gap-2 text-sm font-bold text-slate-800">
-              <div className="rounded-lg bg-[#e6f4f1] p-1.5 text-[#006d77]">
-                <Clock3 className="h-3.5 w-3.5" />
+            <CardTitle className="items-start gap-3 ">
+              <div className="flex gap-3 text-sm font-bold text-slate-800">
+                <div className="rounded-lg bg-[#e6f4f1] p-3 text-[#006d77]">
+                  <Clock3 className="h-4 w-4" />
+                </div>
+                <div>
+                  Миний шалгалтууд
+                  <div className="text-[13px] font-medium text-slate-400">
+                    Яг одоо явагдаж байгаа болон дараагийн 3 шалгалт.
+                  </div>
+                </div>
               </div>
-              Миний шалгалтууд
             </CardTitle>
-            <CardDescription className="pl-9 text-[12px] font-medium text-slate-400">
-              Ойрын өгөх шалгалтууд болон тэдгээрийн мэдээлэл.
-            </CardDescription>
+            <CardDescription></CardDescription>
           </div>
 
           <Button
@@ -438,11 +261,11 @@ export function MyExamSessions({ className }: MyExamSessionsProps) {
             </div>
           ) : visibleExams.length === 0 ? (
             <div className="rounded-2xl border border-gray-200 bg-gray-50 px-5 py-4 text-sm text-gray-500">
-              Сонгосон хичээл дээр тань идэвхтэй шалгалт алга.
+              Одоогоор идэвхтэй эсвэл ойрын шалгалт алга.
             </div>
           ) : (
             <div className="space-y-3">
-              {visibleExams.map((exam) => {
+              {visibleExams.slice(0, 3).map((exam) => {
                 const examCanStart = canStartExam(exam, currentTime);
                 const examStartMessage = getExamStartAvailabilityMessage(
                   exam,
