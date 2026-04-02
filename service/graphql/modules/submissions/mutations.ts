@@ -104,9 +104,12 @@ export const submissionMutations = {
   createSubmission: async (_: unknown, args: CreateSubmissionArgs) => {
     const { start, end } = await getExamTiming(args.exam_id);
     const now = new Date();
+    const isFinalizingAttempt = Boolean(args.submitted_at);
 
     if (now < start) throw new Error("Exam has not started yet");
-    if (now >= end) throw new Error("Exam has already ended");
+    if (now >= end && !isFinalizingAttempt) {
+      throw new Error("Exam has already ended");
+    }
 
     const payload = {
       ...args,

@@ -28,6 +28,8 @@ export const ExamProgressBar = () => {
     setCurrentId,
     setAnswers,
     answeredCount,
+    sessionStatus,
+    setSessionStatus,
     clearSavedExam,
   } = useExamState();
   const { flushWarningLogs } = useExamWarningTracker();
@@ -36,6 +38,7 @@ export const ExamProgressBar = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const progress = Math.round((answeredCount / totalQuestions) * 100);
   const scheduledEndsAtMs = getScheduledEndsAtMs(exam);
+  const isExamLocked = sessionStatus !== "active";
 
   const getStartedAt = () => {
     // exam.startTime байвал шууд тэрийг ашигла, localStorage хэрэггүй
@@ -77,8 +80,12 @@ export const ExamProgressBar = () => {
     toast.success("Demo хариултууд автоматаар бөглөгдлөө.");
   };
 
-  const handleFinishExam = async () => {
-    if (isSubmitting) {
+  const handleFinishExam = async ({
+    autoSubmit = false,
+  }: {
+    autoSubmit?: boolean;
+  } = {}) => {
+    if (isSubmitting || isExamLocked) {
       return;
     }
 
@@ -96,6 +103,7 @@ export const ExamProgressBar = () => {
       return;
     }
 
+    setSessionStatus(autoSubmit ? "auto_submitting" : "manual_submitting");
     setIsSubmitting(true);
 
     try {
@@ -112,6 +120,7 @@ export const ExamProgressBar = () => {
       });
 
       clearSavedExam();
+      setSessionStatus("submitted");
       toast.success("Шалгалт амжилттай илгээгдлээ");
       router.push("/exams");
     } catch (error) {
@@ -122,11 +131,13 @@ export const ExamProgressBar = () => {
 
       if (errorMessage === AUTO_SUBMITTED_ERROR_MESSAGE) {
         clearSavedExam();
+        setSessionStatus("submitted");
         toast.error(errorMessage);
         router.push("/exams");
         return;
       }
 
+      setSessionStatus("active");
       toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
@@ -139,7 +150,7 @@ export const ExamProgressBar = () => {
         durationSeconds={exam.durationSeconds}
         storageKey={`exam-ends-at:${exam.id}`}
         scheduledEndsAtMs={scheduledEndsAtMs}
-        onTimeUp={handleFinishExam}
+        onTimeUp={() => handleFinishExam({ autoSubmit: true })}
       />
       <div className="flex-1">
         <h3 className="text-sm font-medium mb-3 ">Асуултууд</h3>
@@ -197,15 +208,15 @@ export const ExamProgressBar = () => {
       <div className="space-y-3">
         <Button
           onClick={handleDemoFill}
-          disabled={isSubmitting}
+          disabled={isSubmitting || isExamLocked}
           className="flex w-full items-center gap-3 rounded-md border border-[#bfe3dd] bg-[#e6f4f1] px-6 py-5 font-semibold text-[#006d77] hover:bg-[#d7ebe6]"
         >
           <Sparkles />
           Demo бөглөх
         </Button>
         <Button
-          onClick={handleFinishExam}
-          disabled={isSubmitting}
+          onClick={() => handleFinishExam()}
+          disabled={isSubmitting || isExamLocked}
           className="flex w-full items-center gap-3 rounded-md bg-[#006d77] px-6 py-5 font-semibold text-white hover:bg-[#00565e]"
         >
           <Send />
