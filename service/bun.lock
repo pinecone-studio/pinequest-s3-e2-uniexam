@@ -9,6 +9,7 @@
         "@as-integrations/next": "^4.1.0",
         "@aws-sdk/client-sqs": "^3.1019.0",
         "@supabase/supabase-js": "^2.100.0",
+        "@upstash/redis": "^1.37.0",
         "graphql": "^16.13.2",
         "next": "16.2.1",
         "openai": "^6.33.0",
@@ -516,6 +517,8 @@
     "@unrs/resolver-binding-win32-ia32-msvc": ["@unrs/resolver-binding-win32-ia32-msvc@1.11.1", "", { "os": "win32", "cpu": "ia32" }, "sha512-DCEI6t5i1NmAZp6pFonpD5m7i6aFrpofcp4LA2i8IIq60Jyo28hamKBxNrZcyOwVOZkgsRp9O2sXWBWP8MnvIQ=="],
 
     "@unrs/resolver-binding-win32-x64-msvc": ["@unrs/resolver-binding-win32-x64-msvc@1.11.1", "", { "os": "win32", "cpu": "x64" }, "sha512-lrW200hZdbfRtztbygyaq/6jP6AKE8qQN2KvPcJ+x7wiD038YtnYtZ82IMNJ69GJibV7bwL3y9FgK+5w/pYt6g=="],
+
+    "@upstash/redis": ["@upstash/redis@1.37.0", "", { "dependencies": { "uncrypto": "^0.1.3" } }, "sha512-LqOJ3+XWPLSZ2rGSed5DYG3ixybxb8EhZu3yQqF7MdZX1wLBG/FRcI6xcUZXHy/SS7mmXWyadrud0HJHkOc+uw=="],
 
     "@whatwg-node/promise-helpers": ["@whatwg-node/promise-helpers@1.3.2", "", { "dependencies": { "tslib": "^2.6.3" } }, "sha512-Nst5JdK47VIl9UcGwtv2Rcgyn5lWtZ0/mhRQ4G8NN2isxpq2TO30iqHzmwoJycjWuyUfg3GFXqP/gFHXeV57IA=="],
 
@@ -1168,6 +1171,8 @@
     "typescript-eslint": ["typescript-eslint@8.57.1", "", { "dependencies": { "@typescript-eslint/eslint-plugin": "8.57.1", "@typescript-eslint/parser": "8.57.1", "@typescript-eslint/typescript-estree": "8.57.1", "@typescript-eslint/utils": "8.57.1" }, "peerDependencies": { "eslint": "^8.57.0 || ^9.0.0 || ^10.0.0", "typescript": ">=4.8.4 <6.0.0" } }, "sha512-fLvZWf+cAGw3tqMCYzGIU6yR8K+Y9NT2z23RwOjlNFF2HwSB3KhdEFI5lSBv8tNmFkkBShSjsCjzx1vahZfISA=="],
 
     "unbox-primitive": ["unbox-primitive@1.1.0", "", { "dependencies": { "call-bound": "^1.0.3", "has-bigints": "^1.0.2", "has-symbols": "^1.1.0", "which-boxed-primitive": "^1.1.1" } }, "sha512-nWJ91DjeOkej/TA8pXQ3myruKpKEYgqvpw9lz4OPHj/NWFNluYrjbz9j01CJ8yKQd2g4jFoOkINCTW2I5LEEyw=="],
+
+    "uncrypto": ["uncrypto@0.1.3", "", {}, "sha512-Ql87qFHB3s/De2ClA9e0gsnS6zXG27SkTiSJwjCc9MebbfapQfuPzumMIUMi38ezPZVNFcHI9sUIepeQfw8J8Q=="],
 
     "undici-types": ["undici-types@6.21.0", "", {}, "sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ=="],
 

@@ -74,7 +74,7 @@ export function ExamCard({
 
           {/* Title + course */}
           <div>
-            <h3 className="text-base font-semibold text-gray-900 leading-snug group-hover:text-blue-600 transition-colors">
+            <h3 className="text-base font-semibold text-gray-900 leading-snug group-hover:text-blue-600 transition-colors truncate">
               {exam.title}
             </h3>
             <p className="text-sm text-gray-400 mt-0.5 truncate">
@@ -86,11 +86,17 @@ export function ExamCard({
           {exam.image_url ? (
             <img
               src={exam.image_url}
-              alt=""
+              alt={exam.image_url}
               className="w-full h-28 object-cover rounded-md"
             />
           ) : (
-            <div className="w-full h-28 bg-transparent rounded-md"></div>
+            <img
+              src={
+                "https://www.kidicious.com/wp-content/uploads/2015/12/exams.png"
+              }
+              alt="fallback"
+              className="w-full h-28 object-cover rounded-md"
+            />
           )}
 
           {/* Meta */}
