@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { ExamHeader, ExamProgressBar, ExamQA } from "./_components";
 import { ProctoringGuard } from "./_components/ProctoringGuard";
-import { ExamProvider } from "./_hooks/use-exam-states";
+import { ExamProvider, useExamState } from "./_hooks/use-exam-states";
 import {
   EXAM_WARNING_CODES,
   ExamWarningTrackerProvider,
@@ -53,8 +53,10 @@ const Exam = () => {
 export default Exam;
 
 export const ExamContent = () => {
+  const { sessionStatus } = useExamState();
   const { recordWarning, warningCount } = useExamWarningTracker();
   const leaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isExamLocked = sessionStatus !== "active";
 
   const registerWarning = useCallback(
     (code: string, description: string) => {
@@ -125,9 +127,26 @@ export const ExamContent = () => {
         onMouseEnter={handleExamEnter}
       >
         <div className="flex-1 overflow-y-auto">
-          <ExamQA />
+          {isExamLocked ? (
+            <div className="flex min-h-full items-center justify-center px-6 py-16">
+              <div className="max-w-md rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-sm">
+                <h2 className="text-xl font-semibold text-gray-900">
+                  {sessionStatus === "auto_submitting"
+                    ? "Шалгалтын хугацаа дууслаа"
+                    : "Шалгалтыг илгээж байна"}
+                </h2>
+                <p className="mt-3 text-sm leading-6 text-gray-500">
+                  {sessionStatus === "auto_submitting"
+                    ? "Бөглөсөн бүх хариултыг автоматаар хадгалж байна. Түр хүлээнэ үү."
+                    : "Таны хариултуудыг хадгалж байна. Түр хүлээнэ үү."}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <ExamQA />
+          )}
         </div>
-        <ExamProgressBar />
+        {!isExamLocked ? <ExamProgressBar /> : null}
       </div>
     </div>
   );

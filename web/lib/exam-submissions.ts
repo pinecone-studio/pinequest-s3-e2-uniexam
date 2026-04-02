@@ -180,7 +180,7 @@ export const submitExamToBackend = async ({
       studentId,
       examId,
       startedAt,
-      submittedAt: null,
+      submittedAt,
       status: "in_progress",
     },
   );

@@ -19,6 +19,12 @@ type SavedExamState = {
   flagged: number[];
 };
 
+export type ExamSessionStatus =
+  | "active"
+  | "auto_submitting"
+  | "manual_submitting"
+  | "submitted";
+
 const getExamDraftStorageKey = (examId: string) => `exam-draft:${examId}`;
 const getExamEndsAtStorageKey = (examId: string) => `exam-ends-at:${examId}`;
 
@@ -79,6 +85,8 @@ const useExamStateInternal = ({
     initialState.answers,
   );
   const [flagged, setFlagged] = useState<number[]>(initialState.flagged);
+  const [sessionStatus, setSessionStatus] =
+    useState<ExamSessionStatus>("active");
 
   useEffect(() => {
     const endsAtStorageKey = getExamEndsAtStorageKey(examId);
@@ -138,9 +146,11 @@ const useExamStateInternal = ({
     totalQuestions,
     currentQuestion,
     answeredCount,
+    sessionStatus,
     setCurrentId,
     setAnswers,
     setFlagged,
+    setSessionStatus,
     clearSavedExam,
   };
 };
