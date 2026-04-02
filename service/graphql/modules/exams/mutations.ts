@@ -27,9 +27,30 @@ const isMissingImageUrlColumnError = (error: { message?: string } | null) => {
 const hasImageUrlPayload = (value: string | null | undefined) =>
   typeof value === "string" && value.trim().length > 0;
 
-const invalidateExamCache = async (examId?: string) => {
+const COURSE_EXAMS_CACHE_KEY = (courseId: string) =>
+  `rel:course:${courseId}:exams`;
+const EXAM_COURSE_CACHE_KEY = (examId: string) => `rel:exam:${examId}:course`;
+const EXAM_QUESTIONS_CACHE_KEY = (examId: string) =>
+  `rel:exam:${examId}:questions`;
+
+const invalidateExamCache = async (
+  examId?: string,
+  courseIds: Array<string | null | undefined> = [],
+) => {
   await redis.del("exams");
-  if (examId) await redis.del(`exam:${examId}`);
+  await redis.del("courses");
+
+  if (examId) {
+    await redis.del(`exam:${examId}`);
+    await redis.del(EXAM_COURSE_CACHE_KEY(examId));
+    await redis.del(EXAM_QUESTIONS_CACHE_KEY(examId));
+  }
+
+  const uniqueCourseIds = [...new Set(courseIds.filter(Boolean) as string[])];
+  for (const courseId of uniqueCourseIds) {
+    await redis.del(`course:${courseId}`);
+    await redis.del(COURSE_EXAMS_CACHE_KEY(courseId));
+  }
 };
 
 async function rollbackExamInsert(examId: string) {
@@ -75,7 +96,8 @@ export const examMutations = {
       .select()
       .single();
     if (error) throw new Error(error.message);
-    await invalidateExamCache();
+    await invalidateExamCache(data?.id, [data?.course_id]);
+
     return data;
   },
 
@@ -136,7 +158,8 @@ export const examMutations = {
       if (jErr) throw new Error(jErr.message);
     }
 
-    await invalidateExamCache();
+    await invalidateExamCache(exam?.id, [exam?.course_id]);
+
     return exam;
   },
 
@@ -314,7 +337,8 @@ export const examMutations = {
         .insert(junctionRows);
       if (jErr) throw new Error(jErr.message);
 
-      await invalidateExamCache();
+      await invalidateExamCache(exam?.id, [exam?.course_id]);
+
       return exam;
     } catch (e) {
       await rollbackExamInsert(exam.id);
@@ -336,6 +360,13 @@ export const examMutations = {
       image_url?: string;
     },
   ) => {
+    const { data: before, error: beforeErr } = await supabase
+      .from("exams")
+      .select("id, course_id")
+      .eq("id", args.id)
+      .maybeSingle();
+    if (beforeErr) throw new Error(beforeErr.message);
+
     const payload = pickDefined({
       course_id: args.course_id,
       title: args.title,
@@ -359,14 +390,22 @@ export const examMutations = {
       .single();
 
     if (error) throw new Error(error.message);
-    await invalidateExamCache(args.id);
+
+    await invalidateExamCache(args.id, [before?.course_id, data?.course_id]);
     return data;
   },
 
   deleteExam: async (_: unknown, args: { id: string }) => {
     try {
+      const { data: before, error: beforeErr } = await supabase
+        .from("exams")
+        .select("id, course_id")
+        .eq("id", args.id)
+        .maybeSingle();
+      if (beforeErr) throw new Error(beforeErr.message);
+
       await rollbackExamInsert(args.id);
-      await invalidateExamCache(args.id);
+      await invalidateExamCache(args.id, [before?.course_id]);
       return true;
     } catch (e) {
       throw new Error(e instanceof Error ? e.message : "Failed to delete exam");
@@ -435,16 +474,14 @@ export const examMutations = {
     const nextOrder =
       existing && existing.length > 0 ? (existing[0].order_index ?? 0) + 1 : 0;
 
-    const { error: eqErr } = await supabase
-      .from("exam_questions")
-      .insert([
-        {
-          exam_id: args.exam_id,
-          question_id: question.id,
-          order_index: nextOrder,
-          points: 1,
-        },
-      ]);
+    const { error: eqErr } = await supabase.from("exam_questions").insert([
+      {
+        exam_id: args.exam_id,
+        question_id: question.id,
+        order_index: nextOrder,
+        points: 1,
+      },
+    ]);
     if (eqErr) {
       await supabase.from("questions").delete().eq("id", question.id);
       throw new Error(eqErr.message);
