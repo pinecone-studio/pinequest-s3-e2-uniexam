@@ -15,6 +15,7 @@ export async function graphqlRequest<T>(
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ query, variables }),
+    cache: "no-store",
   });
 
   const json = (await res.json()) as GraphQLResponse<T>;

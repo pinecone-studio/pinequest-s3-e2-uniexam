@@ -131,6 +131,10 @@ export default function ExamDashboard() {
     });
   }, [exams, searchQuery, statusFilter]);
 
+  const handleExamDeleted = useCallback((examId: string) => {
+    setExams((prev) => prev.filter((exam) => exam.id !== examId));
+  }, []);
+
   return (
     <div className="min-h-screen bg-transparent font-sans">
       <div className="max-w-6xl mx-auto px-6 py-8 space-y-6">
@@ -162,7 +166,12 @@ export default function ExamDashboard() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredExams.map((exam) => (
-              <ExamCard key={exam.id} exam={exam} onExamUpdated={load} />
+              <ExamCard
+                key={exam.id}
+                exam={exam}
+                onExamUpdated={load}
+                onExamDeleted={handleExamDeleted}
+              />
             ))}
           </div>
         )}

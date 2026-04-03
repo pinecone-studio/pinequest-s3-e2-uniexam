@@ -44,9 +44,11 @@ const statusStyle: Record<ExamCardExam["status"], string> = {
 export function ExamCard({
   exam,
   onExamUpdated,
+  onExamDeleted,
 }: {
   exam: ExamCardExam;
   onExamUpdated?: () => void;
+  onExamDeleted?: (examId: string) => void;
 }) {
   const [editOpen, setEditOpen] = useState(false);
 
@@ -54,8 +56,9 @@ export function ExamCard({
     if (!confirm("Энэ шалгалтыг устгахдаа итгэлтэй байна уу?")) return;
     try {
       await graphqlRequest(DELETE_EXAM, { id: exam.id });
+      onExamDeleted?.(exam.id);
       toast.success("Шалгалт устгагдлаа");
-      onExamUpdated?.();
+      void onExamUpdated?.();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Устгахад алдаа гарлаа");
     }

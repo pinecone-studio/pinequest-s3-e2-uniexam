@@ -198,11 +198,21 @@ export default function ExamDetailPage() {
   const handleDelete = async (id: string) => {
     if (!confirm("Энэ асуултыг устгах уу?")) return;
     setDeletingId(id);
+    const previousExam = exam;
     try {
       await graphqlRequest(DELETE_QUESTION, { id });
+      setExam((prev) =>
+        prev
+          ? {
+              ...prev,
+              questions: (prev.questions ?? []).filter((q) => q.id !== id),
+            }
+          : prev,
+      );
       toast.success("Асуулт устгагдлаа.");
-      await load();
+      void load();
     } catch (e) {
+      setExam(previousExam);
       toast.error(e instanceof Error ? e.message : "Алдаа.");
     } finally {
       setDeletingId(null);
