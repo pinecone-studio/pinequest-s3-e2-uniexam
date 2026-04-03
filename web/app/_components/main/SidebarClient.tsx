@@ -17,6 +17,7 @@ import {
 } from "@clerk/nextjs";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import Image from "next/image";
 
 const items = [
   { icon: Home, label: "Нүүр", href: "/dashboard" },
@@ -77,9 +78,9 @@ const SidebarClient = ({ displayName, isSignedIn }: Props) => {
             className="flex h-12 items-center"
             onClick={() => router.push("/")}
           >
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#006d77] text-base font-semibold text-white transition-transform duration-200 hover:cursor-pointer hover:scale-[1.02]">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center">
-                U
+            <div className="flex items-center justify-center">
+              <span className="flex h-10.5 w-10 shrink-0 items-center justify-center">
+                <Image src="/Icon.svg" alt="UniExam" width={24} height={24} />
               </span>
             </div>
             <span className="ml-3 whitespace-nowrap text-base font-semibold text-[#0c464c]">
@@ -126,9 +127,7 @@ const SidebarClient = ({ displayName, isSignedIn }: Props) => {
                   <span className="flex h-10 w-10 shrink-0 items-center justify-center">
                     <LogIn size={20} />
                   </span>
-                  <span className="ml-3 whitespace-nowrap">
-                    Нэвтрэх
-                  </span>
+                  <span className="ml-3 whitespace-nowrap">Нэвтрэх</span>
                 </Button>
               </SignInButton>
               <SignUpButton>
@@ -136,9 +135,7 @@ const SidebarClient = ({ displayName, isSignedIn }: Props) => {
                   <span className="flex h-10 w-10 shrink-0 items-center justify-center">
                     <LogOut size={20} />
                   </span>
-                  <span className="ml-3 whitespace-nowrap">
-                    Бүртгүүлэх
-                  </span>
+                  <span className="ml-3 whitespace-nowrap">Бүртгүүлэх</span>
                 </Button>
               </SignUpButton>
             </>
