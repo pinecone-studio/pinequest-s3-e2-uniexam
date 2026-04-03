@@ -62,6 +62,7 @@ export const ExamContent = () => {
     (code: string, description: string) => {
       recordWarning(
         code as (typeof EXAM_WARNING_CODES)[keyof typeof EXAM_WARNING_CODES],
+        { message: description },
       );
       console.log(`[exam-warning] ${code}: ${description}`);
     },

@@ -19,6 +19,7 @@ type StudentTile = {
   stream: MediaStream | null;
   connectionState: ConnectionStateLabel;
   debug: string;
+  latestWarning?: LiveWarning;
 };
 
 type PeerConnectionEntry = {
@@ -52,6 +53,81 @@ type PeerLeftPayload = {
 
 type LiveMonitorPanelProps = {
   roomIds?: string[];
+};
+
+type WarningSeverity = "warning" | "danger";
+
+type LiveWarningPayload = {
+  roomId?: string;
+  socketId?: string;
+  from?: string;
+  studentId?: string | number;
+  studentName?: string;
+  warningCode?: string;
+  type?: string;
+  message?: string;
+  severity?: WarningSeverity | string | number;
+  createdAt?: string;
+  timestamp?: string | number;
+};
+
+type LiveWarning = {
+  id: string;
+  peerId: string;
+  roomId: string;
+  message: string;
+  severity: WarningSeverity;
+  typeLabel: string;
+  createdAt: string;
+};
+
+const LIVE_WARNING_EVENTS = [
+  "proctor-alert",
+  "proctor-warning",
+  "student-warning",
+  "exam-warning",
+  "warning-event",
+] as const;
+
+const toWarningSeverity = (
+  value: LiveWarningPayload["severity"],
+): WarningSeverity => {
+  if (typeof value === "number") {
+    return value >= 2 ? "danger" : "warning";
+  }
+  const normalized = String(value ?? "").toLowerCase();
+  return normalized.includes("danger") || normalized.includes("high")
+    ? "danger"
+    : "warning";
+};
+
+const toWarningTypeLabel = (payload: LiveWarningPayload) => {
+  const rawType = String(payload.type ?? payload.warningCode ?? "").replaceAll(
+    /[_-]+/g,
+    " ",
+  );
+  const normalized = rawType.trim();
+  return normalized ? normalized : "warning";
+};
+
+const toWarningMessage = (payload: LiveWarningPayload) => {
+  const message = payload.message?.trim();
+  if (message) return message;
+  return `Detected ${toWarningTypeLabel(payload)}`;
+};
+
+const toWarningTimestamp = (payload: LiveWarningPayload) => {
+  const raw = payload.createdAt ?? payload.timestamp;
+  if (typeof raw === "number") {
+    return new Date(raw).toISOString();
+  }
+  if (typeof raw === "string") {
+    const timestamp = new Date(raw).getTime();
+    if (Number.isFinite(timestamp)) {
+      return new Date(timestamp).toISOString();
+    }
+  }
+  return new Date().toISOString();
 };
 
 function StudentStreamTile({
@@ -93,15 +169,28 @@ function StudentStreamTile({
     <div className="rounded-xl border border-[var(--monitoring-dark-border)] bg-black/95 p-2">
       <div className="mb-2 flex items-center justify-between gap-2 text-xs">
         <p className="truncate font-medium text-white/90">{title}</p>
-        <p
-          className={`truncate ${
-            tile?.connectionState === "connected"
-              ? "text-emerald-300"
-              : "text-white/60"
-          }`}
-        >
-          {subtitle}
-        </p>
+        <div className="flex items-center gap-2">
+          {tile.latestWarning ? (
+            <span
+              className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                tile.latestWarning.severity === "danger"
+                  ? "bg-red-500/20 text-red-300"
+                  : "bg-amber-500/20 text-amber-200"
+              }`}
+            >
+              {tile.latestWarning.typeLabel}
+            </span>
+          ) : null}
+          <p
+            className={`truncate ${
+              tile?.connectionState === "connected"
+                ? "text-emerald-300"
+                : "text-white/60"
+            }`}
+          >
+            {subtitle}
+          </p>
+        </div>
       </div>
 
       <div className="relative aspect-video rounded-lg bg-black">
@@ -124,6 +213,11 @@ function StudentStreamTile({
       <p className="mt-2 truncate text-[11px] text-white/50">
         {tile.debug ?? "No signaling event yet"}
       </p>
+      {tile.latestWarning ? (
+        <p className="mt-1 truncate text-[11px] text-amber-200/90">
+          {tile.latestWarning.message}
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -137,6 +231,7 @@ export function LiveMonitorPanel({
   const [tiles, setTiles] = useState<StudentTile[]>([]);
   const [status, setStatus] = useState("Waiting for students...");
   const [panelDebug, setPanelDebug] = useState("No signaling event yet");
+  const [recentWarnings, setRecentWarnings] = useState<LiveWarning[]>([]);
   const normalizedRoomIds = useMemo(() => {
     const raw = roomIds ?? [];
     return Array.from(new Set(raw.filter(Boolean)));
@@ -144,6 +239,7 @@ export function LiveMonitorPanel({
 
   useEffect(() => {
     setTiles([]);
+    setRecentWarnings([]);
 
     if (normalizedRoomIds.length === 0) {
       setStatus("No live exam rooms");
@@ -246,6 +342,50 @@ export function LiveMonitorPanel({
       return pc;
     };
 
+    const resolvePeerIdFromWarning = (payload: LiveWarningPayload) => {
+      if (payload.socketId) return payload.socketId;
+      if (payload.from) return payload.from;
+
+      if (payload.roomId) {
+        const roomPeers = Array.from(peerRoomRef.current.entries()).filter(
+          ([, roomId]) => roomId === payload.roomId,
+        );
+        if (roomPeers.length === 1) {
+          return roomPeers[0][0];
+        }
+      }
+
+      return null;
+    };
+
+    const handleLiveWarning = (payload: LiveWarningPayload) => {
+      const peerId = resolvePeerIdFromWarning(payload);
+      const roomId =
+        payload.roomId ??
+        (peerId ? peerRoomRef.current.get(peerId) : undefined);
+
+      if (!roomId || !normalizedRoomIds.includes(roomId) || !peerId) {
+        return;
+      }
+
+      const warning: LiveWarning = {
+        id: `${peerId}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        peerId,
+        roomId,
+        message: toWarningMessage(payload),
+        severity: toWarningSeverity(payload.severity),
+        typeLabel: toWarningTypeLabel(payload),
+        createdAt: toWarningTimestamp(payload),
+      };
+
+      upsertTile(peerId, roomId, {
+        latestWarning: warning,
+        debug: `warning: ${warning.typeLabel}`,
+      });
+      setRecentWarnings((prev) => [warning, ...prev].slice(0, 20));
+      setPanelDebug(`Live warning: ${warning.typeLabel}`);
+    };
+
     const flushPendingIce = async (peerId: string) => {
       const pending = pendingIceRef.current.get(peerId);
       if (!pending || pending.length === 0) return;
@@ -284,8 +424,7 @@ export function LiveMonitorPanel({
       if (!sdp || !from) return;
       const resolvedRoomId =
         offeredRoomId ??
-        peerRoomRef.current.get(from) ??
-        normalizedRoomIds[0];
+        peerRoomRef.current.get(from);
       if (!resolvedRoomId || !normalizedRoomIds.includes(resolvedRoomId)) return;
       peerRoomRef.current.set(from, resolvedRoomId);
 
@@ -323,8 +462,7 @@ export function LiveMonitorPanel({
       if (!candidate || !from) return;
       const resolvedRoomId =
         candidateRoomId ??
-        peerRoomRef.current.get(from) ??
-        normalizedRoomIds[0];
+        peerRoomRef.current.get(from);
       if (!resolvedRoomId || !normalizedRoomIds.includes(resolvedRoomId)) return;
       peerRoomRef.current.set(from, resolvedRoomId);
 
@@ -357,11 +495,18 @@ export function LiveMonitorPanel({
       }
     });
 
+    for (const eventName of LIVE_WARNING_EVENTS) {
+      socket.on(eventName, handleLiveWarning);
+    }
+
     return () => {
       socket.off("peer-joined");
       socket.off("offer");
       socket.off("ice-candidate");
       socket.off("peer-left");
+      for (const eventName of LIVE_WARNING_EVENTS) {
+        socket.off(eventName, handleLiveWarning);
+      }
 
       for (const [, entry] of peersRef.current) {
         entry.pc.close();
@@ -408,6 +553,35 @@ export function LiveMonitorPanel({
             ))}
           </div>
         )}
+
+        {recentWarnings.length > 0 ? (
+          <div className="mt-4 rounded-xl border border-[var(--monitoring-dark-border)] bg-[var(--monitoring-primary-surface)] p-3">
+            <p className="mb-2 text-xs font-medium text-[var(--monitoring-muted)]">
+              Live warnings ({recentWarnings.length})
+            </p>
+            <div className="space-y-1">
+              {recentWarnings.slice(0, 8).map((warning) => (
+                <div
+                  key={warning.id}
+                  className="flex items-center justify-between gap-2 rounded-md bg-white px-2 py-1 text-xs"
+                >
+                  <p className="truncate text-[var(--monitoring-dark)]">
+                    {warning.message}
+                  </p>
+                  <p
+                    className={`shrink-0 font-medium ${
+                      warning.severity === "danger"
+                        ? "text-[var(--monitoring-warning)]"
+                        : "text-[var(--monitoring-primary)]"
+                    }`}
+                  >
+                    {warning.typeLabel}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
       </CardContent>
     </Card>
   );

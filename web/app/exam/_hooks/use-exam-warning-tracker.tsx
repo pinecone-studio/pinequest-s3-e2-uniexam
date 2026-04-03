@@ -12,6 +12,7 @@ import {
   useState,
 } from "react";
 import { createCheatLogEntry, updateCheatLogEntry } from "@/lib/cheat-logs";
+import { getSocket } from "@/lib/socket";
 import { resolveStudentId } from "@/lib/students";
 import { useExamState } from "./use-exam-states";
 import {
@@ -44,13 +45,31 @@ type WarningRecord = {
 
 type WarningState = Partial<Record<ExamWarningCode, WarningRecord>>;
 
+type WarningDetails = {
+  message?: string;
+  severity?: "warning" | "danger";
+};
+
 type ExamWarningTrackerContextValue = {
   flushWarningLogs: () => Promise<void>;
-  recordWarning: (code: ExamWarningCode) => void;
+  recordWarning: (code: ExamWarningCode, details?: WarningDetails) => void;
   warningCount: number;
 };
 
 const WARNING_LOG_TYPE = "exam_warning";
+const DEFAULT_WARNING_MESSAGES: Record<ExamWarningCode, string> = {
+  [EXAM_WARNING_CODES.windowLeave]: "Window focus was lost",
+  [EXAM_WARNING_CODES.windowBlur]: "Window blurred during exam",
+  [EXAM_WARNING_CODES.tabHidden]: "Student switched browser tab",
+  [EXAM_WARNING_CODES.keyboardShortcut]: "Blocked keyboard shortcut attempt",
+  [EXAM_WARNING_CODES.contextMenu]: "Right-click context menu attempt",
+  [EXAM_WARNING_CODES.clipboardBlocked]: "Copy/paste attempt blocked",
+  [EXAM_WARNING_CODES.proctorMultiplePeople]: "Multiple faces detected",
+  [EXAM_WARNING_CODES.proctorFaceMissing]: "Face is not visible",
+  [EXAM_WARNING_CODES.proctorLookingDown]: "Student looked away/down",
+  [EXAM_WARNING_CODES.proctorPhoneVisible]: "Phone detected",
+  [EXAM_WARNING_CODES.proctorUnavailable]: "Proctoring camera unavailable",
+};
 
 const ExamWarningTrackerContext =
   createContext<ExamWarningTrackerContextValue | null>(null);
@@ -278,30 +297,38 @@ export const ExamWarningTrackerProvider = ({
     return syncQueueRef.current;
   }, [syncWarnings]);
 
-  useEffect(() => {
-    if (!studentId) {
-      return;
-    }
+  const recordWarning = useCallback(
+    (code: ExamWarningCode, details?: WarningDetails) => {
+      const timestamp = new Date().toISOString();
 
-    void flushWarningLogs();
-  }, [flushWarningLogs, studentId, warningState]);
+      setWarningState((prev) => {
+        const current = prev[code];
 
-  const recordWarning = useCallback((code: ExamWarningCode) => {
-    const timestamp = new Date().toISOString();
+        return {
+          ...prev,
+          [code]: {
+            count: (current?.count ?? 0) + 1,
+            logId: current?.logId,
+            lastRecordedAt: timestamp,
+          },
+        };
+      });
 
-    setWarningState((prev) => {
-      const current = prev[code];
-
-      return {
-        ...prev,
-        [code]: {
-          count: (current?.count ?? 0) + 1,
-          logId: current?.logId,
-          lastRecordedAt: timestamp,
-        },
-      };
-    });
-  }, []);
+      const roomId = `exam-room-${exam.id}`;
+      const socket = getSocket();
+      socket.emit("warning-event", {
+        roomId,
+        warningCode: code,
+        type: code,
+        message: details?.message ?? DEFAULT_WARNING_MESSAGES[code],
+        severity: details?.severity ?? "warning",
+        createdAt: timestamp,
+        studentId: studentId ?? undefined,
+        studentName,
+      });
+    },
+    [exam.id, studentId, studentName],
+  );
 
   const warningCount = useMemo(
     () => getTotalWarningCount(warningState),

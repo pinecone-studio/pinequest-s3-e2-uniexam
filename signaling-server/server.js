@@ -10,6 +10,32 @@ const io = new Server(server, {
 
 io.on("connection", (socket) => {
   console.log("connected:", socket.id);
+  const relayWarningEvent = (eventName, payload = {}) => {
+    const joinedRooms = socket.data.joinedRooms;
+    const fallbackRoomId =
+      joinedRooms && joinedRooms.size > 0
+        ? Array.from(joinedRooms.values())[0]
+        : undefined;
+    const roomId =
+      typeof payload.roomId === "string" && payload.roomId.trim().length > 0
+        ? payload.roomId
+        : fallbackRoomId;
+
+    if (!roomId) return;
+
+    const normalizedPayload = {
+      ...payload,
+      roomId,
+      from: socket.id,
+      socketId: socket.id,
+      createdAt: payload.createdAt || new Date().toISOString(),
+    };
+
+    socket.to(roomId).emit(eventName, normalizedPayload);
+    if (eventName !== "warning-event") {
+      socket.to(roomId).emit("warning-event", normalizedPayload);
+    }
+  };
 
   const emitSignaling = ({ roomId, to, event, payload }) => {
     if (to) {
@@ -84,6 +110,22 @@ io.on("connection", (socket) => {
         roomId,
       },
     });
+  });
+
+  socket.on("warning-event", (payload) => {
+    relayWarningEvent("warning-event", payload);
+  });
+  socket.on("student-warning", (payload) => {
+    relayWarningEvent("student-warning", payload);
+  });
+  socket.on("exam-warning", (payload) => {
+    relayWarningEvent("exam-warning", payload);
+  });
+  socket.on("proctor-warning", (payload) => {
+    relayWarningEvent("proctor-warning", payload);
+  });
+  socket.on("proctor-alert", (payload) => {
+    relayWarningEvent("proctor-alert", payload);
   });
 
   socket.on("disconnect", () => {
