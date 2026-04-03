@@ -203,6 +203,7 @@ export const CreateNewExam = () => {
       toast.success("Шалгалт үүслээ. Асуултуудаа нэмнэ үү.");
       setOpen(false);
       resetForm();
+      router.refresh();
       router.push(`/exams/${id}`);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Үүсгэхэд алдаа гарлаа.");

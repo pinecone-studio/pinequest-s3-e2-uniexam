@@ -225,6 +225,7 @@ export default function ExamDetailPage() {
     try {
       await graphqlRequest(DELETE_EXAM, { id: exam.id });
       toast.success("Шалгалт устгагдлаа.");
+      router.refresh();
       router.push("/exams");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Алдаа гарлаа.");
