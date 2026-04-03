@@ -5,6 +5,13 @@ import { useParams } from "next/navigation";
 import { AlertTriangle, CheckCircle2, Monitor, Wifi } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { graphqlRequest } from "@/lib/graphql";
 
 import { MonitoringFilters } from "./_components/MonitoringFilters";
@@ -20,6 +27,13 @@ import type { Student, StudentAlert } from "./_lib/types";
 
 type StudentFilter = "all" | "alert";
 type ClassOption = { value: string; label: string };
+type StudentViolation = {
+  id: string;
+  type: StudentAlert["type"];
+  message: string;
+  time: string;
+  severity: "warning" | "danger";
+};
 
 const MONITORING_QUERY = `#graphql
   query MonitoringPageData {
@@ -178,6 +192,12 @@ export default function MonitoringPage() {
   const [classFilter, setClassFilter] = useState("all");
   const [classOptions, setClassOptions] = useState<ClassOption[]>([]);
   const [liveStudents, setLiveStudents] = useState<LiveStudentSnapshot[]>([]);
+  const [violationsByStudentId, setViolationsByStudentId] = useState<
+    Record<number, StudentViolation[]>
+  >({});
+  const [selectedCompletedStudentId, setSelectedCompletedStudentId] = useState<
+    number | null
+  >(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -223,14 +243,24 @@ export default function MonitoringPage() {
             .filter((courseId): courseId is string => Boolean(courseId)),
         );
 
-        const liveStudentIds = new Set<string>();
-        for (const enrollment of enrollments) {
-          if (scopedCourseIds.has(enrollment.course_id)) {
-            liveStudentIds.add(enrollment.student_id);
+        const liveStudentIds = new Set<string>(
+          scopedSubmissions
+            .filter(
+              (submission) =>
+                submission.status === "in_progress" ||
+                submission.status === "submitted" ||
+                submission.status === "reviewed",
+            )
+            .map((submission) => submission.student_id),
+        );
+
+        // Fallback to enrollments only when no submission exists yet.
+        if (liveStudentIds.size === 0) {
+          for (const enrollment of enrollments) {
+            if (scopedCourseIds.has(enrollment.course_id)) {
+              liveStudentIds.add(enrollment.student_id);
+            }
           }
-        }
-        for (const submission of inProgressSubmissions) {
-          liveStudentIds.add(submission.student_id);
         }
 
         const cheatLogs = (
@@ -273,6 +303,8 @@ export default function MonitoringPage() {
 
         const nextRoomByStudentId: Record<string, string> = {};
         const nextCourseIdByStudentId: Record<number, string> = {};
+        const nextViolationsByStudentId: Record<number, StudentViolation[]> =
+          {};
         const nextStudents: Student[] = baseStudents.map((student, index) => {
           const studentSubmissions = [
             ...(submissionsByStudentId.get(student.id) ?? []),
@@ -333,9 +365,27 @@ export default function MonitoringPage() {
               : selectedSubmission?.status === "in_progress"
                 ? "online"
                 : "offline";
-          const numericStudentId =
-            Number.parseInt(student.id, 10) || index + 1;
+          const submittedMinutesAgo =
+            status === "submitted" && selectedSubmission?.submitted_at
+              ? Math.max(
+                  0,
+                  Math.floor(
+                    (nowMs - getTimestamp(selectedSubmission.submitted_at)) /
+                      60000,
+                  ),
+                )
+              : undefined;
+          const numericStudentId = Number.parseInt(student.id, 10) || index + 1;
           const normalizedStudentId = String(numericStudentId);
+          nextViolationsByStudentId[numericStudentId] = studentCheatLogs.map(
+            (log, logIndex) => ({
+              id: log.id ?? `${student.id}-${logIndex}`,
+              type: toStudentAlertType(log.type),
+              message: log.event ?? log.type ?? "Зөрчил илэрсэн",
+              time: new Date(log.created_at ?? Date.now()).toLocaleString(),
+              severity: (log.severity ?? 1) >= 2 ? "danger" : "warning",
+            }),
+          );
           const selectedCourseId =
             selectedExam?.course_id ?? enrolledCourseId ?? null;
           if (selectedCourseId) {
@@ -354,6 +404,7 @@ export default function MonitoringPage() {
             status,
             currentQuestion: answeredCount,
             totalQuestions,
+            submittedMinutesAgo,
             tabSwitches,
             latestAlert,
           };
@@ -372,6 +423,7 @@ export default function MonitoringPage() {
           setStudents(nextStudents);
           setRoomByStudentId(nextRoomByStudentId);
           setCourseIdByStudentId(nextCourseIdByStudentId);
+          setViolationsByStudentId(nextViolationsByStudentId);
           setClassOptions(nextClassOptions);
           setActiveRoomIds(
             Array.from(scopedExamIds).map((examId) => `exam-room-${examId}`),
@@ -389,6 +441,7 @@ export default function MonitoringPage() {
         setActiveRoomIds([]);
         setRoomByStudentId({});
         setCourseIdByStudentId({});
+        setViolationsByStudentId({});
         setClassOptions([]);
         setIsLoading(false);
       }
@@ -437,6 +490,33 @@ export default function MonitoringPage() {
     );
   }, [classFilter, courseIdByStudentId, students]);
 
+  const visibleCompletedStudents = useMemo(() => {
+    const keyword = searchTerm.trim().toLowerCase();
+    return classFilteredStudents
+      .filter((student) => student.status === "submitted")
+      .filter((student) => {
+        if (!keyword) return true;
+        return (
+          student.name.toLowerCase().includes(keyword) ||
+          student.email.toLowerCase().includes(keyword) ||
+          student.className.toLowerCase().includes(keyword)
+        );
+      })
+      .sort((a, b) => {
+        const aMinutes = a.submittedMinutesAgo ?? Number.MAX_SAFE_INTEGER;
+        const bMinutes = b.submittedMinutesAgo ?? Number.MAX_SAFE_INTEGER;
+        return aMinutes - bMinutes;
+      });
+  }, [classFilteredStudents, searchTerm]);
+  const selectedCompletedStudent = useMemo(() => {
+    if (selectedCompletedStudentId === null) return null;
+    return (
+      visibleCompletedStudents.find(
+        (student) => student.id === selectedCompletedStudentId,
+      ) ?? null
+    );
+  }, [selectedCompletedStudentId, visibleCompletedStudents]);
+
   const visibleLiveStudents = useMemo(() => {
     return liveStudents
       .filter((student) => {
@@ -459,10 +539,11 @@ export default function MonitoringPage() {
           student.connectionState === "connected" ||
           student.connectionState === "connecting",
       ).length,
-      submitted: 0,
+      submitted: students.filter((student) => student.status === "submitted")
+        .length,
       alerts: liveStudents.filter((student) => student.warningCount > 0).length,
     };
-  }, [liveStudents]);
+  }, [liveStudents, students]);
 
   const classFilteredRoomIds = useMemo(() => {
     const scopedStudents =
@@ -530,7 +611,7 @@ export default function MonitoringPage() {
             tone="warning"
           />
         </div>
-        
+
         <LiveMonitorPanel
           roomIds={panelRoomIds}
           onLiveStudentsChange={setLiveStudents}
@@ -590,7 +671,9 @@ export default function MonitoringPage() {
                       <div
                         key={student.peerId}
                         className={`grid grid-cols-12 gap-3 px-4 py-3 text-sm ${
-                          hasAlert ? "bg-[var(--monitoring-warning-surface)]" : ""
+                          hasAlert
+                            ? "bg-[var(--monitoring-warning-surface)]"
+                            : ""
                         }`}
                       >
                         <div className="col-span-3 min-w-0">
@@ -649,9 +732,166 @@ export default function MonitoringPage() {
                 </div>
               </div>
             )}
+
+            <div className="mt-8">
+              <h3 className="text-lg font-semibold text-[var(--monitoring-dark)]">
+                Шалгалтаа дууссан сурагчид
+              </h3>
+              <p className="mt-1 text-sm text-[var(--monitoring-muted)]">
+                Нийт {visibleCompletedStudents.length} сурагч
+              </p>
+            </div>
+
+            {visibleCompletedStudents.length === 0 ? (
+              <div className="mt-4 rounded-2xl border border-dashed border-[var(--monitoring-dark-border)] bg-white p-8 text-center text-[var(--monitoring-muted)]">
+                Одоогоор шалгалтаа дууссан сурагч алга.
+              </div>
+            ) : (
+              <div className="mt-4 overflow-hidden rounded-2xl border border-[var(--monitoring-dark-border)] bg-white">
+                <div className="grid grid-cols-12 gap-3 border-b border-[var(--monitoring-dark-border)] bg-gray-50 px-4 py-3 text-xs font-semibold text-[var(--monitoring-muted)]">
+                  <div className="col-span-3">Сурагч</div>
+                  <div className="col-span-3">Анги</div>
+                  <div className="col-span-2">Явц</div>
+                  <div className="col-span-3">Илгээсэн</div>
+                  <div className="col-span-1 text-right">Зөрчил</div>
+                </div>
+
+                <div className="divide-y divide-[var(--monitoring-dark-border)]">
+                  {visibleCompletedStudents.map((student) => (
+                    <button
+                      type="button"
+                      key={`submitted-${student.id}`}
+                      onClick={() => setSelectedCompletedStudentId(student.id)}
+                      className="grid w-full grid-cols-12 gap-3 px-4 py-3 text-left text-sm transition hover:bg-[var(--monitoring-primary-soft)]"
+                    >
+                      <div className="col-span-3 min-w-0">
+                        <p className="truncate font-semibold text-[var(--monitoring-dark)]">
+                          {student.name}
+                        </p>
+                        <p className="truncate text-xs text-[var(--monitoring-muted)]">
+                          {student.email}
+                        </p>
+                      </div>
+
+                      <div className="col-span-3 min-w-0">
+                        <p className="truncate text-[var(--monitoring-dark)]">
+                          {student.className}
+                        </p>
+                      </div>
+
+                      <div className="col-span-2">
+                        <span className="inline-flex rounded-full bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700">
+                          {student.currentQuestion}/{student.totalQuestions}
+                        </span>
+                      </div>
+
+                      <div className="col-span-3">
+                        <span className="text-xs text-[var(--monitoring-muted)]">
+                          {student.submittedMinutesAgo === undefined
+                            ? "Хугацаа тодорхойгүй"
+                            : student.submittedMinutesAgo === 0
+                              ? "Сая илгээсэн"
+                              : `${student.submittedMinutesAgo} мин өмнө`}
+                        </span>
+                      </div>
+
+                      <div className="col-span-1 text-right">
+                        <span
+                          className={`text-xs font-semibold ${
+                            student.tabSwitches > 0
+                              ? "text-[var(--monitoring-warning)]"
+                              : "text-gray-400"
+                          }`}
+                        >
+                          {student.tabSwitches}
+                        </span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
+
+      <Dialog
+        open={selectedCompletedStudentId !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setSelectedCompletedStudentId(null);
+          }
+        }}
+      >
+        <DialogContent className="border-[var(--monitoring-dark-border)] bg-white text-[var(--monitoring-dark)] sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Зөрчлийн дэлгэрэнгүй</DialogTitle>
+            <DialogDescription className="text-[var(--monitoring-muted)]">
+              {selectedCompletedStudent
+                ? `${selectedCompletedStudent.name} сурагчийн илэрсэн зөрчил`
+                : "Сурагчийн зөрчлийн мэдээлэл"}
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedCompletedStudent ? (
+            <div className="space-y-4">
+              <div className="rounded-xl border border-[var(--monitoring-dark-border)] bg-[var(--monitoring-primary-soft)] p-4">
+                <p className="text-sm font-semibold text-[var(--monitoring-dark)]">
+                  {selectedCompletedStudent.name}
+                </p>
+                <p className="text-sm text-[var(--monitoring-muted)]">
+                  {selectedCompletedStudent.email}
+                </p>
+                <p className="mt-1 text-xs text-[var(--monitoring-muted)]">
+                  {selectedCompletedStudent.className}
+                </p>
+              </div>
+
+              {(violationsByStudentId[selectedCompletedStudent.id] ?? [])
+                .length > 0 ? (
+                <div className="max-h-72 space-y-2 overflow-y-auto pr-1">
+                  {(
+                    violationsByStudentId[selectedCompletedStudent.id] ?? []
+                  ).map((violation) => (
+                    <div
+                      key={violation.id}
+                      className={`rounded-lg border p-3 ${
+                        violation.severity === "danger"
+                          ? "border-red-200 bg-red-50"
+                          : "border-amber-200 bg-amber-50"
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <p className="text-sm font-medium text-[var(--monitoring-dark)]">
+                          {violation.message}
+                        </p>
+                        <span
+                          className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
+                            violation.severity === "danger"
+                              ? "bg-red-100 text-red-700"
+                              : "bg-amber-100 text-amber-700"
+                          }`}
+                        >
+                          {violation.severity === "danger"
+                            ? "Danger"
+                            : "Warning"}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-xs text-[var(--monitoring-muted)]">
+                        Төрөл: {violation.type} | Хугацаа: {violation.time}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-lg border border-dashed border-[var(--monitoring-dark-border)] p-5 text-sm text-[var(--monitoring-muted)]">
+                  Энэ сурагч дээр одоогоор бүртгэгдсэн зөрчил алга.
+                </div>
+              )}
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

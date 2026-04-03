@@ -23,15 +23,15 @@ const EXAMS_QUERY = `#graphql
         code
       }
     }
-  }
-`;
-
-const ENROLLMENTS_QUERY = `#graphql
-  query ActiveExamStudents {
-    enrollments {
+    submissions {
       id
       student_id
-      course_id
+      exam_id
+      status
+    }
+    cheatLogs {
+      id
+      exam_id
     }
   }
 `;
@@ -52,23 +52,16 @@ type GqlExam = {
   course: GqlCourse | null;
 };
 
-type GqlEnrollment = {
+type GqlSubmission = {
   id: string;
   student_id: string;
-  course_id: string;
+  exam_id: string;
+  status: "in_progress" | "submitted" | "reviewed" | null;
 };
 
-type ProctorAlertsResponse = {
-  alerts: Array<{
-    id: string;
-    studentId: number;
-    studentName: string;
-    className: string;
-    type: string;
-    severity: string;
-    message: string;
-    createdAt: string;
-  }>;
+type GqlCheatLog = {
+  id: string;
+  exam_id: string | null;
 };
 
 type DashboardExam = {
@@ -98,20 +91,6 @@ function isActiveExam(exam: GqlExam, nowMs: number) {
   return nowMs >= start && nowMs <= end;
 }
 
-function classNameMatchesCourse(className: string, exam: GqlExam) {
-  const hay = className.toLowerCase();
-  const course = exam.course;
-  if (!course) return false;
-  const code = course.code?.toLowerCase();
-  const name = course.name?.toLowerCase();
-  const title = exam.title?.toLowerCase();
-  return Boolean(
-    (code && hay.includes(code)) ||
-    (name && hay.includes(name)) ||
-    (title && hay.includes(title)),
-  );
-}
-
 export function ActiveExams() {
   const [isLoading, setIsLoading] = useState(true);
   const [activeExams, setActiveExams] = useState<DashboardExam[]>([]);
@@ -124,29 +103,41 @@ export function ActiveExams() {
       setIsLoading(true);
       setError(null);
       try {
-        const [examsData, enrollmentsData, alertsRes] = await Promise.all([
-          graphqlRequest<{ exams: GqlExam[] | null }>(EXAMS_QUERY),
-          graphqlRequest<{ enrollments: GqlEnrollment[] | null }>(
-            ENROLLMENTS_QUERY,
-          ),
-          fetch("/api/proctor-alerts").then(
-            (r) => r.json() as Promise<ProctorAlertsResponse>,
-          ),
-        ]);
+        const examsData = await graphqlRequest<{
+          exams: GqlExam[] | null;
+          submissions: GqlSubmission[] | null;
+          cheatLogs: GqlCheatLog[] | null;
+        }>(EXAMS_QUERY);
 
         const exams = examsData.exams ?? [];
-        const enrollments = enrollmentsData.enrollments ?? [];
-        const alerts = alertsRes.alerts ?? [];
+        const submissions = examsData.submissions ?? [];
+        const cheatLogs = examsData.cheatLogs ?? [];
 
         const nowMs = Date.now();
         const active = exams.filter((e) => isActiveExam(e, nowMs));
 
-        const studentsByCourseId = new Map<string, Set<string>>();
-        for (const enr of enrollments) {
-          if (!enr.course_id) continue;
-          const set = studentsByCourseId.get(enr.course_id) ?? new Set();
-          set.add(enr.student_id);
-          studentsByCourseId.set(enr.course_id, set);
+        const studentsByExamId = new Map<string, Set<string>>();
+        for (const submission of submissions) {
+          if (!submission.exam_id || !submission.student_id) continue;
+          if (
+            submission.status !== "in_progress" &&
+            submission.status !== "submitted" &&
+            submission.status !== "reviewed"
+          ) {
+            continue;
+          }
+          const set = studentsByExamId.get(submission.exam_id) ?? new Set();
+          set.add(submission.student_id);
+          studentsByExamId.set(submission.exam_id, set);
+        }
+
+        const violationsByExamId = new Map<string, number>();
+        for (const log of cheatLogs) {
+          if (!log.exam_id) continue;
+          violationsByExamId.set(
+            log.exam_id,
+            (violationsByExamId.get(log.exam_id) ?? 0) + 1,
+          );
         }
 
         const dashboard = active.map((exam) => {
@@ -156,13 +147,8 @@ export function ActiveExams() {
               ? `${formatWhen(exam.start_time)}`
               : "";
 
-          const students =
-            (exam.course_id && studentsByCourseId.get(exam.course_id)?.size) ??
-            0;
-
-          const violations = alerts.filter((a) =>
-            classNameMatchesCourse(a.className ?? "", exam),
-          ).length;
+          const students = studentsByExamId.get(exam.id)?.size ?? 0;
+          const violations = violationsByExamId.get(exam.id) ?? 0;
 
           return {
             id: exam.id,
