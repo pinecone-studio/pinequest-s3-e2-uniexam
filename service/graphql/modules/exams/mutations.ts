@@ -32,6 +32,8 @@ const COURSE_EXAMS_CACHE_KEY = (courseId: string) =>
 const EXAM_COURSE_CACHE_KEY = (examId: string) => `rel:exam:${examId}:course`;
 const EXAM_QUESTIONS_CACHE_KEY = (examId: string) =>
   `rel:exam:${examId}:questions`;
+const QUESTION_ANSWERS_CACHE_KEY = (questionId: string) =>
+  `rel:question:${questionId}:answers`;
 
 const invalidateExamCache = async (
   examId?: string,
@@ -50,6 +52,35 @@ const invalidateExamCache = async (
   for (const courseId of uniqueCourseIds) {
     await redis.del(`course:${courseId}`);
     await redis.del(COURSE_EXAMS_CACHE_KEY(courseId));
+  }
+};
+
+const findExamIdByQuestionId = async (
+  questionId: string,
+): Promise<string | null> => {
+  const { data, error } = await supabase
+    .from("exam_questions")
+    .select("exam_id")
+    .eq("question_id", questionId)
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+  return data?.exam_id ?? null;
+};
+
+const invalidateQuestionMutationCaches = async ({
+  examId,
+  questionId,
+}: {
+  examId?: string | null;
+  questionId?: string | null;
+}) => {
+  if (examId) {
+    await invalidateExamCache(examId);
+  }
+
+  if (questionId) {
+    await redis.del(QUESTION_ANSWERS_CACHE_KEY(questionId));
   }
 };
 
@@ -497,6 +528,11 @@ export const examMutations = {
     const { error: aErr } = await supabase.from("answers").insert(answerRows);
     if (aErr) throw new Error(aErr.message);
 
+    await invalidateQuestionMutationCaches({
+      examId: args.exam_id,
+      questionId: question.id,
+    });
+
     return { ...question, order_index: nextOrder };
   },
 
@@ -512,6 +548,7 @@ export const examMutations = {
     },
   ) => {
     const OPTION_COUNT = 5;
+    const examId = await findExamIdByQuestionId(args.id);
     const firstUpdate = await supabase
       .from("questions")
       .update({
@@ -565,6 +602,11 @@ export const examMutations = {
     const { error: aErr } = await supabase.from("answers").insert(answerRows);
     if (aErr) throw new Error(aErr.message);
 
+    await invalidateQuestionMutationCaches({
+      examId,
+      questionId: args.id,
+    });
+
     return question;
   },
 
@@ -616,6 +658,11 @@ export const examMutations = {
       throw new Error(eqErr.message);
     }
 
+    await invalidateQuestionMutationCaches({
+      examId: args.exam_id,
+      questionId: question.id,
+    });
+
     return { ...question, order_index: nextOrder };
   },
 
@@ -629,6 +676,7 @@ export const examMutations = {
       max_points?: number;
     },
   ) => {
+    const examId = await findExamIdByQuestionId(args.id);
     const { data: question, error: qErr } = await supabase
       .from("questions")
       .update({
@@ -647,10 +695,16 @@ export const examMutations = {
       .update({ points: args.max_points ?? 1 })
       .eq("question_id", args.id);
 
+    await invalidateQuestionMutationCaches({
+      examId,
+      questionId: args.id,
+    });
+
     return question;
   },
 
   deleteQuestion: async (_: unknown, args: { id: string }) => {
+    const examId = await findExamIdByQuestionId(args.id);
     await supabase.from("exam_questions").delete().eq("question_id", args.id);
     await supabase.from("answers").delete().eq("question_id", args.id);
     const { error } = await supabase
@@ -658,6 +712,12 @@ export const examMutations = {
       .delete()
       .eq("id", args.id);
     if (error) throw new Error(error.message);
+
+    await invalidateQuestionMutationCaches({
+      examId,
+      questionId: args.id,
+    });
+
     return true;
   },
 };
