@@ -29,6 +29,7 @@ type PeerConnectionEntry = {
   pc: RTCPeerConnection;
   stream: MediaStream | null;
 };
+type ReconnectTimer = ReturnType<typeof setTimeout>;
 
 type PeerJoinedPayload = {
   role?: "teacher" | "student";
@@ -92,6 +93,11 @@ const LIVE_WARNING_EVENTS = [
   "exam-warning",
   "warning-event",
 ] as const;
+
+const normalizeRoomIds = (value: string[] | undefined) =>
+  Array.from(new Set((value ?? []).filter(Boolean))).sort((a, b) =>
+    a.localeCompare(b),
+  );
 
 const toWarningSeverity = (
   value: LiveWarningPayload["severity"],
@@ -199,20 +205,20 @@ export function LiveMonitorPanel({
   const peersRef = useRef<Map<string, PeerConnectionEntry>>(new Map());
   const pendingIceRef = useRef<Map<string, RTCIceCandidateInit[]>>(new Map());
   const peerRoomRef = useRef<Map<string, string>>(new Map());
+  const reconnectTimersRef = useRef<Map<string, ReconnectTimer>>(new Map());
   const [tiles, setTiles] = useState<StudentTile[]>([]);
   const [status, setStatus] = useState("Waiting for students...");
   const [panelDebug, setPanelDebug] = useState("No signaling event yet");
-  const normalizedRoomIds = useMemo(() => {
-    const raw = roomIds ?? [];
-    return Array.from(new Set(raw.filter(Boolean)));
-  }, [roomIds]);
+  const roomIdsKey = useMemo(() => normalizeRoomIds(roomIds).join("|"), [roomIds]);
+  const normalizedRoomIds = useMemo(
+    () => (roomIdsKey ? roomIdsKey.split("|") : []),
+    [roomIdsKey],
+  );
 
   useEffect(() => {
-    setTiles([]);
+    const scopedRoomIds = roomIdsKey ? roomIdsKey.split("|") : [];
 
-    if (normalizedRoomIds.length === 0) {
-      setStatus("No live exam rooms");
-      setPanelDebug("No room selected");
+    if (scopedRoomIds.length === 0) {
       return;
     }
 
@@ -254,6 +260,11 @@ export function LiveMonitorPanel({
     };
 
     const removePeer = (peerId: string) => {
+      const reconnectTimer = reconnectTimersRef.current.get(peerId);
+      if (reconnectTimer) {
+        clearTimeout(reconnectTimer);
+        reconnectTimersRef.current.delete(peerId);
+      }
       const entry = peersRef.current.get(peerId);
       if (entry) {
         entry.pc.close();
@@ -262,6 +273,25 @@ export function LiveMonitorPanel({
       peerRoomRef.current.delete(peerId);
       pendingIceRef.current.delete(peerId);
       setTiles((prev) => prev.filter((tile) => tile.peerId !== peerId));
+    };
+
+    const requestOffer = (peerId: string, roomId: string, reason: string) => {
+      socket.emit("request-offer", { roomId, to: peerId });
+      upsertTile(peerId, roomId, {
+        connectionState: "connecting",
+        debug: `reconnect requested (${reason})`,
+        stream: null,
+      });
+    };
+
+    const scheduleReconnect = (peerId: string, roomId: string, reason: string) => {
+      if (reconnectTimersRef.current.has(peerId)) return;
+      const timer = setTimeout(() => {
+        reconnectTimersRef.current.delete(peerId);
+        removePeer(peerId);
+        requestOffer(peerId, roomId, reason);
+      }, 1200);
+      reconnectTimersRef.current.set(peerId, timer);
     };
 
     const getOrCreatePeerConnection = (peerId: string, nextRoomId: string) => {
@@ -291,6 +321,10 @@ export function LiveMonitorPanel({
           stream,
           debug: `track received: ${event.track.kind}`,
         });
+        const track = event.track;
+        track.onended = () => {
+          scheduleReconnect(peerId, nextRoomId, `${track.kind} ended`);
+        };
       };
 
       pc.onicecandidate = (event) => {
@@ -304,10 +338,14 @@ export function LiveMonitorPanel({
       };
 
       pc.onconnectionstatechange = () => {
+        const connectionState = pc.connectionState;
         upsertTile(peerId, nextRoomId, {
-          connectionState: pc.connectionState,
-          debug: `connection ${pc.connectionState}`,
+          connectionState,
+          debug: `connection ${connectionState}`,
         });
+        if (connectionState === "failed" || connectionState === "disconnected") {
+          scheduleReconnect(peerId, nextRoomId, connectionState);
+        }
       };
 
       peersRef.current.set(peerId, { pc, stream: null });
@@ -341,7 +379,7 @@ export function LiveMonitorPanel({
         payload.roomId ??
         (peerId ? peerRoomRef.current.get(peerId) : undefined);
 
-      if (!roomId || !normalizedRoomIds.includes(roomId) || !peerId) {
+      if (!roomId || !scopedRoomIds.includes(roomId) || !peerId) {
         return;
       }
 
@@ -377,16 +415,23 @@ export function LiveMonitorPanel({
       pendingIceRef.current.delete(peerId);
     };
 
-    for (const nextRoomId of normalizedRoomIds) {
-      socket.emit("join-room", {
-        roomId: nextRoomId,
-        role: "teacher",
-      });
-    }
+    const ensureRoomSubscriptions = () => {
+      for (const nextRoomId of scopedRoomIds) {
+        socket.emit("join-room", {
+          roomId: nextRoomId,
+          role: "teacher",
+        });
+        // Ask currently connected students in the room to send fresh offers.
+        socket.emit("request-offer", { roomId: nextRoomId });
+      }
+    };
+
+    ensureRoomSubscriptions();
+    socket.on("connect", ensureRoomSubscriptions);
 
     socket.on("peer-joined", ({ role, socketId, roomId: joinedRoomId }: PeerJoinedPayload) => {
       if (role === "student" && socketId && joinedRoomId) {
-        if (!normalizedRoomIds.includes(joinedRoomId)) return;
+        if (!scopedRoomIds.includes(joinedRoomId)) return;
         peerRoomRef.current.set(socketId, joinedRoomId);
         setStatus("Student joined. Waiting for offer...");
         setPanelDebug("Student joined and offer requested");
@@ -399,7 +444,7 @@ export function LiveMonitorPanel({
       const resolvedRoomId =
         offeredRoomId ??
         peerRoomRef.current.get(from);
-      if (!resolvedRoomId || !normalizedRoomIds.includes(resolvedRoomId)) return;
+      if (!resolvedRoomId || !scopedRoomIds.includes(resolvedRoomId)) return;
       peerRoomRef.current.set(from, resolvedRoomId);
 
       try {
@@ -437,7 +482,7 @@ export function LiveMonitorPanel({
       const resolvedRoomId =
         candidateRoomId ??
         peerRoomRef.current.get(from);
-      if (!resolvedRoomId || !normalizedRoomIds.includes(resolvedRoomId)) return;
+      if (!resolvedRoomId || !scopedRoomIds.includes(resolvedRoomId)) return;
       peerRoomRef.current.set(from, resolvedRoomId);
 
       const entry = peersRef.current.get(from);
@@ -460,7 +505,7 @@ export function LiveMonitorPanel({
 
     socket.on("peer-left", ({ role, socketId, roomId: leftRoomId }: PeerLeftPayload) => {
       if (role === "student") {
-        if (leftRoomId && !normalizedRoomIds.includes(leftRoomId)) return;
+        if (leftRoomId && !scopedRoomIds.includes(leftRoomId)) return;
         if (socketId) {
           removePeer(socketId);
         }
@@ -478,6 +523,7 @@ export function LiveMonitorPanel({
       socket.off("offer");
       socket.off("ice-candidate");
       socket.off("peer-left");
+      socket.off("connect", ensureRoomSubscriptions);
       for (const eventName of LIVE_WARNING_EVENTS) {
         socket.off(eventName, handleLiveWarning);
       }
@@ -488,9 +534,13 @@ export function LiveMonitorPanel({
       peersRef.current.clear();
       peerRoomRef.current.clear();
       pendingIceRef.current.clear();
+      for (const [, timer] of reconnectTimersRef.current) {
+        clearTimeout(timer);
+      }
+      reconnectTimersRef.current.clear();
       setTiles([]);
     };
-  }, [normalizedRoomIds]);
+  }, [roomIdsKey]);
 
   const connectedCount = useMemo(
     () =>
@@ -501,6 +551,10 @@ export function LiveMonitorPanel({
   const visibleTiles = useMemo(() => {
     return [...tiles].sort((a, b) => a.roomId.localeCompare(b.roomId));
   }, [tiles]);
+  const displayStatus =
+    normalizedRoomIds.length === 0 ? "No live exam rooms" : status;
+  const displayPanelDebug =
+    normalizedRoomIds.length === 0 ? "No room selected" : panelDebug;
 
   useEffect(() => {
     onLiveStudentsChange?.(
@@ -524,11 +578,11 @@ export function LiveMonitorPanel({
           Live camera monitoring
         </h2>
         <p className="mt-1 text-sm text-[var(--monitoring-muted)]">
-          {status} - connected {connectedCount}/{visibleTiles.length || 0} - rooms{" "}
+          {displayStatus} - connected {connectedCount}/{visibleTiles.length || 0} - rooms{" "}
           {normalizedRoomIds.length}
         </p>
         <p className="mb-4 text-xs text-[var(--monitoring-muted)]/80">
-          {panelDebug}
+          {displayPanelDebug}
         </p>
 
         {visibleTiles.length === 0 ? (

@@ -11,14 +11,7 @@ import {
   UserButton,
   useUser,
 } from "@clerk/nextjs";
-import {
-  LayoutDashboard,
-  ClipboardList,
-  Star,
-  Users,
-  TrendingUp,
-  BarChart3,
-} from "lucide-react";
+import { LayoutDashboard, ClipboardList, Star, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV_MAIN = [
@@ -46,7 +39,7 @@ export function Sidebar() {
         </div>
         <div>
           <p className="text-white text-[27px] font-semibold leading-tight">
-            Uniexam
+            UniExam
           </p>
         </div>
       </div>
