@@ -58,16 +58,26 @@ export function ProctoringWarnings({
     lastToastTimeRef.current = now;
 
     if (flags.includes("Олон хүн илэрсэн")) {
-      recordWarning(EXAM_WARNING_CODES.proctorMultiplePeople);
+      recordWarning(EXAM_WARNING_CODES.proctorMultiplePeople, {
+        message: "Multiple faces detected",
+        severity: "danger",
+      });
     }
     if (flags.includes("Царай харагдахгүй байна")) {
-      recordWarning(EXAM_WARNING_CODES.proctorFaceMissing);
+      recordWarning(EXAM_WARNING_CODES.proctorFaceMissing, {
+        message: "Face is not visible",
+      });
     }
     if (flags.includes("Доош харж байна")) {
-      recordWarning(EXAM_WARNING_CODES.proctorLookingDown);
+      recordWarning(EXAM_WARNING_CODES.proctorLookingDown, {
+        message: "Student looked away/down",
+      });
     }
     if (flags.includes("Утас харагдаж байна")) {
-      recordWarning(EXAM_WARNING_CODES.proctorPhoneVisible);
+      recordWarning(EXAM_WARNING_CODES.proctorPhoneVisible, {
+        message: "Phone detected",
+        severity: "danger",
+      });
     }
 
   }, [error, flags, isReady, recordWarning]);
@@ -75,7 +85,10 @@ export function ProctoringWarnings({
   useEffect(() => {
     if (!error) return;
 
-    recordWarning(EXAM_WARNING_CODES.proctorUnavailable);
+    recordWarning(EXAM_WARNING_CODES.proctorUnavailable, {
+      message: "Proctoring camera unavailable",
+      severity: "danger",
+    });
 
   }, [error, recordWarning]);
 

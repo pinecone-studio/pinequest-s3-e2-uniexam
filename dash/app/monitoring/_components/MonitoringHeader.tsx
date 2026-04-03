@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -6,19 +7,29 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import Link from "next/link";
 
 type Props = {
   classFilter: string;
-  classOptions: string[];
+  isExamScoped?: boolean;
+  classOptions: Array<{
+    value: string;
+    label: string;
+  }>;
   onClassChange: (value: string) => void;
 };
 
 export function MonitoringHeader({
   classFilter,
+  isExamScoped = false,
   classOptions,
   onClassChange,
 }: Props) {
-  const selectedClassTitle = classFilter === "all" ? "Бүх анги" : classFilter;
+  const selectedClassTitle =
+    classFilter === "all"
+      ? "Бүх анги"
+      : (classOptions.find((option) => option.value === classFilter)?.label ??
+        "Бүх анги");
 
   return (
     <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -39,28 +50,43 @@ export function MonitoringHeader({
       </div>
 
       <div className="w-full shrink-0 lg:w-[320px]">
-        <Select value={classFilter} onValueChange={onClassChange}>
-          <SelectTrigger className="w-full border-[var(--monitoring-dark-border)] bg-white text-[var(--monitoring-dark)] focus:border-[#00B89C] focus:ring-2 focus:ring-[#00B89C]/15 focus:ring-offset-0 data-[placeholder]:text-[var(--monitoring-muted)]">
-            <SelectValue placeholder="Анги сонгох" />
-          </SelectTrigger>
-
-          <SelectContent className="w-[--radix-select-trigger-width] min-w-[--radix-select-trigger-width] border-[var(--monitoring-dark-border)] bg-white">
-            <SelectItem
-              value="all"
-              className="truncate text-[var(--monitoring-dark)] focus:bg-[var(--monitoring-primary-soft)] focus:text-[var(--monitoring-dark)]">
+        {isExamScoped ? (
+          <Link href="/monitoring">
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full justify-center border-[var(--monitoring-dark-border)] bg-white text-[var(--monitoring-dark)] hover:bg-[var(--monitoring-primary-soft)]"
+              onClick={() => onClassChange("all")}
+            >
               Бүх анги
-            </SelectItem>
+            </Button>
+          </Link>
+        ) : (
+          <Select value={classFilter} onValueChange={onClassChange}>
+            <SelectTrigger className="w-full border-[var(--monitoring-dark-border)] bg-white text-[var(--monitoring-dark)] focus:border-[#00B89C] focus:ring-2 focus:ring-[#00B89C]/15 focus:ring-offset-0 data-[placeholder]:text-[var(--monitoring-muted)]">
+              <SelectValue placeholder="Анги сонгох" />
+            </SelectTrigger>
 
-            {classOptions.map((className) => (
+            <SelectContent className="w-[--radix-select-trigger-width] min-w-[--radix-select-trigger-width] border-[var(--monitoring-dark-border)] bg-white">
               <SelectItem
-                key={className}
-                value={className}
-                className="truncate text-[var(--monitoring-dark)] focus:bg-[var(--monitoring-primary-soft)] focus:text-[var(--monitoring-dark)]">
-                {className}
+                value="all"
+                className="truncate text-[var(--monitoring-dark)] focus:bg-[var(--monitoring-primary-soft)] focus:text-[var(--monitoring-dark)]"
+              >
+                Бүх анги
               </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+
+              {classOptions.map((option) => (
+                <SelectItem
+                  key={option.value}
+                  value={option.value}
+                  className="truncate text-[var(--monitoring-dark)] focus:bg-[var(--monitoring-primary-soft)] focus:text-[var(--monitoring-dark)]"
+                >
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
       </div>
     </div>
   );

@@ -25,6 +25,7 @@ import { LiveMonitorPanel } from "./_components/LiveMonitorPanel";
 import type { Student, StudentAlert } from "./_lib/types";
 
 type StudentFilter = "all" | "alert";
+type ClassOption = { value: string; label: string };
 
 const MONITORING_QUERY = `#graphql
   query MonitoringPageData {
@@ -128,10 +129,13 @@ const getTimestamp = (value: string | null | undefined) => {
   return Number.isFinite(ts) ? ts : 0;
 };
 
-function isExamActiveNow(exam: {
-  start_time: string | null;
-  end_time: string | null;
-}, nowMs: number) {
+function isExamActiveNow(
+  exam: {
+    start_time: string | null;
+    end_time: string | null;
+  },
+  nowMs: number,
+) {
   const start = getTimestamp(exam.start_time);
   const end = getTimestamp(exam.end_time);
   if (!start || !end) return false;
@@ -169,12 +173,16 @@ export default function MonitoringPage() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [students, setStudents] = useState<Student[]>([]);
   const [activeRoomIds, setActiveRoomIds] = useState<string[]>([]);
-  const [roomByStudentId, setRoomByStudentId] = useState<Record<string, string>>(
-    {},
-  );
+  const [roomByStudentId, setRoomByStudentId] = useState<
+    Record<string, string>
+  >({});
+  const [courseIdByStudentId, setCourseIdByStudentId] = useState<
+    Record<number, string>
+  >({});
   const [searchTerm, setSearchTerm] = useState("");
   const [studentFilter, setStudentFilter] = useState<StudentFilter>("all");
   const [classFilter, setClassFilter] = useState("all");
+  const [classOptions, setClassOptions] = useState<ClassOption[]>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -205,8 +213,8 @@ export default function MonitoringPage() {
                 .map((exam) => exam.id),
             );
 
-        const scopedSubmissions = allSubmissions.filter(
-          (submission) => scopedExamIds.has(submission.exam_id),
+        const scopedSubmissions = allSubmissions.filter((submission) =>
+          scopedExamIds.has(submission.exam_id),
         );
         const inProgressSubmissions = scopedSubmissions.filter(
           (submission) => submission.status === "in_progress",
@@ -230,10 +238,13 @@ export default function MonitoringPage() {
           liveStudentIds.add(submission.student_id);
         }
 
-        const cheatLogs = (routeExamId
-          ? allCheatLogs.filter((log) => log.exam_id === routeExamId)
-          : allCheatLogs
-        ).filter((log) => Boolean(log.student_id && liveStudentIds.has(log.student_id)));
+        const cheatLogs = (
+          routeExamId
+            ? allCheatLogs.filter((log) => log.exam_id === routeExamId)
+            : allCheatLogs
+        ).filter((log) =>
+          Boolean(log.student_id && liveStudentIds.has(log.student_id)),
+        );
 
         const courseById = new Map(
           courses.map((course) => [course.id, course]),
@@ -266,18 +277,21 @@ export default function MonitoringPage() {
         );
 
         const nextRoomByStudentId: Record<string, string> = {};
+        const nextCourseIdByStudentId: Record<number, string> = {};
         const nextStudents: Student[] = baseStudents.map((student, index) => {
-          const studentSubmissions =
-            submissionsByStudentId
-              .get(student.id)
-              ?.sort(
-                (a, b) =>
-                  getTimestamp(b.submitted_at ?? b.started_at) -
-                  getTimestamp(a.submitted_at ?? a.started_at),
-              ) ?? [];
-          const latestSubmission = studentSubmissions[0];
-          const latestExam = latestSubmission
-            ? examById.get(latestSubmission.exam_id)
+          const studentSubmissions = [
+            ...(submissionsByStudentId.get(student.id) ?? []),
+          ].sort(
+            (a, b) =>
+              getTimestamp(b.submitted_at ?? b.started_at) -
+              getTimestamp(a.submitted_at ?? a.started_at),
+          );
+          const activeSubmission = studentSubmissions.find(
+            (submission) => submission.status === "in_progress",
+          );
+          const selectedSubmission = activeSubmission ?? studentSubmissions[0];
+          const selectedExam = selectedSubmission
+            ? examById.get(selectedSubmission.exam_id)
             : undefined;
 
           const enrolledCourseId =
@@ -285,8 +299,8 @@ export default function MonitoringPage() {
           const enrolledCourse = enrolledCourseId
             ? courseById.get(enrolledCourseId)
             : undefined;
-          const classCourse = latestExam?.course_id
-            ? courseById.get(latestExam.course_id)
+          const classCourse = selectedExam?.course_id
+            ? courseById.get(selectedExam.course_id)
             : enrolledCourse;
           const className = formatClassName(classCourse);
           const studentCheatLogs =
@@ -311,29 +325,34 @@ export default function MonitoringPage() {
             : null;
 
           const tabSwitches = studentCheatLogs.length;
-          const answeredCount = latestSubmission?.answers?.length ?? 0;
+          const answeredCount = selectedSubmission?.answers?.length ?? 0;
           const totalQuestions =
-            latestExam?.questions?.length && latestExam.questions.length > 0
-              ? latestExam.questions.length
+            selectedExam?.questions?.length && selectedExam.questions.length > 0
+              ? selectedExam.questions.length
               : Math.max(answeredCount, 1);
 
           const status =
-            latestSubmission?.status === "submitted" ||
-            latestSubmission?.status === "reviewed"
+            selectedSubmission?.status === "submitted" ||
+            selectedSubmission?.status === "reviewed"
               ? "submitted"
-              : latestSubmission?.status === "in_progress"
+              : selectedSubmission?.status === "in_progress"
                 ? "online"
                 : "offline";
-          const normalizedStudentId = String(
-            Number.parseInt(student.id, 10) || index + 1,
-          );
-          if (latestSubmission?.exam_id) {
+          const numericStudentId =
+            Number.parseInt(student.id, 10) || index + 1;
+          const normalizedStudentId = String(numericStudentId);
+          const selectedCourseId =
+            selectedExam?.course_id ?? enrolledCourseId ?? null;
+          if (selectedCourseId) {
+            nextCourseIdByStudentId[numericStudentId] = selectedCourseId;
+          }
+          if (selectedSubmission?.exam_id) {
             nextRoomByStudentId[normalizedStudentId] =
-              `exam-room-${latestSubmission.exam_id}`;
+              `exam-room-${selectedSubmission.exam_id}`;
           }
 
           return {
-            id: Number.parseInt(student.id, 10) || index + 1,
+            id: numericStudentId,
             name: student.name ?? "Нэргүй сурагч",
             email: student.email ?? "email-гүй",
             className,
@@ -345,9 +364,20 @@ export default function MonitoringPage() {
           };
         });
 
+        const nextClassOptions: ClassOption[] = Array.from(
+          new Set(Object.values(nextCourseIdByStudentId)),
+        )
+          .map((courseId) => ({
+            value: courseId,
+            label: formatClassName(courseById.get(courseId)),
+          }))
+          .sort((a, b) => a.label.localeCompare(b.label));
+
         if (!cancelled) {
           setStudents(nextStudents);
           setRoomByStudentId(nextRoomByStudentId);
+          setCourseIdByStudentId(nextCourseIdByStudentId);
+          setClassOptions(nextClassOptions);
           setActiveRoomIds(
             Array.from(scopedExamIds).map((examId) => `exam-room-${examId}`),
           );
@@ -363,6 +393,8 @@ export default function MonitoringPage() {
         setStudents([]);
         setActiveRoomIds([]);
         setRoomByStudentId({});
+        setCourseIdByStudentId({});
+        setClassOptions([]);
         setIsLoading(false);
       }
     };
@@ -390,17 +422,25 @@ export default function MonitoringPage() {
     setClassFilter(value);
   };
 
-  const classOptions = useMemo(() => {
-    return Array.from(new Set(students.map((student) => student.className)));
-  }, [students]);
+  useEffect(() => {
+    if (classFilter === "all") return;
+    const stillExists = classOptions.some(
+      (option) => option.value === classFilter,
+    );
+    if (!stillExists) {
+      setClassFilter("all");
+    }
+  }, [classFilter, classOptions]);
 
   const classFilteredStudents = useMemo(() => {
     if (classFilter === "all") {
       return students;
     }
 
-    return students.filter((student) => student.className === classFilter);
-  }, [classFilter, students]);
+    return students.filter(
+      (student) => courseIdByStudentId[student.id] === classFilter,
+    );
+  }, [classFilter, courseIdByStudentId, students]);
 
   const visibleStudents = useMemo(() => {
     return classFilteredStudents.filter((student) => {
@@ -460,6 +500,7 @@ export default function MonitoringPage() {
       <div className="mx-auto max-w-7xl space-y-4">
         <MonitoringHeader
           classFilter={classFilter}
+          isExamScoped={Boolean(routeExamId)}
           classOptions={classOptions}
           onClassChange={handleClassChange}
         />
@@ -468,7 +509,6 @@ export default function MonitoringPage() {
             Monitoring data ачаалж чадсангүй: {loadError}
           </div>
         ) : null}
-        <LiveMonitorPanel roomIds={panelRoomIds} />
         <div className="grid gap-8 md:grid-cols-2 xl:grid-cols-4 p-0">
           <StatCard
             title="Нийт сурагч"
@@ -498,6 +538,8 @@ export default function MonitoringPage() {
             tone="warning"
           />
         </div>
+        
+        <LiveMonitorPanel roomIds={panelRoomIds} />
 
         <Card className="rounded-2xl border-[var(--monitoring-dark-border)] bg-white shadow-sm">
           <CardContent className="p-6">

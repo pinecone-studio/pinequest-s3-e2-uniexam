@@ -2,7 +2,6 @@
 import { ChevronLeft, ChevronRight, Flag } from "lucide-react";
 import { useExamState } from "../_hooks/use-exam-states";
 import { Textarea } from "@/components/ui/textarea";
-import { toast } from "sonner";
 import { getQuestionTypeLabel } from "@/lib/question-type-label";
 import {
   EXAM_WARNING_CODES,
@@ -64,22 +63,26 @@ export const ExamQA = () => {
       e.key === "PrintScreen" ||
       e.key === "F12"
     ) {
-      recordWarning(EXAM_WARNING_CODES.keyboardShortcut);
+      recordWarning(EXAM_WARNING_CODES.keyboardShortcut, {
+        message: `Blocked shortcut: ${e.key}`,
+      });
       e.preventDefault();
-      toast.error(`Товчлол ашиглах хориотой: ${e.key}`);
     }
   };
 
   const handleContextMenu = (e: React.MouseEvent<HTMLTextAreaElement>) => {
-    recordWarning(EXAM_WARNING_CODES.contextMenu);
+    recordWarning(EXAM_WARNING_CODES.contextMenu, {
+      message: "Right-click context menu attempt",
+    });
     e.preventDefault();
-    toast.error("Хулганы баруун товч ашиглах хориотой!");
   };
 
   const handleCopyPaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
-    recordWarning(EXAM_WARNING_CODES.clipboardBlocked);
+    recordWarning(EXAM_WARNING_CODES.clipboardBlocked, {
+      message: `Blocked clipboard action: ${e.type}`,
+      severity: "danger",
+    });
     e.preventDefault();
-    toast.error("Хуулах/Буулгах үйлдэл хориотой!");
   };
   //   console.log({ answers });
 
