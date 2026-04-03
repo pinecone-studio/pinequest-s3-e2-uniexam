@@ -141,8 +141,6 @@ async function assertSubmissionWritable(submissionId: string) {
 async function assertSubmissionAnswerEditable(submissionId: string) {
   const sub = await assertSubmissionWritable(submissionId);
 
-  // Deadline enforcement happens when the submission is finalized so
-  // answers are not dropped if the student submits at the exact cutoff.
   if (sub.status !== "in_progress") {
     throw new Error("Submission is not editable");
   }
@@ -211,15 +209,21 @@ export const submissionAnswerMutations = {
       submissionId = row.submission_id;
     }
 
+    if (!submissionId) {
+      throw new Error("Submission ID is required");
+    }
+
+    const resolvedSubmissionId = submissionId;
+
     const isGradingPayload =
       args.score !== undefined ||
       args.feedback !== undefined ||
       args.is_correct !== undefined;
 
     if (isGradingPayload) {
-      await assertSubmissionGradeEditable(submissionId);
+      await assertSubmissionGradeEditable(resolvedSubmissionId);
     } else {
-      await assertSubmissionAnswerEditable(submissionId);
+      await assertSubmissionAnswerEditable(resolvedSubmissionId);
     }
 
     const payload = pickDefined({
@@ -241,8 +245,8 @@ export const submissionAnswerMutations = {
 
     if (error) throw new Error(error.message);
 
-    await invalidateSubmissionAnswersRelation(submissionId);
-    if (data?.submission_id && data.submission_id !== submissionId) {
+    await invalidateSubmissionAnswersRelation(resolvedSubmissionId);
+    if (data?.submission_id && data.submission_id !== resolvedSubmissionId) {
       await invalidateSubmissionAnswersRelation(data.submission_id);
     }
     return data;
