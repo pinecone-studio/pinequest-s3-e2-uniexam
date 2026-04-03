@@ -132,11 +132,11 @@ export default function ExamDashboard() {
   }, [exams, searchQuery, statusFilter]);
 
   return (
-    <div className="min-h-screen bg-white font-sans">
+    <div className="min-h-screen bg-transparent font-sans">
       <div className="max-w-6xl mx-auto px-6 py-8 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-semibold text-gray-900 tracking-tight pl-5">
+          <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">
             Шалгалтуудын удирдлага
           </h1>
           <CreateNewExam />

@@ -406,7 +406,9 @@ export function QuestionCreator({
                   size="sm"
                   onClick={() => {
                     setOeContent("Дараах даалгаврыг бодож хариуг бичнэ үү.");
-                    setOeImageUrl("https://res.cloudinary.com/dczx8w4x1/image/upload/v1775129114/exam-options/ytadwklaurqvx6q6qjew.png");
+                    setOeImageUrl(
+                      "https://res.cloudinary.com/dczx8w4x1/image/upload/v1775129114/exam-options/ytadwklaurqvx6q6qjew.png",
+                    );
                     toast.info("Жишээ хуулагдлаа");
                   }}
                   className="h-9 text-xs text-neutral-500"
@@ -475,7 +477,7 @@ export function QuestionCreator({
                 </Label>
                 <Textarea
                   placeholder={
-                    "Та бэлдсэн шалгалтын асуултаа энд copy-past хийж оруулна уу."
+                    "Та бэлдсэн шалгалтын асуултаа энд copy-paste хийж оруулна уу."
                   }
                   className="min-h-30 resize-none rounded-md border-neutral-200 p-3 text-sm leading-relaxed focus:ring-0"
                   value={rawText}
