@@ -128,9 +128,15 @@ type StudentRow = { id: string; name: string; email: string };
 type Question = {
   id: string;
   text: string;
+  image_url?: string | null;
   type?: string | null;
   order_index?: number | null;
 };
+
+function clampScore(value: number | null | undefined, maxScore: number): number {
+  if (!Number.isFinite(value)) return 0;
+  return Math.min(Math.max(Math.round(value ?? 0), 0), maxScore);
+}
 
 function isManualQuestionType(type?: string | null): boolean {
   if (!type) return true;
@@ -291,7 +297,6 @@ query GradingStudent($courseId: String!, $studentId: String!) {
     exams {
       id
       title
-      questions { id text type order_index }
     }
   }
   student(id: $studentId) { id name email }
@@ -307,6 +312,22 @@ query GradingStudent($courseId: String!, $studentId: String!) {
     score_manual
     final_score
     answers { id question_id answer_id text_answer score feedback }
+  }
+}
+`;
+
+const EXAM_DETAIL_QUERY = `
+query GradingExam($examId: String!) {
+  exam(id: $examId) {
+    id
+    title
+    questions {
+      id
+      text
+      image_url
+      type
+      order_index
+    }
   }
 }
 `;
@@ -400,15 +421,24 @@ export async function fetchStudentGradingContext(
       const bt = new Date(b.submitted_at ?? b.started_at ?? 0).getTime();
       return bt - at;
     })[0];
-  const latestMcTotal = latest?.exam_id
+  const latestExamTotal = latest?.exam_id
     ? (classExamTotalById.get(latest.exam_id) ?? 0)
     : 0;
   const questionPointsById = latest?.exam_id
     ? await getExamQuestionPoints(latest.exam_id)
     : new Map<string, number>();
 
-  const questions = (data.course.exams ?? [])
-    .flatMap((e) => e.questions ?? [])
+  const examQuestionData = latest?.exam_id
+    ? await gql<{
+        exam: {
+          id: string;
+          title?: string | null;
+          questions?: Question[] | null;
+        } | null;
+      }>(EXAM_DETAIL_QUERY, { examId: latest.exam_id })
+    : { exam: null };
+
+  const questions = (examQuestionData.exam?.questions ?? [])
     .filter((q): q is Question => Boolean(q?.id && q?.text))
     .sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0));
 
@@ -433,9 +463,20 @@ export async function fetchStudentGradingContext(
             text:
               questionById.get(String(a.question_id))?.text ??
               `Асуулт ${idx + 1}`,
+            image_url:
+              questionById.get(String(a.question_id))?.image_url ?? null,
             type: "written",
             order_index: idx,
           }));
+
+  const manualQuestionIds = new Set(
+    fallbackManualQuestions.map((question) => String(question.id)),
+  );
+  const latestManualTotal = Array.from(manualQuestionIds).reduce(
+    (sum, questionId) => sum + (questionPointsById.get(questionId) ?? 0),
+    0,
+  );
+  const latestMcTotal = Math.max(latestExamTotal - latestManualTotal, 0);
 
   const essays: EssayQuestion[] = fallbackManualQuestions.map((q, idx) => {
     const answer = answerMap.get(String(q.id));
@@ -446,10 +487,12 @@ export async function fetchStudentGradingContext(
       questionId: q.id,
       submissionAnswerId: answer?.id ?? null,
       question: q.text,
+      questionImageUrl: q.image_url ?? null,
       studentAnswer: answer?.text_answer ?? "",
       rubric: DEFAULT_RUBRIC.map((r) => ({
         ...r,
         maxScore: Math.max(1, maxScoreForQuestion),
+        score: clampScore(answer?.score, Math.max(1, maxScoreForQuestion)),
       })),
       feedback: answer?.feedback ?? "",
     };
@@ -477,12 +520,9 @@ export async function fetchStudentGradingContext(
       code: data.course.code,
       name: data.course.name,
       assignmentLabel: data.course.exams?.[0]?.title ?? "Шалгалт",
-      pending: classSubs.filter(
-        (s) => s.final_score === null || s.final_score === undefined,
-      ).length,
-      graded: classSubs.filter(
-        (s) => s.final_score !== null && s.final_score !== undefined,
-      ).length,
+      pending: classStudents.filter((s) => s.status === "Хүлээгдэж байна")
+        .length,
+      graded: classStudents.filter((s) => s.status === "Дүгнэгдсэн").length,
       total: classStudentIds.size,
     },
     classStudents,

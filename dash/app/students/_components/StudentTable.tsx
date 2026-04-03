@@ -36,6 +36,11 @@ const getInitials = (name: string) =>
     ?.join("")
     ?.toUpperCase() || "";
 
+const formatPercent = (value: number | null) => {
+  if (value === null) return "-";
+  return `${value.toFixed(1)}%`;
+};
+
 const StudentTable = ({ students }: StudentTableProps) => {
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [open, setOpen] = useState(false);
@@ -57,7 +62,7 @@ const StudentTable = ({ students }: StudentTableProps) => {
     if (template === "score") {
       return {
         subject: `${student.name} - Дүнгийн мэдээлэл`,
-        body: `Сайн байна уу, ${student.name}.\n\nТаны дүн: ${student.finalScore ?? "-"}\nШалгалтын тоо: ${student.examsTaken}\n\nХүндэтгэсэн.`,
+        body: `Сайн байна уу, ${student.name}.\n\nТаны дүн: ${formatPercent(student.finalScore)}\nШалгалтын тоо: ${student.examsTaken}\n\nХүндэтгэсэн.`,
       };
     }
 
@@ -203,7 +208,7 @@ const StudentTable = ({ students }: StudentTableProps) => {
                         <span className="text-gray-500">-</span>
                       ) : (
                         <span className="text-sm font-medium text-blue-700">
-                          {s.finalScore}
+                          {formatPercent(s.finalScore)}
                         </span>
                       )}
                     </td>
@@ -344,9 +349,7 @@ const StudentTable = ({ students }: StudentTableProps) => {
                 <div>
                   <p className="text-gray-500">Дүн</p>
                   <p className="font-medium">
-                    {selectedStudent.finalScore === null
-                      ? "-"
-                      : selectedStudent.finalScore}
+                    {formatPercent(selectedStudent.finalScore)}
                   </p>
                 </div>
               </div>
@@ -370,7 +373,7 @@ const StudentTable = ({ students }: StudentTableProps) => {
 
                         <div className="text-right">
                           <p className="font-semibold">
-                            {exam.score ?? "-"}/{exam.maxScore ?? "-"}
+                            {formatPercent(exam.score)}
                           </p>
                           <p className="text-xs text-gray-500">
                             {exam.grade ?? "-"}

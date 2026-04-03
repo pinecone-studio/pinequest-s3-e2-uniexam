@@ -25,6 +25,7 @@ export const GET_STUDENTS_REAL = `
       id
       student_id
       exam_id
+      status
       final_score
       submitted_at
       started_at
@@ -63,6 +64,7 @@ export const GET_STUDENTS_REAL_LEGACY = `
       id
       student_id
       exam_id
+      status
       final_score
       submitted_at
       started_at

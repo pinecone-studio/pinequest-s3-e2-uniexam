@@ -13,6 +13,7 @@ export type EssayQuestion = {
   questionId: string;
   submissionAnswerId?: string | null;
   question: string;
+  questionImageUrl?: string | null;
   studentAnswer: string;
   rubric: RubricCriterion[];
   feedback: string;

@@ -11,11 +11,6 @@ export const ManualRubric = ({ rubric, onScoreChange }: ManualRubricProps) => {
   const clampScore = (value: number, maxScore: number) =>
     Math.min(maxScore, Math.max(0, Math.round(value)));
 
-  const getQuickScores = (maxScore: number) => {
-    const mid = Math.round(maxScore / 2);
-    return [...new Set([0, mid, maxScore])];
-  };
-
   const applyScore = (criterionId: string, next: number, maxScore: number) => {
     onScoreChange(criterionId, clampScore(next, maxScore));
   };

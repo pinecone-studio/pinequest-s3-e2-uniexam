@@ -7,6 +7,7 @@ type EssaySubmissionProps = {
   essay: EssayQuestion;
   essayIndex: number;
   totalEssays: number;
+  onSelectEssay: (index: number) => void;
   onPrev: () => void;
   onNext: () => void;
 };
@@ -15,6 +16,7 @@ export const EssaySubmission = ({
   essay,
   essayIndex,
   totalEssays,
+  onSelectEssay,
   onPrev,
   onNext,
 }: EssaySubmissionProps) => {
@@ -28,6 +30,17 @@ export const EssaySubmission = ({
           <p className="text-sm text-gray-600 leading-relaxed mb-5">
             {essay.question}
           </p>
+
+          {essay.questionImageUrl ? (
+            <div className="mb-5 overflow-hidden rounded-xl border border-gray-200 bg-gray-50">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={essay.questionImageUrl}
+                alt={`${essay.id}-р асуултын зураг`}
+                className="max-h-[420px] w-full object-contain"
+              />
+            </div>
+          ) : null}
 
           <div>
             <div className="flex items-center gap-2 mb-2">
@@ -56,9 +69,26 @@ export const EssaySubmission = ({
           Өмнөх Эссе
         </button>
 
-        <span className="text-sm text-gray-600">
-          {essayIndex + 1} / {totalEssays} эссе
-        </span>
+        <div className="flex max-w-[320px] items-center gap-2 overflow-x-auto px-2">
+          {Array.from({ length: totalEssays }).map((_, index) => {
+            const isActive = index === essayIndex;
+            return (
+              <button
+                key={index}
+                type="button"
+                onClick={() => onSelectEssay(index)}
+                className={`h-8 min-w-8 rounded-md border px-2 text-xs font-medium transition ${
+                  isActive
+                    ? "border-[#31A8E0] bg-[#31A8E0] text-white"
+                    : "border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50"
+                }`}
+                aria-label={`${index + 1}-р эссэ рүү шилжих`}
+              >
+                {index + 1}
+              </button>
+            );
+          })}
+        </div>
 
         <button
           onClick={onNext}

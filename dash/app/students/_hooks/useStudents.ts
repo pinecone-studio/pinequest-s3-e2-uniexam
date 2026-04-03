@@ -6,6 +6,14 @@ import {
   GET_STUDENTS_REAL_LEGACY,
 } from "../queries/student";
 
+const EXAM_POINTS_QUERY = `
+  query ExamPoints($examId: String!) {
+    examQuestions(exam_id: $examId) {
+      points
+    }
+  }
+`;
+
 type RealStudent = {
   id: string;
   name: string | null;
@@ -35,6 +43,7 @@ type Submission = {
   id: string;
   student_id: string;
   exam_id: string | null;
+  status: "in_progress" | "submitted" | "reviewed" | null;
   final_score: number | null;
   submitted_at: string | null;
   started_at: string | null;
@@ -53,6 +62,10 @@ type StudentsRealResponse = {
   exams: Exam[];
   submissions: Submission[];
   cheatLogs: CheatLog[];
+};
+
+type ExamPointsResponse = {
+  examQuestions: Array<{ points: number | null }> | null;
 };
 
 const DEFAULT_STUDENT: Omit<Student, "id" | "name" | "email"> = {
@@ -84,7 +97,35 @@ function toCourseLabelFromCode(code: string | null | undefined): string {
   return "-";
 }
 
-function mapToStudents(data: StudentsRealResponse): Student[] {
+function toPercent(
+  score: number | null | undefined,
+  total: number | null | undefined,
+): number | null {
+  if (score === null || score === undefined) return null;
+
+  const safeScore = Number(score);
+  const safeTotal = Number(total ?? 0);
+
+  if (!Number.isFinite(safeScore)) return null;
+  if (safeTotal > 0) {
+    return Math.round((safeScore / safeTotal) * 1000) / 10;
+  }
+
+  if (safeScore <= 1) {
+    return Math.round(safeScore * 1000) / 10;
+  }
+
+  return Math.round(safeScore * 10) / 10;
+}
+
+function isVisibleSubmissionStatus(status: Submission["status"]): boolean {
+  return status === "submitted" || status === "reviewed";
+}
+
+function mapToStudents(
+  data: StudentsRealResponse,
+  examTotalsById: Map<string, number>,
+): Student[] {
   const students = data.students ?? [];
   const enrollments = data.enrollments ?? [];
   const courses = data.courses ?? [];
@@ -114,7 +155,7 @@ function mapToStudents(data: StudentsRealResponse): Student[] {
   }
 
   const submissionsByStudentId = new Map<string, Submission[]>();
-  for (const submission of (submissions as any)) {
+  for (const submission of submissions) {
     const next = submissionsByStudentId.get(submission.student_id) ?? [];
     next.push(submission);
     submissionsByStudentId.set(submission.student_id, next);
@@ -124,7 +165,9 @@ function mapToStudents(data: StudentsRealResponse): Student[] {
     const courseIds = enrollmentsByStudentId.get(student.id) ?? [];
     const classCode = courseById.get(courseIds[0] ?? "")?.code ?? "-";
 
-    const studentSubmissions = submissionsByStudentId.get(student.id) ?? [];
+    const studentSubmissions = (submissionsByStudentId.get(student.id) ?? []).filter(
+      (submission) => isVisibleSubmissionStatus(submission.status),
+    );
     const examsForStudent = exams.filter(
       (exam) => exam.course_id && courseIds.includes(exam.course_id)
     );
@@ -138,19 +181,26 @@ function mapToStudents(data: StudentsRealResponse): Student[] {
     const latestSubmission = sortedSubmissions[0] ?? null;
 
     const examHistory = sortedSubmissions.map((s) => {
-      const score = s.final_score ?? 0;
+      const percentScore = toPercent(
+        s.final_score,
+        s.exam_id ? (examTotalsById.get(s.exam_id) ?? 0) : 0,
+      );
       return {
         id: s.id,
         name: examById.get(s.exam_id ?? "")?.title ?? "Unknown Exam",
         date: s.submitted_at || s.started_at || "-",
-        score: score <= 1 ? score * 100 : score, // Scale to 100 if it's 0-1
+        score: percentScore,
         maxScore: 100,
         grade: "-",
       };
     });
 
-    const lScore = latestSubmission?.final_score ?? null;
-    const scaledFinalScore = (lScore !== null) ? (lScore <= 1 ? lScore * 100 : lScore) : null;
+    const scaledFinalScore = toPercent(
+      latestSubmission?.final_score ?? null,
+      latestSubmission?.exam_id
+        ? (examTotalsById.get(latestSubmission.exam_id) ?? 0)
+        : 0,
+    );
 
     return {
       id: student.id,
@@ -184,7 +234,30 @@ export function useStudents() {
       try {
         const data = await graphqlFetch<StudentsRealResponse>(GET_STUDENTS_REAL);
         if (!isMounted) return;
-        setStudents(mapToStudents(data));
+        const examIds = Array.from(
+          new Set(
+            (data.submissions ?? [])
+              .map((submission) => submission.exam_id)
+              .filter((examId): examId is string => Boolean(examId)),
+          ),
+        );
+
+        const examTotals = await Promise.all(
+          examIds.map(async (examId) => {
+            const pointsData = await graphqlFetch<ExamPointsResponse>(
+              EXAM_POINTS_QUERY,
+              { examId },
+            );
+            const total = (pointsData.examQuestions ?? []).reduce(
+              (sum, row) => sum + (row.points ?? 0),
+              0,
+            );
+            return [examId, total] as const;
+          }),
+        );
+
+        if (!isMounted) return;
+        setStudents(mapToStudents(data, new Map(examTotals)));
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : "Unknown error";
         const majorFieldMissing = message.includes('Cannot query field "major"');
@@ -200,7 +273,30 @@ export function useStudents() {
             GET_STUDENTS_REAL_LEGACY
           );
           if (!isMounted) return;
-          setStudents(mapToStudents(legacyData));
+          const examIds = Array.from(
+            new Set(
+              (legacyData.submissions ?? [])
+                .map((submission) => submission.exam_id)
+                .filter((examId): examId is string => Boolean(examId)),
+            ),
+          );
+
+          const examTotals = await Promise.all(
+            examIds.map(async (examId) => {
+              const pointsData = await graphqlFetch<ExamPointsResponse>(
+                EXAM_POINTS_QUERY,
+                { examId },
+              );
+              const total = (pointsData.examQuestions ?? []).reduce(
+                (sum, row) => sum + (row.points ?? 0),
+                0,
+              );
+              return [examId, total] as const;
+            }),
+          );
+
+          if (!isMounted) return;
+          setStudents(mapToStudents(legacyData, new Map(examTotals)));
         } catch (legacyErr: unknown) {
           if (!isMounted) return;
           setError(legacyErr instanceof Error ? legacyErr.message : "Unknown error");

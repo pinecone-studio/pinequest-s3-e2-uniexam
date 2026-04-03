@@ -247,6 +247,7 @@ const GradeStudentPage = () => {
           ? {
               ...prev,
               status: "Дүгнэгдсэн",
+              finalScore,
               essays: prev.essays.map((essay, idx) => ({
                 ...essay,
                 feedback: reviewedEssays[idx]?.feedback ?? essay.feedback,
@@ -261,6 +262,7 @@ const GradeStudentPage = () => {
             ? {
                 ...s,
                 status: "Дүгнэгдсэн",
+                finalScore,
               }
             : s,
         ),
@@ -332,6 +334,7 @@ const GradeStudentPage = () => {
                   essay={currentEssay}
                   essayIndex={essayIndex}
                   totalEssays={student.essays.length}
+                  onSelectEssay={setEssayIndex}
                   onPrev={() => setEssayIndex((i) => Math.max(0, i - 1))}
                   onNext={() =>
                     setEssayIndex((i) =>
