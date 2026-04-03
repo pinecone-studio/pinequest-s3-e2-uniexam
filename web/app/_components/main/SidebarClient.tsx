@@ -78,9 +78,9 @@ const SidebarClient = ({ displayName, isSignedIn }: Props) => {
             className="flex h-12 items-center"
             onClick={() => router.push("/")}
           >
-            <div className="flex items-center justify-center">
-              <span className="flex h-10.5 w-10 shrink-0 items-center justify-center">
-                <Image src="/Icon.svg" alt="UniExam" width={24} height={24} />
+            <div className="flex items-center ml-3.5 justify-center">
+              <span className="w-[34px] h-[34px] shrink-0 flex items-center justify-center">
+                <Image src="/Icon.svg" alt="icon" width={34} height={34} />
               </span>
             </div>
             <span className="ml-3 whitespace-nowrap text-base font-semibold text-[#0c464c]">

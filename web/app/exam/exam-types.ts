@@ -8,6 +8,7 @@ export type ExamQuestion = {
   id: number;
   questionId: string;
   question: string;
+  imageUrl?: string | null;
   type: "Short Answer" | "Multiple Choice" | "True/False";
   difficulty: "Easy" | "Medium" | "Hard";
   points: number;

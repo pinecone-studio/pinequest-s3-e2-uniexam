@@ -95,6 +95,16 @@ export const ExamQA = () => {
         <p className="text-gray-800 text-base font-medium mb-6">
           {currentQuestion.question}
         </p>
+        {currentQuestion.imageUrl ? (
+          <div className="mb-6 overflow-hidden rounded-xl border border-slate-100 bg-slate-50">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={currentQuestion.imageUrl}
+              alt="Асуултын зураг"
+              className="max-h-[28rem] w-full object-contain"
+            />
+          </div>
+        ) : null}
 
         {currentQuestion.type === "Short Answer" ? (
           <div className="flex flex-col gap-1">

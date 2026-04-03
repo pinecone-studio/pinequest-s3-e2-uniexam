@@ -25,6 +25,7 @@ type ExamQueryResponse = {
   questions: {
     id: string;
     text: string;
+    image_url: string | null;
     type: string;
     difficulty: string | null;
   }[];
@@ -67,6 +68,7 @@ const EXAM_PAGE_QUERY = `
     questions {
       id
       text
+      image_url
       type
       difficulty
     }
@@ -151,6 +153,7 @@ const buildExamData = (data: ExamQueryResponse): LoadedExamData | null => {
         id: index + 1,
         questionId: question.id,
         question: question.text,
+        imageUrl: question.image_url ?? null,
         type,
         difficulty: getDifficulty(question.difficulty),
         points: examQuestion.points ?? 0,
