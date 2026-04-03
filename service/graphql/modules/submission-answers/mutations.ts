@@ -135,8 +135,22 @@ async function assertSubmissionWritable(submissionId: string) {
   if (subErr) throw new Error(subErr.message);
   if (!sub) throw new Error("Submission not found");
 
+  return sub;
+}
+
+async function assertSubmissionAnswerEditable(submissionId: string) {
+  const sub = await assertSubmissionWritable(submissionId);
+
   if (sub.status !== "in_progress") {
     throw new Error("Submission is not editable");
+  }
+}
+
+async function assertSubmissionGradeEditable(submissionId: string) {
+  const sub = await assertSubmissionWritable(submissionId);
+
+  if (sub.status !== "submitted" && sub.status !== "reviewed") {
+    throw new Error("Submission is not ready for grading");
   }
 }
 
@@ -145,7 +159,16 @@ export const submissionAnswerMutations = {
     _: unknown,
     args: CreateSubmissionAnswerArgs,
   ) => {
-    await assertSubmissionWritable(args.submission_id);
+    const isGradingPayload =
+      args.score !== undefined ||
+      args.feedback !== undefined ||
+      args.is_correct !== undefined;
+
+    if (isGradingPayload) {
+      await assertSubmissionGradeEditable(args.submission_id);
+    } else {
+      await assertSubmissionAnswerEditable(args.submission_id);
+    }
 
     const { data, error } = await supabase
       .from("submission_answers")
@@ -186,8 +209,22 @@ export const submissionAnswerMutations = {
       submissionId = row.submission_id;
     }
 
-    if (!submissionId) throw new Error("Submission ID is required");
-    await assertSubmissionWritable(submissionId);
+    if (!submissionId) {
+      throw new Error("Submission ID is required");
+    }
+
+    const resolvedSubmissionId = submissionId;
+
+    const isGradingPayload =
+      args.score !== undefined ||
+      args.feedback !== undefined ||
+      args.is_correct !== undefined;
+
+    if (isGradingPayload) {
+      await assertSubmissionGradeEditable(resolvedSubmissionId);
+    } else {
+      await assertSubmissionAnswerEditable(resolvedSubmissionId);
+    }
 
     const payload = pickDefined({
       submission_id: args.submission_id,
@@ -208,8 +245,8 @@ export const submissionAnswerMutations = {
 
     if (error) throw new Error(error.message);
 
-    await invalidateSubmissionAnswersRelation(submissionId);
-    if (data?.submission_id && data.submission_id !== submissionId) {
+    await invalidateSubmissionAnswersRelation(resolvedSubmissionId);
+    if (data?.submission_id && data.submission_id !== resolvedSubmissionId) {
       await invalidateSubmissionAnswersRelation(data.submission_id);
     }
     return data;
