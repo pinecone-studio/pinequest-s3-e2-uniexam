@@ -131,7 +131,7 @@ const buildRecentSubmissions = (
         status: submission.status as "submitted" | "reviewed",
       };
     })
-    .filter((item): item is RecentSubmissionCard => item !== null)
+    .filter((item): item is RecentSubmissionCard => item !== null);
 };
 
 export function RecentSubmittedExams() {
@@ -180,7 +180,7 @@ export function RecentSubmittedExams() {
 
         if (!studentId) {
           setItems([]);
-          setMessage("Таны оюутны мэдээлэл олдсонгүй.");
+          setMessage("Одоогоор өгсөн шалгалт алга.");
           return;
         }
 
@@ -200,20 +200,20 @@ export function RecentSubmittedExams() {
           .slice(0, RECENT_SUBMISSIONS_LIMIT);
 
         const examQuestionCounts = await Promise.all(
-          Array.from(new Set(recentSubmissions.map((item) => item.exam_id))).map(
-            async (examId) => {
-              const examQuestionsData =
-                await graphqlRequest<ExamQuestionsCountResponse>(
-                  EXAM_QUESTIONS_COUNT_QUERY,
-                  { examId },
-                );
+          Array.from(
+            new Set(recentSubmissions.map((item) => item.exam_id)),
+          ).map(async (examId) => {
+            const examQuestionsData =
+              await graphqlRequest<ExamQuestionsCountResponse>(
+                EXAM_QUESTIONS_COUNT_QUERY,
+                { examId },
+              );
 
-              return [
-                examId,
-                examQuestionsData.examQuestions?.length ?? 0,
-              ] as const;
-            },
-          ),
+            return [
+              examId,
+              examQuestionsData.examQuestions?.length ?? 0,
+            ] as const;
+          }),
         );
 
         if (cancelled) return;

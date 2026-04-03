@@ -304,7 +304,7 @@ export function useGradesCourses(): UseGradesCoursesResult {
 
         if (!studentId) {
           setCourses([]);
-          setMessage(" Таны оюутны мэдээлэл олдсонгүй.");
+          setMessage("Одоогоор дүгнэгдсэн шалгалт алга.");
           return;
         }
 
